@@ -1,0 +1,587 @@
+/* ─────────────────────────────────────────────────────────────
+   Affan Najiy — portfolio
+   Berkshire base (text-first, no decoration) + McMaster grid (dense tables).
+   Palette carried over from tyunnie-pa: orange / black / warm white.
+
+   Light mode only, on purpose. `color-scheme: light` below stops browsers
+   auto-inverting form controls and scrollbars on a dark OS.
+
+   Orange is a SIGNAL, not decoration. It appears only on:
+   link underlines and hover, section index numbers, the table-header rule,
+   nav hover, row hover fill, and focus rings.
+   Never as a large fill, never as a gradient, never as a shadow.
+   ───────────────────────────────────────────────────────────── */
+
+:root{
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg:        #faf8f5;   /* page — warm cream */
+  --surface:   #ffffff;   /* tables sit above the page */
+  --surface-2: #f3f0ea;   /* zebra stripe */
+  --border:    #e8e2d8;   /* hairline rules */
+  --rule:      #111010;   /* structural rules — header, footer, masthead */
+
+  /* Ink */
+  --fg:        #111010;   /* headings */
+  --text:      #2d2416;   /* body copy — 14.4:1 */
+  --muted:     #75695a;   /* hints, footer, nav, label column — 5.05:1 */
+
+  /* Accent.
+     --accent is the brand orange, used for RULES, BORDERS, UNDERLINES and
+     FOCUS RINGS only. At 2.64:1 on cream it is not a legible text colour,
+     so anything that renders orange *words* uses --accent-text (4.96:1). */
+  --accent:      #f97316;
+  --accent-text: #b8490c;
+  --accent-soft: #fff0e6;
+  --accent-mid:  #fed7aa;
+  --accent-rgb:  249, 115, 22;
+
+  --mono:  "Geist Mono", ui-monospace, "SF Mono", "Courier New", Courier, monospace;
+  --serif: Georgia, "Times New Roman", Times, serif;
+
+  --maxw: 1000px;
+}
+
+*{ box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--serif);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-text-size-adjust:100%;
+}
+
+/* Screen-reader-only: present to assistive tech, absent visually. */
+.sr-only{
+  position:absolute;
+  width:1px; height:1px;
+  padding:0; margin:-1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+  border:0;
+}
+
+/* ── Skip link ────────────────────────────────────────────
+   Hidden until focused, then a normal visible control. */
+.skip-link{
+  position:absolute;
+  left:.5rem;
+  top:-4rem;
+  z-index:100;
+  padding:.6rem .9rem;
+  background:var(--fg);
+  color:var(--bg);
+  font-family:var(--mono);
+  font-size:.8rem;
+  text-decoration:none;
+  transition:top .12s ease;
+}
+.skip-link:focus{ top:.5rem; }
+
+/* ── Links ────────────────────────────────────────────────
+   Underline present at rest — never colour alone (Rulebook §4). */
+a{ color:var(--text); }
+
+a.text-link{
+  color:var(--text);
+  text-decoration:underline;
+  text-decoration-color:var(--accent-mid);
+  text-underline-offset:2px;
+  transition:color .12s ease, text-decoration-color .12s ease;
+}
+a.text-link:hover,
+a.text-link:focus-visible{
+  color:var(--accent-text);
+  text-decoration-color:var(--accent);
+}
+
+:where(a, button, [tabindex]):focus-visible{
+  outline:2px solid rgba(var(--accent-rgb), .9);
+  outline-offset:2px;
+  border-radius:2px;
+}
+
+code{
+  font-family:var(--mono);
+  font-size:.9em;
+  background:var(--surface-2);
+  padding:.1em .35em;
+  border:1px solid var(--border);
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.site-header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:var(--bg);
+  border-bottom:2px solid var(--rule);
+}
+
+.site-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:.25rem 1.5rem;
+  padding:0 1.25rem;
+  max-width:var(--maxw);
+  margin:0 auto;
+}
+
+.wordmark{
+  font-family:var(--mono);
+  font-weight:700;
+  letter-spacing:.08em;
+  text-decoration:none;
+  font-size:1rem;
+  color:var(--fg);
+  /* 40px minimum tap target (Fitts's Law, Rulebook §3.7). */
+  display:flex;
+  align-items:center;
+  min-height:44px;
+}
+.wordmark:hover{ color:var(--accent-text); }
+
+.site-nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0 1.1rem;
+  font-family:var(--mono);
+  font-size:.82rem;
+}
+
+.site-nav a{
+  display:flex;
+  align-items:center;
+  min-height:44px;          /* tap target, not visual size */
+  text-decoration:none;
+  color:var(--muted);
+  border-bottom:2px solid transparent;
+  transition:color .12s ease, border-color .12s ease;
+}
+.site-nav a:hover,
+.site-nav a:focus-visible{
+  color:var(--fg);
+  border-bottom-color:var(--accent);
+}
+
+/* Current section. Marked in weight AND colour AND a rule — never colour
+   alone, and it answers "where am I" without the user scrolling to check. */
+.site-nav a[aria-current="true"]{
+  color:var(--fg);
+  font-weight:700;
+  border-bottom-color:var(--accent);
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
+main{
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:0 1.25rem;
+}
+
+/* ── Masthead ─────────────────────────────────────────────
+   One dominant shape so the page is recognised before it is read. */
+.masthead{
+  padding:3.5rem 0 2.5rem;
+  border-bottom:2px solid var(--rule);
+}
+
+.masthead-name{
+  font-family:var(--serif);
+  font-size:clamp(2.4rem, 7vw, 4rem);
+  line-height:1.05;
+  letter-spacing:-.02em;
+  font-weight:400;
+  color:var(--fg);
+  margin:0;
+}
+
+.masthead-role{
+  font-family:var(--mono);
+  font-size:.85rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--accent-text);
+  margin:.6rem 0 0 0;
+}
+
+.masthead-meta{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  gap:1rem 2rem;
+  margin:2rem 0 0 0;
+  padding-top:1.25rem;
+  border-top:1px solid var(--border);
+}
+.masthead-meta > div{ min-width:0; }
+
+.masthead-meta dt{
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:0 0 .2rem 0;
+}
+.masthead-meta dd{
+  margin:0;
+  font-size:.95rem;
+  overflow-wrap:anywhere;
+}
+
+/* ── Sections ────────────────────────────────────────────── */
+.section{
+  border-bottom:1px solid var(--border);
+  padding:2.75rem 0;
+  scroll-margin-top:5rem;   /* sticky header must not cover the heading */
+}
+.section:last-of-type{ border-bottom:none; }
+
+.section-title{
+  font-family:var(--mono);
+  font-size:.95rem;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--fg);
+  margin:0 0 1.25rem 0;
+}
+
+.section-title .num{ color:var(--accent-text); }
+
+.section-body p{
+  max-width:65ch;
+  margin:0 0 1rem 0;
+}
+
+.hint{
+  font-family:var(--mono);
+  font-size:.75rem;
+  line-height:1.5;
+  color:var(--muted);
+  margin:.75rem 0 0 0 !important;
+}
+
+/* Sub-heading inside a section (e.g. "Coursework projects"). */
+.subhead{
+  font-family:var(--mono);
+  font-size:.78rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:2rem 0 .75rem 0;
+}
+
+/* A stated fact that is not a table row and not a caveat — e.g. the Dean's
+   List line. Distinct from .hint, which always marks something unfinished. */
+.note{
+  font-size:.9rem;
+  margin:1rem 0 0 0 !important;
+  padding-left:.9rem;
+  border-left:2px solid var(--accent-mid);
+}
+
+/* ── Filter ──────────────────────────────────────────────
+   21 repositories is past the point where scanning beats searching
+   (Rulebook §3.2 choice overload, §3.17 Miller's Law). */
+.filter-row{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  margin-bottom:.85rem;
+}
+
+.filter-label{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.filter-input{
+  flex:1 1 auto;
+  min-width:0;
+  max-width:26rem;
+  min-height:40px;
+  padding:0 .7rem;
+  font-family:var(--mono);
+  font-size:.82rem;
+  color:var(--text);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:0;
+}
+.filter-input::placeholder{ color:var(--muted); opacity:1; }
+.filter-input:hover{ border-color:var(--accent-mid); }
+.filter-input:focus{
+  border-color:var(--accent);
+  outline:2px solid rgba(var(--accent-rgb), .9);
+  outline-offset:1px;
+}
+.filter-input:disabled{
+  background:var(--surface-2);
+  cursor:not-allowed;
+}
+
+/* Loading / count / error line for the Projects table. */
+.status{
+  font-family:var(--mono);
+  font-size:.75rem;
+  color:var(--muted);
+  margin:0 0 .75rem 0 !important;
+}
+.status[data-state="error"]{
+  color:var(--text);
+  background:var(--accent-soft);
+  border-left:3px solid var(--accent);
+  padding:.6rem .75rem;
+  max-width:65ch;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.button{
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  padding:0 1.1rem;
+  background:var(--fg);
+  color:var(--bg);
+  font-family:var(--mono);
+  font-size:.8rem;
+  letter-spacing:.04em;
+  text-decoration:none;
+  border:2px solid var(--fg);
+  transition:background .12s ease, color .12s ease;
+}
+.button:hover,
+.button:focus-visible{
+  background:transparent;
+  color:var(--fg);
+  border-color:var(--accent);
+}
+
+.resume-actions{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:.75rem 1.25rem;
+}
+
+/* ── Tables — the McMaster half ───────────────────────────
+   Hidden overflow is hidden data (Rulebook §2.4): the wrapper scrolls
+   rather than clipping, so a 5-column table stays reachable at 375px. */
+.table-wrap{
+  overflow-x:auto;
+  border:1px solid var(--border);
+  background:var(--surface);
+}
+
+.grid-table{
+  width:100%;
+  border-collapse:collapse;
+  font-family:var(--mono);
+  font-size:.82rem;
+  background:var(--surface);
+}
+
+.grid-table th,
+.grid-table td{
+  border-bottom:1px solid var(--border);
+  border-right:1px solid var(--border);
+  padding:.55rem .7rem;
+  text-align:left;
+  vertical-align:top;
+  font-weight:400;
+}
+.grid-table th:last-child,
+.grid-table td:last-child{ border-right:none; }
+.grid-table tbody tr:last-child > *{ border-bottom:none; }
+
+.grid-table thead th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:var(--fg);
+  color:var(--bg);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-size:.72rem;
+  white-space:nowrap;
+  padding:0;                                /* the button owns the padding */
+  border-bottom:2px solid var(--accent);    /* accent as structure, not fill */
+}
+/* Non-sortable headers keep their own padding. */
+.grid-table thead th:not(:has(.sort-btn)){ padding:.55rem .7rem; }
+
+/* Sort controls read as headers, behave as buttons. */
+.sort-btn{
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+  width:100%;
+  min-height:40px;      /* tap-target floor */
+  padding:.55rem .7rem;
+  background:none;
+  border:0;
+  color:inherit;
+  font:inherit;
+  letter-spacing:inherit;
+  text-transform:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.sort-btn:hover{ color:var(--accent-mid); }
+
+/* The arrow is drawn from the header's aria-sort, so the visual state and the
+   announced state cannot drift apart. */
+.sort-btn::after{
+  content:"↕";
+  opacity:.35;
+  font-size:.9em;
+}
+th[aria-sort="ascending"] .sort-btn::after{ content:"↑"; opacity:1; color:var(--accent-mid); }
+th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var(--accent-mid); }
+
+.grid-table tbody tr:nth-child(even) > *{ background:var(--surface-2); }
+.grid-table tbody tr:hover > *{ background:var(--accent-soft); }
+
+/* Row headers are labels, not data. */
+.grid-table tbody th[scope="row"]{
+  color:var(--muted);
+  white-space:nowrap;
+}
+.grid-table tbody tr:hover th[scope="row"]{ color:var(--accent-text); }
+
+/* Projects proportions — description gets the room, numbers stay tight. */
+#projects-table td:nth-child(2){ min-width:20ch; }
+#projects-table td:nth-child(4),
+#projects-table td:nth-child(5){ white-space:nowrap; text-align:right; }
+#projects-table td:nth-child(1){ white-space:nowrap; }
+
+/* Skeleton rows. Shape-matched placeholders say what is coming, which a
+   spinner cannot (Rulebook §1.1, §3.6). Not a progress bar: we do not know
+   the percentage, so we do not draw one. */
+.skeleton-row td:nth-child(1) .skeleton-bar{ width:60%; }
+.skeleton-row td:nth-child(2) .skeleton-bar{ width:90%; }
+.skeleton-row td:nth-child(3) .skeleton-bar{ width:50%; }
+.skeleton-row td:nth-child(4) .skeleton-bar{ width:40%; }
+.skeleton-row td:nth-child(5) .skeleton-bar{ width:70%; }
+
+.skeleton-bar{
+  display:block;
+  height:.7em;
+  border-radius:2px;
+  background:linear-gradient(90deg,
+    var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size:200% 100%;
+  animation:skeleton-shimmer 1.6s linear infinite;
+}
+@keyframes skeleton-shimmer{
+  0%   { background-position:200% 0; }
+  100% { background-position:-200% 0; }
+}
+
+.retry-btn{
+  display:inline-flex;
+  align-items:center;
+  min-height:40px;
+  margin-top:.6rem;
+  padding:0 .9rem;
+  background:transparent;
+  border:1px solid var(--fg);
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:.75rem;
+  cursor:pointer;
+}
+.retry-btn:hover{ border-color:var(--accent); color:var(--accent-text); }
+
+/* A scrollbar shows on desktop, but a touch device shows nothing until the
+   user already guessed. Say it in words, only where it applies. */
+.scroll-hint{ display:none; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.site-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:.4rem 1.5rem;
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:1.25rem;
+  border-top:2px solid var(--rule);
+  font-family:var(--mono);
+  font-size:.72rem;
+  color:var(--muted);
+}
+.site-footer a{
+  color:var(--muted);
+  text-decoration:underline;
+  text-decoration-color:var(--accent-mid);
+}
+.site-footer a:hover{ color:var(--accent-text); }
+
+/* ── Mobile (tested at 375px) ────────────────────────────── */
+@media (max-width: 640px){
+  html,body{ font-size:15px; }
+
+  .site-header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:0;
+    padding:0 1rem;
+  }
+  .wordmark{ min-height:40px; }
+  .site-nav{ gap:0 .9rem; font-size:.78rem; padding-bottom:.15rem; }
+  .site-nav a{ min-height:40px; }
+
+  main{ padding:0 1rem; }
+
+  .masthead{ padding:2.25rem 0 1.75rem; }
+  .masthead-meta{ gap:.9rem; margin-top:1.5rem; }
+
+  /* Seven nav items wrap to two rows here, making the sticky header ~124px.
+     The offset must clear it or anchor links land underneath the nav. */
+  .section{ padding:2rem 0; scroll-margin-top:9rem; }
+
+  .grid-table{ font-size:.74rem; }
+  .grid-table th,
+  .grid-table td{ padding:.45rem .55rem; }
+  .grid-table thead th:not(:has(.sort-btn)){ padding:.45rem .55rem; }
+  .sort-btn{ padding:.45rem .55rem; }
+
+  .scroll-hint{ display:block; }
+
+  /* 16px floor: iOS zooms the page on focus below this and does not undo it. */
+  .filter-input{ font-size:16px; }
+  .filter-row{ flex-wrap:wrap; }
+
+  .site-footer{ padding:1rem; }
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+  /* The shimmer is the whole point of the skeleton; without motion it becomes
+     a plain static bar, which still communicates "content is coming". */
+  .skeleton-bar{ background:var(--surface-2); }
+}
