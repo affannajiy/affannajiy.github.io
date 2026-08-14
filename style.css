@@ -12,30 +12,38 @@
    Never as a large fill, never as a gradient, never as a shadow.
    ───────────────────────────────────────────────────────────── */
 
-:root{
+:root {
   color-scheme: light;
 
   /* Surfaces */
-  --bg:        #faf8f5;   /* page — warm cream */
-  --surface:   #ffffff;   /* tables sit above the page */
-  --surface-2: #f3f0ea;   /* zebra stripe */
-  --border:    #e8e2d8;   /* hairline rules */
-  --rule:      #111010;   /* structural rules — header, footer, masthead */
+  --bg: #faf8f5;
+  /* page — warm cream */
+  --surface: #ffffff;
+  /* tables sit above the page */
+  --surface-2: #f3f0ea;
+  /* zebra stripe */
+  --border: #e8e2d8;
+  /* hairline rules */
+  --rule: #111010;
+  /* structural rules — header, footer, masthead */
 
   /* Ink */
-  --fg:        #111010;   /* headings */
-  --text:      #2d2416;   /* body copy — 14.4:1 */
-  --muted:     #75695a;   /* hints, footer, nav, label column — 5.05:1 */
+  --fg: #111010;
+  /* headings */
+  --text: #2d2416;
+  /* body copy — 14.4:1 */
+  --muted: #75695a;
+  /* hints, footer, nav, label column — 5.05:1 */
 
   /* Accent.
      --accent is the brand orange, used for RULES, BORDERS, UNDERLINES and
      FOCUS RINGS only. At 2.64:1 on cream it is not a legible text colour,
      so anything that renders orange *words* uses --accent-text (4.96:1). */
-  --accent:      #f97316;
+  --accent: #f97316;
   --accent-text: #b8490c;
   --accent-soft: #fff0e6;
-  --accent-mid:  #fed7aa;
-  --accent-rgb:  249, 115, 22;
+  --accent-mid: #fed7aa;
+  --accent-rgb: 249, 115, 22;
 
   /* One family, screen and paper. Arial on Windows, Helvetica on macOS,
      Liberation Sans (metrically identical to Arial) on Linux — all installed
@@ -53,628 +61,1427 @@
   --maxw: 1000px;
 }
 
-*{ box-sizing:border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html{ scroll-behavior:smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
-html,body{
-  margin:0;
-  padding:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--sans);
-  font-size:16px;
-  line-height:1.55;
-  -webkit-text-size-adjust:100%;
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Screen-reader-only: present to assistive tech, absent visually. */
-.sr-only{
-  position:absolute;
-  width:1px; height:1px;
-  padding:0; margin:-1px;
-  overflow:hidden;
-  clip:rect(0 0 0 0);
-  white-space:nowrap;
-  border:0;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
+
+/* ── No JavaScript ────────────────────────────────────────
+   `.no-js` sits on <html> from the first byte and is removed by the first line
+   of script.js. Anything marked `.js-only` is a control that cannot do its job
+   without that file — a filter box that cannot filter, a sort header that
+   cannot sort, an export button that opens nothing. Showing a dead control is
+   worse than showing none: it invites a click and then says nothing about why
+   nothing happened (Nielsen §1.5, §1.1). The <noscript> block in the Projects
+   section says what is missing and links the same data on GitHub. */
+.no-js .js-only {
+  display: none !important;
+}
+
+.no-js .sort-btn {
+  pointer-events: none;
+}
+
+/* ── Links that leave the page ────────────────────────────
+   Every target="_blank" link carries an sr-only "(opens in a new tab)" so the
+   change of context is announced rather than discovered. This is the visual
+   half of the same message, for readers who get nothing from the sr-only text.
+   aria-hidden by nature: it is a duplicate of words already in the link. */
+a[target="_blank"]::after {
+  content: "\2197";
+  /* ↗ */
+  display: inline-block;
+  margin-left: .15em;
+  font-size: .85em;
+  line-height: 1;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+/* Dropped on paper in the print block below: nothing printed is clickable, so
+   the marker would promise a tab that cannot open. */
 
 /* ── Skip link ────────────────────────────────────────────
    Hidden until focused, then a normal visible control. */
-.skip-link{
-  position:absolute;
-  left:.5rem;
-  top:-4rem;
-  z-index:100;
-  padding:.6rem .9rem;
-  background:var(--fg);
-  color:var(--bg);
-  font-family:var(--sans);
-  font-size:.8rem;
-  text-decoration:none;
-  transition:top .12s ease;
+.skip-link {
+  position: absolute;
+  left: .5rem;
+  top: -4rem;
+  z-index: 100;
+  /* 40px floor: it measured 37px, and this is the first control a keyboard
+     reader reaches. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: .6rem .9rem;
+  background: var(--fg);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: .8rem;
+  text-decoration: none;
+  transition: top .12s ease;
 }
-.skip-link:focus{ top:.5rem; }
+
+.skip-link:focus {
+  top: .5rem;
+}
 
 /* ── Links ────────────────────────────────────────────────
    Underline present at rest — never colour alone (Rulebook §4). */
-a{ color:var(--text); }
-
-a.text-link{
-  color:var(--text);
-  text-decoration:underline;
-  text-decoration-color:var(--accent-mid);
-  text-underline-offset:2px;
-  transition:color .12s ease, text-decoration-color .12s ease;
+a {
+  color: var(--text);
 }
+
+a.text-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-mid);
+  text-underline-offset: 2px;
+  transition: color .12s ease, text-decoration-color .12s ease;
+}
+
 a.text-link:hover,
-a.text-link:focus-visible{
-  color:var(--accent-text);
-  text-decoration-color:var(--accent);
+a.text-link:focus-visible {
+  color: var(--accent-text);
+  text-decoration-color: var(--accent);
 }
 
-:where(a, button, [tabindex]):focus-visible{
-  outline:2px solid rgba(var(--accent-rgb), .9);
-  outline-offset:2px;
-  border-radius:2px;
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-code{
-  font-family:var(--sans);
-  font-size:.9em;
-  background:var(--surface-2);
-  padding:.1em .35em;
-  border:1px solid var(--border);
+code {
+  font-family: var(--sans);
+  font-size: .9em;
+  background: var(--surface-2);
+  padding: .1em .35em;
+  border: 1px solid var(--border);
 }
 
 /* ── Header ──────────────────────────────────────────────── */
-.site-header{
-  position:sticky;
-  top:0;
-  z-index:20;
-  background:var(--bg);
-  border-bottom:2px solid var(--rule);
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 2px solid var(--rule);
 }
 
-.site-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:.25rem 1.5rem;
-  padding:0 1.25rem;
-  max-width:var(--maxw);
-  margin:0 auto;
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .25rem 1.5rem;
+  padding: 0 1.25rem;
+  max-width: var(--maxw);
+  margin: 0 auto;
 }
 
-.wordmark{
-  font-family:var(--sans);
-  font-weight:700;
-  letter-spacing:.08em;
-  text-decoration:none;
-  font-size:1rem;
-  color:var(--fg);
+.wordmark {
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-decoration: none;
+  font-size: 1rem;
+  color: var(--fg);
   /* 40px minimum tap target (Fitts's Law, Rulebook §3.7). */
-  display:flex;
-  align-items:center;
-  min-height:44px;
-}
-.wordmark:hover{ color:var(--accent-text); }
-
-.site-nav{
-  display:flex;
-  flex-wrap:wrap;
-  gap:0 1.1rem;
-  font-family:var(--sans);
-  font-size:.82rem;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
 }
 
-.site-nav a{
-  display:flex;
-  align-items:center;
-  min-height:44px;          /* tap target, not visual size */
-  text-decoration:none;
-  color:var(--muted);
-  border-bottom:2px solid transparent;
-  transition:color .12s ease, border-color .12s ease;
+.wordmark:hover {
+  color: var(--accent-text);
 }
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.1rem;
+  font-family: var(--sans);
+  font-size: .82rem;
+}
+
+.site-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  /* tap target, not visual size */
+  text-decoration: none;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: color .12s ease, border-color .12s ease;
+}
+
 .site-nav a:hover,
-.site-nav a:focus-visible{
-  color:var(--fg);
-  border-bottom-color:var(--accent);
+.site-nav a:focus-visible {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
 }
 
 /* Current section. Marked in weight AND colour AND a rule — never colour
    alone, and it answers "where am I" without the user scrolling to check. */
-.site-nav a[aria-current="true"]{
-  color:var(--fg);
-  font-weight:700;
-  border-bottom-color:var(--accent);
+.site-nav a[aria-current="true"] {
+  color: var(--fg);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
 }
 
 /* ── Layout ──────────────────────────────────────────────── */
-main{
-  max-width:var(--maxw);
-  margin:0 auto;
-  padding:0 1.25rem;
+main {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 1.25rem;
 }
 
 /* ── Masthead ─────────────────────────────────────────────
    One dominant shape so the page is recognised before it is read. */
-.masthead{
-  padding:3.5rem 0 2.5rem;
-  border-bottom:2px solid var(--rule);
+.masthead {
+  padding: 3.5rem 0 2.5rem;
+  border-bottom: 2px solid var(--rule);
 }
 
-.masthead-name{
-  font-family:var(--sans);
-  font-size:clamp(2.4rem, 7vw, 4rem);
-  line-height:1.05;
-  letter-spacing:-.02em;
-  font-weight:400;
-  color:var(--fg);
-  margin:0;
+.masthead-name {
+  font-family: var(--sans);
+  font-size: clamp(2.4rem, 7vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  font-weight: 400;
+  color: var(--fg);
+  margin: 0;
 }
 
-.masthead-role{
-  font-family:var(--sans);
-  font-size:.85rem;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  color:var(--accent-text);
-  margin:.6rem 0 0 0;
+.masthead-role {
+  font-family: var(--sans);
+  font-size: .85rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin: .6rem 0 0 0;
 }
 
-.masthead-meta{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
-  gap:1rem 2rem;
-  margin:2rem 0 0 0;
-  padding-top:1.25rem;
-  border-top:1px solid var(--border);
+.masthead-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem 2rem;
+  margin: 2rem 0 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
 }
-.masthead-meta > div{ min-width:0; }
 
-.masthead-meta dt{
-  font-family:var(--sans);
-  font-size:.68rem;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin:0 0 .2rem 0;
+.masthead-meta>div {
+  min-width: 0;
 }
-.masthead-meta dd{
-  margin:0;
-  font-size:.95rem;
-  overflow-wrap:anywhere;
+
+.masthead-meta dt {
+  font-family: var(--sans);
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 .2rem 0;
+}
+
+.masthead-meta dd {
+  margin: 0;
+  font-size: .95rem;
+  overflow-wrap: anywhere;
 }
 
 /* ── Sections ────────────────────────────────────────────── */
-.section{
-  border-bottom:1px solid var(--border);
-  padding:2.75rem 0;
-  scroll-margin-top:5rem;   /* sticky header must not cover the heading */
-}
-.section:last-of-type{ border-bottom:none; }
-
-.section-title{
-  font-family:var(--sans);
-  font-size:.95rem;
-  font-weight:700;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--fg);
-  margin:0 0 1.25rem 0;
+.section {
+  border-bottom: 1px solid var(--border);
+  padding: 2.75rem 0;
+  scroll-margin-top: 5rem;
+  /* sticky header must not cover the heading */
 }
 
-.section-title .num{ color:var(--accent-text); }
+.section:last-of-type {
+  border-bottom: none;
+}
+
+.section-title {
+  font-family: var(--sans);
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin: 0 0 1.25rem 0;
+}
+
+.section-title .num {
+  color: var(--accent-text);
+}
 
 /* Prose runs the full content column and reflows with the viewport rather than
    stopping at a fixed measure. The 1000px cap on the column is what bounds the
    line length — roughly 105ch at 1280px — so there is no runaway on a wide
    monitor without a second cap here. */
-.section-body p{
-  max-width:100%;
-  margin:0 0 1rem 0;
+.section-body p {
+  max-width: 100%;
+  margin: 0 0 1rem 0;
 }
 
-.hint{
-  font-family:var(--sans);
-  font-size:.75rem;
-  line-height:1.5;
-  color:var(--muted);
-  margin:.75rem 0 0 0 !important;
+.hint {
+  font-family: var(--sans);
+  font-size: .75rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: .75rem 0 0 0 !important;
 }
 
 /* Sub-heading inside a section (e.g. "Coursework projects"). */
-.subhead{
-  font-family:var(--sans);
-  font-size:.78rem;
-  font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin:2rem 0 .75rem 0;
+.subhead {
+  font-family: var(--sans);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 2rem 0 .75rem 0;
 }
 
 /* A stated fact that is not a table row and not a caveat — e.g. the Dean's
    List line. Distinct from .hint, which always marks something unfinished. */
-.note{
-  font-size:.9rem;
-  margin:1rem 0 0 0 !important;
-  padding-left:.9rem;
-  border-left:2px solid var(--accent-mid);
+.note {
+  font-size: .9rem;
+  margin: 1rem 0 0 0 !important;
+  padding-left: .9rem;
+  border-left: 2px solid var(--accent-mid);
 }
 
 /* ── Filter ──────────────────────────────────────────────
    21 repositories is past the point where scanning beats searching
    (Rulebook §3.2 choice overload, §3.17 Miller's Law). */
-.filter-row{
-  display:flex;
-  align-items:center;
-  gap:.6rem;
-  margin-bottom:.85rem;
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .85rem;
 }
 
-.filter-label{
-  font-family:var(--sans);
-  font-size:.72rem;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--muted);
+.filter-label {
+  font-family: var(--sans);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 /* The "/" shortcut, stated where the field is rather than left as folklore.
    Revealed by JS only on a device with a hover-capable pointer, so a phone is
    never told to press a key it does not have. */
-.filter-key{
-  font-family:var(--sans);
-  font-size:.72rem;
-  color:var(--muted);
-  order:3;                 /* after the input, so it never splits label from field */
-}
-.filter-key kbd{
-  font-family:var(--sans);
-  font-size:.72rem;
-  padding:.05rem .3rem;
-  border:1px solid var(--border);
-  border-bottom-width:2px;
-  border-radius:3px;
-  background:var(--surface);
-  color:var(--text);
+.filter-key {
+  font-family: var(--sans);
+  font-size: .72rem;
+  color: var(--muted);
+  order: 3;
+  /* after the input, so it never splits label from field */
 }
 
-.filter-input{
-  flex:1 1 auto;
-  min-width:0;
-  max-width:26rem;
-  min-height:40px;
-  padding:0 .7rem;
-  font-family:var(--sans);
-  font-size:.82rem;
-  color:var(--text);
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:0;
+.filter-key kbd {
+  font-family: var(--sans);
+  font-size: .72rem;
+  padding: .05rem .3rem;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text);
 }
-.filter-input::placeholder{ color:var(--muted); opacity:1; }
-.filter-input:hover{ border-color:var(--accent-mid); }
-.filter-input:focus{
-  border-color:var(--accent);
-  outline:2px solid rgba(var(--accent-rgb), .9);
-  outline-offset:1px;
+
+.filter-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 26rem;
+  min-height: 40px;
+  padding: 0 .7rem;
+  font-family: var(--sans);
+  font-size: .82rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
 }
-.filter-input:disabled{
-  background:var(--surface-2);
-  cursor:not-allowed;
+
+.filter-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.filter-input:hover {
+  border-color: var(--accent-mid);
+}
+
+.filter-input:focus {
+  border-color: var(--accent);
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 1px;
+}
+
+.filter-input:disabled {
+  background: var(--surface-2);
+  cursor: not-allowed;
 }
 
 /* Loading / count / error line for the Projects table. */
-.status{
-  font-family:var(--sans);
-  font-size:.75rem;
-  color:var(--muted);
-  margin:0 0 .75rem 0 !important;
+.status {
+  font-family: var(--sans);
+  font-size: .75rem;
+  color: var(--muted);
+  margin: 0 0 .75rem 0 !important;
 }
-.status[data-state="error"]{
-  color:var(--text);
-  background:var(--accent-soft);
-  border-left:3px solid var(--accent);
-  padding:.6rem .75rem;
-  max-width:65ch;
+
+.status[data-state="error"] {
+  color: var(--text);
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  padding: .6rem .75rem;
+  max-width: 65ch;
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
-.button{
-  display:inline-flex;
-  align-items:center;
-  min-height:44px;
-  padding:0 1.1rem;
-  background:var(--fg);
-  color:var(--bg);
-  font-family:var(--sans);
-  font-size:.8rem;
-  letter-spacing:.04em;
-  text-decoration:none;
-  border:2px solid var(--fg);
-  transition:background .12s ease, color .12s ease;
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  background: var(--fg);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: .8rem;
+  letter-spacing: .04em;
+  text-decoration: none;
+  border: 2px solid var(--fg);
+  transition: background .12s ease, color .12s ease;
 }
+
 .button:hover,
-.button:focus-visible{
-  background:transparent;
-  color:var(--fg);
-  border-color:var(--accent);
+.button:focus-visible {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--accent);
 }
 
 /* Secondary action next to the primary one. Outlined rather than filled so the
    two buttons do not compete: the PDF is the main path, email is the fallback. */
-.button-quiet{
-  background:transparent;
-  color:var(--fg);
-  border-color:var(--border);
-}
-.button-quiet:hover,
-.button-quiet:focus-visible{
-  background:transparent;
-  color:var(--fg);
-  border-color:var(--accent);
+.button-quiet {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--border);
 }
 
-.resume-actions{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:.75rem 1.25rem;
+.button-quiet:hover,
+.button-quiet:focus-visible {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.resume-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .75rem 1.25rem;
 }
 
 /* ── Tables — the McMaster half ───────────────────────────
    Hidden overflow is hidden data (Rulebook §2.4): the wrapper scrolls
    rather than clipping, so a 5-column table stays reachable at 375px. */
-.table-wrap{
-  overflow-x:auto;
-  border:1px solid var(--border);
-  background:var(--surface);
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
-.grid-table{
-  width:100%;
-  border-collapse:collapse;
-  font-family:var(--sans);
-  font-size:.82rem;
-  background:var(--surface);
+.grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: .82rem;
+  background: var(--surface);
   /* Monospace used to line the star counts and dates up by accident. With a
      proportional face the digits are different widths, so tabular figures are
      asked for explicitly — otherwise a column of numbers reads ragged. */
-  font-variant-numeric:tabular-nums;
+  font-variant-numeric: tabular-nums;
 }
 
 .grid-table th,
-.grid-table td{
-  border-bottom:1px solid var(--border);
-  border-right:1px solid var(--border);
-  padding:.55rem .7rem;
-  text-align:left;
-  vertical-align:top;
-  font-weight:400;
+.grid-table td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: .55rem .7rem;
+  text-align: left;
+  vertical-align: top;
+  font-weight: 400;
 }
-.grid-table th:last-child,
-.grid-table td:last-child{ border-right:none; }
-.grid-table tbody tr:last-child > *{ border-bottom:none; }
 
-.grid-table thead th{
-  position:sticky;
-  top:0;
-  z-index:1;
-  background:var(--fg);
-  color:var(--bg);
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  font-size:.72rem;
-  white-space:nowrap;
-  padding:0;                                /* the button owns the padding */
-  border-bottom:2px solid var(--accent);    /* accent as structure, not fill */
+.grid-table th:last-child,
+.grid-table td:last-child {
+  border-right: none;
 }
+
+.grid-table tbody tr:last-child>* {
+  border-bottom: none;
+}
+
+.grid-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .72rem;
+  white-space: nowrap;
+  padding: 0;
+  /* the button owns the padding */
+  border-bottom: 2px solid var(--accent);
+  /* accent as structure, not fill */
+}
+
 /* Non-sortable headers keep their own padding. */
-.grid-table thead th:not(:has(.sort-btn)){ padding:.55rem .7rem; }
+.grid-table thead th:not(:has(.sort-btn)) {
+  padding: .55rem .7rem;
+}
 
 /* Sort controls read as headers, behave as buttons. */
-.sort-btn{
-  display:flex;
-  align-items:center;
-  gap:.4rem;
-  width:100%;
-  min-height:40px;      /* tap-target floor */
-  padding:.55rem .7rem;
-  background:none;
-  border:0;
-  color:inherit;
-  font:inherit;
-  letter-spacing:inherit;
-  text-transform:inherit;
-  text-align:left;
-  cursor:pointer;
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  width: 100%;
+  min-height: 40px;
+  /* tap-target floor */
+  padding: .55rem .7rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.sort-btn:hover{ color:var(--accent-mid); }
+
+.sort-btn:hover {
+  color: var(--accent-mid);
+}
 
 /* The arrow is drawn from the header's aria-sort, so the visual state and the
    announced state cannot drift apart. */
-.sort-btn::after{
-  content:"↕";
-  opacity:.35;
-  font-size:.9em;
+.sort-btn::after {
+  content: "↕";
+  opacity: .35;
+  font-size: .9em;
 }
-th[aria-sort="ascending"] .sort-btn::after{ content:"↑"; opacity:1; color:var(--accent-mid); }
-th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var(--accent-mid); }
 
-.grid-table tbody tr:nth-child(even) > *{ background:var(--surface-2); }
-.grid-table tbody tr:hover > *{ background:var(--accent-soft); }
+th[aria-sort="ascending"] .sort-btn::after {
+  content: "↑";
+  opacity: 1;
+  color: var(--accent-mid);
+}
+
+th[aria-sort="descending"] .sort-btn::after {
+  content: "↓";
+  opacity: 1;
+  color: var(--accent-mid);
+}
+
+.grid-table tbody tr:nth-child(even)>* {
+  background: var(--surface-2);
+}
+
+.grid-table tbody tr:hover>* {
+  background: var(--accent-soft);
+}
 
 /* Row headers are labels, not data. */
-.grid-table tbody th[scope="row"]{
-  color:var(--muted);
-  white-space:nowrap;
+.grid-table tbody th[scope="row"] {
+  color: var(--muted);
+  white-space: nowrap;
 }
-.grid-table tbody tr:hover th[scope="row"]{ color:var(--accent-text); }
 
-/* Projects proportions — description gets the room, numbers stay tight. */
-#projects-table td:nth-child(2){ min-width:20ch; }
-#projects-table td:nth-child(4),
-#projects-table td:nth-child(5){ white-space:nowrap; text-align:right; }
-#projects-table td:nth-child(1){ white-space:nowrap; }
+.grid-table tbody tr:hover th[scope="row"] {
+  color: var(--accent-text);
+}
+
+/* Projects proportions — description gets the room, the date stays tight.
+   Four columns now: Name, Description, Language, Updated. The Stars column is
+   gone; every repository had none, so it was a column of zeros pretending to
+   be data and it cost sideways scroll at 375px to say nothing. */
+#projects-table td:nth-child(2) {
+  min-width: 20ch;
+}
+
+#projects-table td:nth-child(4) {
+  white-space: nowrap;
+  text-align: right;
+}
+
+#projects-table td:nth-child(1) {
+  white-space: nowrap;
+}
 
 /* Skeleton rows. Shape-matched placeholders say what is coming, which a
    spinner cannot (Rulebook §1.1, §3.6). Not a progress bar: we do not know
    the percentage, so we do not draw one. */
-.skeleton-row td:nth-child(1) .skeleton-bar{ width:60%; }
-.skeleton-row td:nth-child(2) .skeleton-bar{ width:90%; }
-.skeleton-row td:nth-child(3) .skeleton-bar{ width:50%; }
-.skeleton-row td:nth-child(4) .skeleton-bar{ width:40%; }
-.skeleton-row td:nth-child(5) .skeleton-bar{ width:70%; }
-
-.skeleton-bar{
-  display:block;
-  height:.7em;
-  border-radius:2px;
-  background:linear-gradient(90deg,
-    var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
-  background-size:200% 100%;
-  animation:skeleton-shimmer 1.6s linear infinite;
-}
-@keyframes skeleton-shimmer{
-  0%   { background-position:200% 0; }
-  100% { background-position:-200% 0; }
+.skeleton-row td:nth-child(1) .skeleton-bar {
+  width: 60%;
 }
 
-.retry-btn{
-  display:inline-flex;
-  align-items:center;
-  min-height:40px;
-  margin-top:.6rem;
-  padding:0 .9rem;
-  background:transparent;
-  border:1px solid var(--fg);
-  color:var(--fg);
-  font-family:var(--sans);
-  font-size:.75rem;
-  cursor:pointer;
+.skeleton-row td:nth-child(2) .skeleton-bar {
+  width: 90%;
 }
-.retry-btn:hover{ border-color:var(--accent); color:var(--accent-text); }
+
+.skeleton-row td:nth-child(3) .skeleton-bar {
+  width: 50%;
+}
+
+.skeleton-row td:nth-child(4) .skeleton-bar {
+  width: 70%;
+}
+
+.skeleton-bar {
+  display: block;
+  height: .7em;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+      var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: .6rem;
+  padding: 0 .9rem;
+  background: transparent;
+  border: 1px solid var(--fg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: .75rem;
+  cursor: pointer;
+}
+
+.retry-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
 
 /* Copy the email address. A mailto: on a machine with no mail client does
    nothing at all and says nothing about why — this is the way out (§1.3).
    Built in JS, so a browser without the Clipboard API gets no button rather
    than one that fails quietly. The label changes to "Copied" in words, not by
    colour, and reverts, so the confirmation cannot be missed or misread. */
-.copy-btn{
-  display:inline-flex;
-  align-items:center;
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
   /* The 40px tap target is a HIT AREA, not a box — see ::after below. Sizing
      the box itself to 40px pushed the masthead's Contact line to 40px against
      24px for every other value, and the Links table's Email row to 58px
      against 39px. One row half again as tall as its neighbours reads as a
      mistake, because in every other table here it would be one. */
-  min-height:0;
-  position:relative;
-  margin-left:.5rem;
-  padding:.1rem .55rem;
-  line-height:1.5;
-  background:transparent;
-  border:1px solid var(--border);
-  color:var(--muted);
-  font-family:var(--sans);
-  font-size:.7rem;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  cursor:pointer;
-  vertical-align:middle;
+  min-height: 0;
+  position: relative;
+  margin-left: .5rem;
+  padding: .1rem .55rem;
+  line-height: 1.5;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .7rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  vertical-align: middle;
 }
+
 /* The tap target, spent as an invisible overlay instead of as line height.
    §3.3 asks that nothing interactive be smaller than 40px to hit; it does not
    ask that every control be 40px tall. The overlay is centred on the chip and
    only ever spans the chip's own width, so it cannot swallow a click meant for
    the address beside it. */
-.copy-btn::after{
-  content:"";
-  position:absolute;
-  left:0;
-  right:0;
-  top:50%;
-  height:40px;
-  transform:translateY(-50%);
+.copy-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
 }
 
-.copy-btn:hover{ border-color:var(--accent); color:var(--accent-text); }
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
 
 /* A scrollbar shows on desktop, but a touch device shows nothing until the
    user already guessed. Say it in words, only where it applies. */
-.scroll-hint{ display:none; }
+.scroll-hint {
+  display: none;
+}
+
+/* ── Chips: topics, years, view modes ─────────────────────
+   One control, three uses. The pressed state is drawn from aria-pressed, so
+   the announced state and the visible one are the same fact — the contract the
+   sort arrows already keep with aria-sort. Never colour alone: the active chip
+   inverts its fill AND gains weight. */
+.topic-chips,
+.year-bar,
+.view-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem;
+  margin: 0 0 .85rem 0;
+}
+
+.topic-chips[hidden] {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  /* tap-target floor (§3.3) */
+  padding: 0 .7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .72rem;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.view-switch {
+  margin: 0;
+}
+
+.view-label {
+  font-family: var(--sans);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Repository statistics ────────────────────────────────
+   The bars are block characters in the cell, not CSS widths: a percentage
+   width can only arrive as an inline style attribute, which rule 1.8 forbids
+   and the CSP would not stop, so it would fail as a layout bug rather than as
+   an error. Text bars also copy, print and read at any zoom. */
+.repo-stats[hidden] {
+  display: none;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 2.25rem;
+  margin: 0 0 .85rem 0;
+}
+
+.stat-row div {
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+}
+
+.stat-row dt {
+  font-family: var(--sans);
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-row dd {
+  margin: 0;
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one place a monospace face is correct: the bar only lines up if every
+   cell is the same width. It is decoration for the number beside it, not text
+   to read, so it is hidden from assistive tech in the markup. */
+.bar {
+  font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font-size: .8em;
+  letter-spacing: -.05em;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+.lang-table td:nth-child(3) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Selected projects ────────────────────────────────────
+   A list, not cards. Curation lives on GitHub via the "featured" topic, so
+   with nothing tagged the whole band is hidden rather than standing empty. */
+.featured-band[hidden] {
+  display: none;
+}
+
+.featured-list {
+  list-style: none;
+  margin: 0 0 1.25rem 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.featured-item {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(5rem, 8rem) 1fr;
+  gap: .25rem 1rem;
+  padding: .6rem .7rem;
+  border-bottom: 1px solid var(--border);
+  font-size: .82rem;
+}
+
+.featured-item:last-child {
+  border-bottom: none;
+}
+
+.featured-item:hover {
+  background: var(--accent-soft);
+}
+
+.featured-name {
+  font-weight: 700;
+}
+
+.featured-lang {
+  color: var(--muted);
+}
+
+.featured-desc {
+  color: var(--text);
+}
+
+/* ── Row-level detail control ─────────────────────────────
+   Sits beside the repository link rather than replacing it: the link stays a
+   link, so middle-click, "open in new tab" and "copy link address" all keep
+   working, and the second action is named rather than hidden in a row click. */
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  margin-left: .4rem;
+  padding: .05rem .4rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .66rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* Tap target spent as an overlay, not as line height — the same trick
+   .copy-btn uses, and for the same reason: a 40px-tall box here would make
+   every Projects row half again as tall as the ones around it. */
+.detail-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+}
+
+.detail-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.compare-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin: 0 0 .85rem 0 !important;
+  font-family: var(--sans);
+  font-size: .75rem;
+  color: var(--muted);
+}
+
+.compare-bar .retry-btn {
+  margin-top: 0;
+}
+
+/* ── Multi-select filter row ──────────────────────────────
+   Selects, not a text box: the values are a closed set the table already
+   knows, and free text over a closed set invites a query that can only fail. */
+.filter-row-multi {
+  flex-wrap: wrap;
+  gap: .4rem .6rem;
+}
+
+.filter-select {
+  min-height: 40px;
+  padding: 0 .5rem;
+  font-family: var(--sans);
+  font-size: .78rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.filter-select:hover {
+  border-color: var(--accent-mid);
+}
+
+.filter-select:focus {
+  border-color: var(--accent);
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 1px;
+}
+
+/* A row removed by a filter, not by a view mode. Kept as its own class so the
+   two can never fight over the same attribute. */
+.filtered-out {
+  display: none;
+}
+
+/* ── View modes ───────────────────────────────────────────
+   Full is the default and hides nothing. A mode hides rows and blocks that
+   carry data-hide-in, and nothing else — the toggle is always visible, so no
+   content is ever gated behind a click the reader does not know they can undo
+   (§3.8). */
+body.view-recruiter [data-hide-in~="recruiter"],
+body.view-developer [data-hide-in~="developer"] {
+  display: none;
+}
+
+/* ── Density ──────────────────────────────────────────────
+   A reading preference, so it is remembered — unlike fold state, which §3.8
+   deliberately forgets. */
+body.density-compact .grid-table th,
+body.density-compact .grid-table td {
+  padding: .3rem .55rem;
+}
+
+body.density-compact .grid-table {
+  font-size: .78rem;
+}
+
+body.density-compact .sort-btn {
+  padding: .3rem .55rem;
+}
+
+/* ── Copy a link to a section ─────────────────────────────
+   Lives inside the <summary>, so its click handler stops propagation — without
+   that, copying the link would also collapse the section, which reads as the
+   copy having broken something. */
+.anchor-btn {
+  position: relative;
+  margin-left: .5rem;
+  padding: 0 .35rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .9em;
+  cursor: pointer;
+  vertical-align: baseline;
+}
+
+/* The 40px tap target, spent as an invisible overlay rather than as box
+   height — the same trade .copy-btn and .detail-btn make. Sizing the button
+   itself to 40px would set the height of every section heading, since it sits
+   inside the <summary>. ::before, not ::after: ::after already carries the
+   "copied" confirmation, and one pseudo-element cannot do both jobs. */
+.anchor-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+}
+
+.section-title:hover .anchor-btn {
+  border-color: var(--border);
+}
+
+.anchor-btn:hover {
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+/* Confirmation in a word, not in a colour — the same contract .copy-btn keeps. */
+.anchor-btn.is-done::after {
+  content: " copied";
+  font-size: .7rem;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--accent-text);
+}
+
+/* ── Detail list ──────────────────────────────────────────
+   For what a one-sentence "Highlights" cell cannot hold. */
+.detail-list {
+  display: grid;
+  grid-template-columns: minmax(6rem, 9rem) 1fr;
+  gap: .35rem 1rem;
+  margin: .85rem 0 0 0;
+  padding: .85rem 0 0 0;
+  border-top: 1px solid var(--border);
+  font-size: .85rem;
+}
+
+.detail-list div {
+  display: contents;
+}
+
+.detail-list dt {
+  font-family: var(--sans);
+  font-size: .68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: .15rem;
+}
+
+.detail-list dd {
+  margin: 0;
+}
+
+/* ── Plain-text diagram ───────────────────────────────────
+   Content, not an image: it copies as text and needs no binary in assets/.
+   The wrapper is what keeps it from pushing the page sideways at 375px, which
+   §3.6 forbids outright — the diagram scrolls inside its own box instead. */
+.ascii-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: .85rem;
+}
+
+.ascii-art {
+  margin: 0;
+  font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font-size: .72rem;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: pre;
+}
+
+/* ── Search dialog ────────────────────────────────────────
+   Wider and taller than the export dialog because it holds a list that grows;
+   the results scroll inside it rather than growing the modal past the screen. */
+.search-dialog {
+  width: min(46rem, 94vw);
+  max-height: 82vh;
+  margin: 6vh auto auto auto;
+  padding: 0;
+  border: 2px solid var(--rule);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.search-dialog::backdrop {
+  background: rgba(17, 16, 16, .45);
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  max-height: 82vh;
+  padding: 1.1rem;
+}
+
+.search-bar {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1 1 auto;
+  max-width: none;
+}
+
+.search-close {
+  flex: 0 0 auto;
+}
+
+.search-results {
+  list-style: none;
+  margin: .4rem 0 0 0;
+  padding: 0;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.search-hit {
+  border-bottom: 1px solid var(--border);
+}
+
+.search-hit a {
+  display: block;
+  padding: .55rem .35rem;
+  text-decoration: none;
+}
+
+.search-hit a:hover,
+.search-hit a:focus-visible {
+  background: var(--accent-soft);
+}
+
+.search-where {
+  display: block;
+  font-family: var(--sans);
+  font-size: .66rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.search-what {
+  display: block;
+  font-size: .82rem;
+  color: var(--text);
+}
+
+.search-hit a:hover .search-what {
+  color: var(--accent-text);
+}
+
+/* ── Keyboard glyphs ──────────────────────────────────────
+   Shared with the filter hint's own kbd, which was already styled above. */
+.grid-table kbd {
+  font-family: var(--sans);
+  font-size: .72rem;
+  padding: .05rem .3rem;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ── JSON view ────────────────────────────────────────────
+   tabindex on the <pre> so a keyboard can scroll it; without that the content
+   is reachable by screen reader but not by arrow key. */
+.json-out {
+  max-height: 50vh;
+  overflow: auto;
+  margin: 0 0 1rem 0;
+  padding: .75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font-size: .72rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre;
+}
 
 /* ── Footer ──────────────────────────────────────────────── */
-.site-footer{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:.4rem 1.5rem;
-  max-width:var(--maxw);
-  margin:0 auto;
-  padding:1.25rem;
-  border-top:2px solid var(--rule);
-  font-family:var(--sans);
-  font-size:.72rem;
-  color:var(--muted);
+.site-footer {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 1.25rem;
+  border-top: 2px solid var(--rule);
+  font-family: var(--sans);
+  font-size: .72rem;
+  color: var(--muted);
 }
-.site-footer a{
-  color:var(--muted);
-  text-decoration:underline;
-  text-decoration-color:var(--accent-mid);
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem 1.5rem;
 }
-.site-footer a:hover{ color:var(--accent-text); }
+
+.site-footer a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-mid);
+}
+
+.site-footer a:hover {
+  color: var(--accent-text);
+}
+
+/* "Back to top" is a navigation control, not a word in a sentence, so the 40px
+   floor applies to it — it measured 17px. Padding rather than an overlay,
+   because there is nothing beside it to collide with. */
+.footer-top a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-inline: .15rem;
+}
+
+/* ── Colophon ─────────────────────────────────────────────
+   Folded into the footer rather than given a section of its own. The nav
+   already wraps to two rows at 375px; a ninth destination would take it to
+   three and break the anchor offset every heading depends on (§3.6).
+
+   Closed by default, and that is not a violation of §3.8 — the invariant is
+   about the record itself. This is a note about the site, below the footer
+   rule, reachable in one click and named plainly. */
+.colophon {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.colophon-summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  cursor: pointer;
+  list-style: none;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.colophon-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron drawn from borders, matching the section folds: down is collapsed,
+   up is expanded, per accordion convention. */
+.colophon-summary::before {
+  content: "";
+  width: .42rem;
+  height: .42rem;
+  margin-right: .5rem;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg);
+  margin-top: -.2rem;
+  transition: transform .15s ease, margin-top .15s ease;
+}
+
+.colophon[open]>.colophon-summary::before {
+  transform: rotate(-135deg);
+  margin-top: .15rem;
+}
+
+.colophon-summary:hover {
+  color: var(--accent-text);
+}
+
+.colophon-body {
+  padding-top: .5rem;
+}
+
+.colophon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.colophon-body .subhead {
+  margin-top: 1.25rem;
+}
+
+.colophon-grid .subhead:first-child {
+  margin-top: 0;
+}
+
+.colophon-note {
+  margin: 0 0 .75rem 0;
+  font-size: .75rem;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: justify;
+}
+
+.colophon-note code {
+  font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font-size: .92em;
+  color: var(--text);
+}
+
+.colophon-body code {
+  font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font-size: .92em;
+}
+
+.colophon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: 1rem 0 0 0;
+}
+
+.colophon-actions .button {
+  min-height: 40px;
+  font-size: .72rem;
+}
 
 /* ── Mobile (tested at 375px) ────────────────────────────── */
-@media (max-width: 640px){
-  html,body{ font-size:15px; }
+@media (max-width: 640px) {
 
-  .site-header{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:0;
-    padding:0 1rem;
+  html,
+  body {
+    font-size: 15px;
   }
-  .wordmark{ min-height:40px; }
-  .site-nav{ gap:0 .9rem; font-size:.78rem; padding-bottom:.15rem; }
-  .site-nav a{ min-height:40px; }
 
-  main{ padding:0 1rem; }
+  .site-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0 1rem;
+  }
 
-  .masthead{ padding:2.25rem 0 1.75rem; }
-  .masthead-meta{ gap:.9rem; margin-top:1.5rem; }
+  .wordmark {
+    min-height: 40px;
+  }
+
+  .site-nav {
+    gap: 0 .9rem;
+    font-size: .78rem;
+    padding-bottom: .15rem;
+  }
+
+  .site-nav a {
+    min-height: 40px;
+  }
+
+  main {
+    padding: 0 1rem;
+  }
+
+  .masthead {
+    padding: 2.25rem 0 1.75rem;
+  }
+
+  .masthead-meta {
+    gap: .9rem;
+    margin-top: 1.5rem;
+  }
 
   /* Eight nav items wrap to two rows here, making the sticky header ~124px.
      The offset must clear it or anchor links land underneath the nav. */
   /* 11.5rem = 172px against a 124px header. The extra headroom is deliberate:
      a ninth nav item would wrap the nav to three rows (~160px) and anchors
      would land under it. Better to carry the slack than to break silently. */
-  .section{ padding:2rem 0; scroll-margin-top:11.5rem; }
+  .section {
+    padding: 2rem 0;
+    scroll-margin-top: 11.5rem;
+  }
 
   /* .74rem on a 15px root read as 11.1px — legible on a desktop monitor,
      not on a phone held at arm's length. .88rem = 13.2px, which sits close
      enough to the 15px prose to stop the tables feeling like fine print.
      The padding is tightened to buy back the width the larger type costs,
      so the 5-column Projects table does not scroll any further than before. */
-  .grid-table{ font-size:.88rem; }
-  .grid-table thead th{ font-size:.8rem; }
-  .grid-table th,
-  .grid-table td{ padding:.5rem .6rem; }
-  .grid-table thead th:not(:has(.sort-btn)){ padding:.5rem .6rem; }
-  .sort-btn{ padding:.5rem .6rem; }
+  .grid-table {
+    font-size: .88rem;
+  }
 
-  .scroll-hint{ display:block; }
+  .grid-table thead th {
+    font-size: .8rem;
+  }
+
+  .grid-table th,
+  .grid-table td {
+    padding: .5rem .6rem;
+  }
+
+  .grid-table thead th:not(:has(.sort-btn)) {
+    padding: .5rem .6rem;
+  }
+
+  .sort-btn {
+    padding: .5rem .6rem;
+  }
+
+  .scroll-hint {
+    display: block;
+  }
 
   /* 16px floor: iOS zooms the page on focus below this and does not undo it. */
-  .filter-input{ font-size:16px; }
-  .filter-row{ flex-wrap:wrap; }
+  .filter-input {
+    font-size: 16px;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+  }
 
   /* ── Condensed header ──────────────────────────────────
      Eight nav items on two rows cost 124px of a 667px phone screen, held
@@ -685,42 +1492,106 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
      fade on the right edge is what says so. A hard clipped edge would read
      as the end of the list (Gestalt §2.4, closure), which is the one thing
      it must not do. JS keeps the current section scrolled into view. */
-  .nav-condensed .site-header{
-    flex-direction:row;
-    align-items:center;
-    gap:0 .75rem;
+  .nav-condensed .site-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 0 .75rem;
   }
-  .nav-condensed .wordmark{
-    flex:0 0 auto;
-    font-size:.8rem;
-    min-height:40px;
+
+  .nav-condensed .wordmark {
+    flex: 0 0 auto;
+    font-size: .8rem;
+    min-height: 40px;
   }
-  .nav-condensed .site-nav{
-    flex:1 1 0;
-    min-width:0;
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    overscroll-behavior-x:contain;
-    scrollbar-width:none;
+
+  .nav-condensed .site-nav {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
     /* Slack the width of the fade, so the last item can scroll clear of it.
        Without this Résumé is permanently half-faded whenever it is the
        marked section — the scroll range simply ends underneath the mask. */
-    padding:0 2.25rem 0 0;
-    -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
-    mask-image:linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+    padding: 0 2.25rem 0 0;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
   }
-  .nav-condensed .site-nav::-webkit-scrollbar{ display:none; }
-  .nav-condensed .site-nav a{
-    flex:0 0 auto;
-    white-space:nowrap;
-    min-height:40px;
+
+  .nav-condensed .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-condensed .site-nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 40px;
   }
 
   /* The offset is sized for the tall header. Against the condensed one it
      would strand every heading 76px down the page, so it shrinks with it. */
-  .nav-condensed .section{ scroll-margin-top:4.5rem; }
+  .nav-condensed .section {
+    scroll-margin-top: 4.5rem;
+  }
 
-  .site-footer{ padding:1rem; }
+  .site-footer {
+    padding: 1rem;
+  }
+
+  /* Selected projects: three columns will not fit 375px, so the row becomes
+     three stacked lines rather than a grid squeezed to nothing. */
+  .featured-item {
+    grid-template-columns: 1fr;
+    gap: .15rem;
+  }
+
+  .featured-lang {
+    font-size: .72rem;
+  }
+
+  /* The stat row is four labelled values; at 375px they read as two columns
+     rather than one long ladder. */
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .6rem 1rem;
+  }
+
+  /* Two labels and two selects per line rather than six items in a queue. */
+  .filter-row-multi {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .filter-row-multi .retry-btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .detail-list {
+    grid-template-columns: 1fr;
+    gap: .1rem;
+  }
+
+  .detail-list div {
+    display: block;
+    margin-bottom: .6rem;
+  }
+
+  .search-dialog {
+    width: 96vw;
+    margin: 2vh auto auto auto;
+  }
+
+  .search-form {
+    padding: .85rem;
+  }
+
+  .colophon-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Collapsible sections ─────────────────────────────────
@@ -728,15 +1599,20 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
    announcement, and find-in-page auto-expansion all come from the browser.
    Every section is open on load: a reader who never clicks still sees
    everything, and collapsing is an affordance rather than a gate. */
-.section-summary{
-  display:flex;
-  align-items:center;
-  gap:.6rem;
-  min-height:40px;                    /* tap-target floor */
-  cursor:pointer;
-  list-style:none;                    /* Firefox default marker */
+.section-summary {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 40px;
+  /* tap-target floor */
+  cursor: pointer;
+  list-style: none;
+  /* Firefox default marker */
 }
-.section-summary::-webkit-details-marker{ display:none; }
+
+.section-summary::-webkit-details-marker {
+  display: none;
+}
 
 /* The marker is drawn from the open state, so what is shown and what is
    announced cannot drift apart — the same rule the sort arrows follow.
@@ -746,181 +1622,236 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
    whatever the font happens to give a plus sign. Down = collapsed (content is
    below, press to bring it out), up = expanded (press to fold it away), which
    is the convention every accordion the reader has already used (Jakob's Law). */
-.section-summary::after{
-  content:"";
-  margin-left:auto;
-  flex:0 0 auto;
-  width:.62rem;
-  height:.62rem;
-  margin-top:-.28rem;                 /* optical centring of a rotated square */
-  border-right:2.5px solid var(--accent-text);
-  border-bottom:2.5px solid var(--accent-text);
-  transform:rotate(45deg);            /* chevron pointing down — collapsed */
-  transition:transform .15s ease;
-}
-.section-fold[open] > .section-summary::after{
-  margin-top:.22rem;
-  transform:rotate(-135deg);          /* chevron pointing up — expanded */
-}
-.section-summary:hover::after{
-  border-right-color:var(--accent);
-  border-bottom-color:var(--accent);
+.section-summary::after {
+  content: "";
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: .62rem;
+  height: .62rem;
+  margin-top: -.28rem;
+  /* optical centring of a rotated square */
+  border-right: 2.5px solid var(--accent-text);
+  border-bottom: 2.5px solid var(--accent-text);
+  transform: rotate(45deg);
+  /* chevron pointing down — collapsed */
+  transition: transform .15s ease;
 }
 
-.section-summary:hover .section-title{ color:var(--accent-text); }
-.section-summary:focus-visible{
-  outline:2px solid rgba(var(--accent-rgb), .9);
-  outline-offset:3px;
+.section-fold[open]>.section-summary::after {
+  margin-top: .22rem;
+  transform: rotate(-135deg);
+  /* chevron pointing up — expanded */
 }
-.section-summary .section-title{ margin-bottom:0; }
-.section-fold[open] > .section-summary .section-title{ margin-bottom:1.25rem; }
+
+.section-summary:hover::after {
+  border-right-color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.section-summary:hover .section-title {
+  color: var(--accent-text);
+}
+
+.section-summary:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 3px;
+}
+
+.section-summary .section-title {
+  margin-bottom: 0;
+}
+
+.section-fold[open]>.section-summary .section-title {
+  margin-bottom: 1.25rem;
+}
 
 /* One control for eight folds. Quiet by design: it is an accelerator for the
    reader who wants everything, not a competing call to action (Nielsen §1.7,
    §1.8). Added by script.js, so it never appears without the JS to run it. */
-.fold-controls{
-  margin:1.5rem 0 0 0;
-  padding:0;
+/* The bar now carries three controls — expand/collapse, density and the view
+   switch — so it wraps rather than assuming one line. */
+.fold-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem 1.5rem;
+  margin: 1.5rem 0 0 0;
+  padding: 0;
 }
 
-.fold-toggle{
-  display:inline-flex;
-  align-items:center;
-  min-height:40px;
-  padding:0 .1rem;
-  background:none;
-  border:0;
-  font-family:var(--sans);
-  font-size:.72rem;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--muted);
-  cursor:pointer;
-  border-bottom:1px solid var(--accent-mid);
+.fold-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 .1rem;
+  background: none;
+  border: 0;
+  font-family: var(--sans);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 1px solid var(--accent-mid);
 }
-.fold-toggle:hover{ color:var(--accent-text); border-bottom-color:var(--accent); }
-.fold-toggle:focus-visible{
-  outline:2px solid rgba(var(--accent-rgb), .9);
-  outline-offset:3px;
+
+.fold-toggle:hover {
+  color: var(--accent-text);
+  border-bottom-color: var(--accent);
+}
+
+.fold-toggle:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 3px;
 }
 
 /* ── Export dialog ────────────────────────────────────────
    Native <dialog>: the browser owns the focus trap, the inertness of the page
    behind it, and Escape-to-close. */
-.export-dialog{
-  width:min(34rem, calc(100vw - 2rem));
-  padding:0;
-  border:2px solid var(--rule);
-  background:var(--surface);
-  color:var(--text);
-}
-.export-dialog::backdrop{ background:rgba(17,16,16,.55); }
-
-.export-form{ padding:1.5rem; }
-
-.export-title{
-  font-family:var(--sans);
-  font-size:.9rem;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  margin:0 0 .5rem 0;
-}
-.export-intro{
-  font-size:.9rem;
-  color:var(--muted);
-  margin:0 0 1.25rem 0;
+.export-dialog {
+  width: min(34rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 2px solid var(--rule);
+  background: var(--surface);
+  color: var(--text);
 }
 
-.export-group{
-  border:0;
-  border-top:1px solid var(--border);
-  padding:1rem 0 0 0;
-  margin:0 0 1rem 0;
+.export-dialog::backdrop {
+  background: rgba(17, 16, 16, .55);
 }
-.export-group legend{
-  font-family:var(--sans);
-  font-size:.7rem;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--muted);
-  padding:0 .5rem 0 0;
+
+/* The comparison and JSON dialogs hold a table and a code block, both of which
+   need the room. They scroll inside themselves rather than growing the modal
+   past the viewport. */
+.export-dialog-wide {
+  width: min(56rem, calc(100vw - 2rem));
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.export-form {
+  padding: 1.5rem;
+}
+
+.export-title {
+  font-family: var(--sans);
+  font-size: .9rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: 0 0 .5rem 0;
+}
+
+.export-intro {
+  font-size: .9rem;
+  color: var(--muted);
+  margin: 0 0 1.25rem 0;
+}
+
+.export-group {
+  border: 0;
+  border-top: 1px solid var(--border);
+  padding: 1rem 0 0 0;
+  margin: 0 0 1rem 0;
+}
+
+.export-group legend {
+  font-family: var(--sans);
+  font-size: .7rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 .5rem 0 0;
 }
 
 /* The one-page estimate. Stated in words and not in colour alone — over
    budget reads as over budget with the sound off (Rulebook §4). */
-.export-budget{
-  margin:.7rem 0 0 0;
-  padding:.45rem .6rem;
-  background:var(--surface-2);
-  border-left:3px solid var(--border);
-  font-size:.8rem;
-  color:var(--muted);
-}
-.export-budget.is-over{
-  background:var(--accent-soft);
-  border-left-color:var(--accent);
-  color:var(--accent-text);
+.export-budget {
+  margin: .7rem 0 0 0;
+  padding: .45rem .6rem;
+  background: var(--surface-2);
+  border-left: 3px solid var(--border);
+  font-size: .8rem;
+  color: var(--muted);
 }
 
-.export-checks{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(9rem, 1fr));
-  gap:.15rem 1rem;
+.export-budget.is-over {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+  color: var(--accent-text);
 }
 
-.export-check{
-  display:flex;
-  align-items:center;
-  gap:.55rem;
-  min-height:40px;
-  font-size:.9rem;
-  cursor:pointer;
-}
-.export-check input{ accent-color:var(--accent); flex:0 0 auto; }
-.export-check input:focus-visible{
-  outline:2px solid rgba(var(--accent-rgb), .9);
-  outline-offset:2px;
+.export-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .15rem 1rem;
 }
 
-.export-select{
-  min-height:40px;
-  width:100%;
-  padding:0 .6rem;
-  font-family:var(--sans);
-  font-size:.85rem;
-  color:var(--text);
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:0;
-}
-.export-select:focus-visible{
-  border-color:var(--accent);
-  outline:2px solid rgba(var(--accent-rgb), .9);
-  outline-offset:1px;
+.export-check {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 40px;
+  font-size: .9rem;
+  cursor: pointer;
 }
 
-.export-actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:.75rem;
-  border-top:1px solid var(--border);
-  padding-top:1.25rem;
+.export-check input {
+  accent-color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.export-check input:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 2px;
+}
+
+.export-select {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 .6rem;
+  font-family: var(--sans);
+  font-size: .85rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.export-select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: 1px;
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
 }
 
 /* ── Print / Save as PDF ──────────────────────────────────
    The printed page is a résumé, not a screenshot of a website: no nav, no
    controls, no colour fills, and links that still work on paper because the
    URL is printed after the text. */
-@media print{
-  /* Ink is expensive and cream backgrounds print as grey haze. */
+@media print {
+
+  /* The new-tab marker is an affordance about clicking. Nothing on paper is
+     clickable, and the URL is printed after the link text anyway. */
+  a[target="_blank"]::after {
+    content: none;
+  }
+
   /* Ink is expensive and cream backgrounds print as grey haze.
      Sizes follow résumé convention: body 10–12pt, headings 14–16pt. */
-  html,body{
-    background:#fff;
-    color:#000;
-    font-family:var(--sans);
-    font-size:11pt;
-    line-height:1.35;
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    font-family: var(--sans);
+    font-size: 11pt;
+    line-height: 1.35;
   }
 
   .site-header,
@@ -933,43 +1864,207 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   .fold-controls,
   .copy-btn,
   .export-dialog,
-  .sort-btn::after{
-    display:none !important;
+  .sort-btn::after,
+  /* Everything below is a control, not content. A printed page cannot be
+     filtered, searched or toggled, so a chip on paper is an instruction the
+     reader cannot follow (Rulebook §1.1). The rows those controls were
+     filtering still print — only the controls go. */
+  .topic-chips,
+  .year-bar,
+  .view-switch,
+  .compare-bar,
+  .detail-btn,
+  .anchor-btn,
+  .filter-row-multi,
+  #cert-status,
+  #year-status,
+  .search-dialog,
+  .colophon {
+    display: none !important;
   }
 
   /* Sections the reader unticked in the export dialog. */
-  .print-hidden{ display:none !important; }
+  .print-hidden {
+    display: none !important;
+  }
 
-  main{ padding:0; max-width:none; }
+  /* A row hidden by a transient filter comes back on paper. The filter control
+     itself does not print, so a PDF showing three of seven certificates would
+     give no reason for the other four being missing — it would read as three
+     being all there are. The export dialog's checkboxes are the mechanism for
+     choosing what prints; a filter is for looking, not for deciding.
+
+     The view modes are deliberately NOT undone here: that toggle is visible,
+     named, and stays on screen next to what it changed, so printing it is
+     printing what the reader chose to look at. */
+  .filtered-out {
+    display: table-row !important;
+  }
+
+  /* New blocks, all content rather than chrome. */
+  .ascii-wrap {
+    border: .5pt solid #000;
+    padding: 4pt;
+    overflow: visible;
+  }
+
+  .ascii-art {
+    font-size: 7.5pt;
+  }
+
+  .detail-list {
+    display: block;
+    border-top: .5pt solid #000;
+    padding-top: 4pt;
+    font-size: 10pt;
+  }
+
+  .detail-list div {
+    display: block;
+    margin-bottom: 2pt;
+  }
+
+  .detail-list dt {
+    display: inline;
+    font-size: 9pt;
+    font-weight: 700;
+  }
+
+  .detail-list dt::after {
+    content: " — ";
+  }
+
+  .detail-list dd {
+    display: inline;
+    margin: 0;
+  }
+
+  .stat-row {
+    display: block;
+    margin-bottom: 4pt;
+    font-size: 10pt;
+  }
+
+  .stat-row div {
+    display: inline;
+  }
+
+  .stat-row dt {
+    display: inline;
+    font-size: 9pt;
+  }
+
+  .stat-row dt::after {
+    content: " ";
+  }
+
+  .stat-row dd {
+    display: inline;
+    font-weight: 700;
+  }
+
+  .stat-row dd::after {
+    content: "   ·   ";
+    font-weight: 400;
+  }
+
+  .stat-row div:last-child dd::after {
+    content: "";
+  }
+
+  /* The bar is block characters, so it prints as text like everything else —
+     no image, no background colour a printer would drop. */
+  .bar {
+    color: #000;
+  }
+
+  .featured-list {
+    border: .5pt solid #000;
+  }
+
+  .featured-item {
+    display: block;
+    border-bottom: .5pt solid #000;
+    padding: 3pt 4pt;
+    break-inside: avoid;
+  }
+
+  .featured-name {
+    font-weight: 700;
+  }
+
+  .featured-lang::before {
+    content: " — ";
+  }
+
+  .featured-desc {
+    display: block;
+  }
+
+  main {
+    padding: 0;
+    max-width: none;
+  }
 
   /* The masthead becomes the letterhead. */
-  .masthead{
-    padding:0 0 .75rem 0;
-    border-bottom:1.5pt solid #000;
-    margin-bottom:1rem;
+  .masthead {
+    padding: 0 0 .75rem 0;
+    border-bottom: 1.5pt solid #000;
+    margin-bottom: 1rem;
   }
-  .masthead-name{ font-size:20pt; letter-spacing:0; }
-  .masthead-role{ font-size:10pt; color:#000; letter-spacing:.06em; }
-  .masthead-meta{ gap:.4rem 1.5rem; margin-top:.75rem; }
-  .masthead-meta dt{ font-size:8.5pt; }     /* a field label, not body copy */
-  .masthead-meta dd{ font-size:10pt; }
 
-  .section{ padding:.9rem 0 0 0; scroll-margin-top:0; }
+  .masthead-name {
+    font-size: 20pt;
+    letter-spacing: 0;
+  }
+
+  .masthead-role {
+    font-size: 10pt;
+    color: #000;
+    letter-spacing: .06em;
+  }
+
+  .masthead-meta {
+    gap: .4rem 1.5rem;
+    margin-top: .75rem;
+  }
+
+  .masthead-meta dt {
+    font-size: 8.5pt;
+  }
+
+  /* a field label, not body copy */
+  .masthead-meta dd {
+    font-size: 10pt;
+  }
+
+  .section {
+    padding: .9rem 0 0 0;
+    scroll-margin-top: 0;
+  }
 
   /* A section heading stranded at the foot of a page is a wasted page. */
-  .section-title{
-    font-size:14pt;
-    letter-spacing:.04em;
-    break-after:avoid;
-    page-break-after:avoid;
+  .section-title {
+    font-size: 14pt;
+    letter-spacing: .04em;
+    break-after: avoid;
+    page-break-after: avoid;
   }
-  .section-title .num{ color:#000; }
-  .section-summary::after{ display:none; }   /* no +/− marker on paper */
-  .subhead{
-    font-size:11pt;
-    color:#000;
-    break-after:avoid;
-    page-break-after:avoid;
+
+  .section-title .num {
+    color: #000;
+  }
+
+  .section-summary::after {
+    display: none;
+  }
+
+  /* no +/− marker on paper */
+  .subhead {
+    font-size: 11pt;
+    color: #000;
+    break-after: avoid;
+    page-break-after: avoid;
   }
 
   /* ── Tables stay tables on paper ────────────────────────
@@ -982,75 +2077,101 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
      now made the other way, deliberately: this PDF is written for a person to
      read, and `assets/resume.pdf` remains the plain copy to hand a portal.
      Do not reintroduce the linearisation without moving that copy too. */
-  .table-wrap{
-    overflow:visible;
-    border:0;
-    background:transparent;
-    break-inside:auto;
+  .table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    break-inside: auto;
   }
 
-  .grid-table{
-    width:100%;
-    font-size:10pt;                          /* the floor in §3.10; never lower */
-    border-collapse:collapse;
-    table-layout:auto;                       /* long cells wrap, columns self-size */
+  .grid-table {
+    width: 100%;
+    font-size: 10pt;
+    /* the floor in §3.10; never lower */
+    border-collapse: collapse;
+    table-layout: auto;
+    /* long cells wrap, columns self-size */
   }
 
   /* A table running past a page break must reprint its headings, or the
      second page is a grid of unlabelled columns. */
-  .grid-table thead{ display:table-header-group; }
-  .grid-table tfoot{ display:table-footer-group; }
-
-  .grid-table thead th{
-    position:static;                         /* sticky is meaningless on paper */
-    background:#eee;
-    color:#000;
-    font-size:8.5pt;                         /* a column label, not body copy */
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-    white-space:nowrap;
-    padding:.12rem .28rem;
-    border:.5pt solid #999;
-    border-bottom:1pt solid #000;            /* the header/body divide is the strong one */
+  .grid-table thead {
+    display: table-header-group;
   }
+
+  .grid-table tfoot {
+    display: table-footer-group;
+  }
+
+  .grid-table thead th {
+    position: static;
+    /* sticky is meaningless on paper */
+    background: #eee;
+    color: #000;
+    font-size: 8.5pt;
+    /* a column label, not body copy */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    padding: .12rem .28rem;
+    border: .5pt solid #999;
+    border-bottom: 1pt solid #000;
+    /* the header/body divide is the strong one */
+  }
+
   /* The sort control is a button on screen; on paper it is just its own text. */
-  .grid-table thead th .sort-btn{
-    display:inline;
-    min-height:0;
-    padding:0;
-    font:inherit;
-    letter-spacing:inherit;
-    text-transform:inherit;
-    color:#000;
+  .grid-table thead th .sort-btn {
+    display: inline;
+    min-height: 0;
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: #000;
   }
 
   .grid-table th,
-  .grid-table td{
-    border:.5pt solid #999;
-    padding:.12rem .28rem;
-    text-align:left;
-    vertical-align:top;
-    overflow-wrap:break-word;                /* a long description wraps, never overflows */
+  .grid-table td {
+    border: .5pt solid #999;
+    padding: .12rem .28rem;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    /* a long description wraps, never overflows */
   }
-  .grid-table tbody th[scope="row"]{ font-weight:700; color:#000; }
+
+  .grid-table tbody th[scope="row"] {
+    font-weight: 700;
+    color: #000;
+  }
 
   /* The screen drops the outer edges so the wrapper's own border can supply
      them. That wrapper has no border on paper, so the edges are put back —
      matching the selectors that removed them, or specificity keeps them off. */
   .grid-table th:last-child,
-  .grid-table td:last-child{ border-right:.5pt solid #999; }
-  .grid-table tbody tr:last-child > *{ border-bottom:.5pt solid #999; }
-  .grid-table thead th:not(:has(.sort-btn)){ padding:.12rem .28rem; }
+  .grid-table td:last-child {
+    border-right: .5pt solid #999;
+  }
+
+  .grid-table tbody tr:last-child>* {
+    border-bottom: .5pt solid #999;
+  }
+
+  .grid-table thead th:not(:has(.sort-btn)) {
+    padding: .12rem .28rem;
+  }
 
   /* Zebra striping prints as grey haze and the grid already separates rows. */
-  .grid-table tbody tr:nth-child(even) > *{ background:transparent; }
+  .grid-table tbody tr:nth-child(even)>* {
+    background: transparent;
+  }
 
   /* A row split across a page break puts a role on one page and its dates on
      the next. Rows stay whole; the table itself may break between them. */
-  .grid-table tbody tr{
-    break-inside:avoid;
-    page-break-inside:avoid;
+  .grid-table tbody tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   /* ── One-page résumé mode ───────────────────────────────
@@ -1076,89 +2197,197 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
      them. A section that marks nothing (Skills) prints whole.
      `.resume-curated` is set in JS, since CSS cannot ask whether an ancestor
      contains a matching descendant. */
-  .print-resume .resume-curated tbody tr:not([data-resume]){ display:none; }
-  .print-resume .resume-curated .section-body > p:not([data-resume]){ display:none; }
+  .print-resume .resume-curated tbody tr:not([data-resume]) {
+    display: none;
+  }
+
+  .print-resume .resume-curated .section-body>p:not([data-resume]) {
+    display: none;
+  }
 
   /* A table whose rows have all gone, and the sub-heading introducing it, are
      hidden together — a heading over nothing is worse than neither. Emptiness
      is not a CSS question, so JS sets this at print time. */
-  .print-resume .resume-empty{ display:none; }
+  .print-resume .resume-empty {
+    display: none;
+  }
+
+  /* Blocks that are neither a <p> nor a table row, so the two curation rules
+     above cannot reach them, and which have no place on a one-page résumé.
+     Marked in the markup rather than matched by tag here, so adding another
+     one is a one-word edit and not a change to this stylesheet. */
+  .print-resume .resume-omit {
+    display: none;
+  }
+
+  /* The Skills evidence column, dropped from the one-page résumé only.
+     It is the most valuable column on screen — it turns a self-assessed level
+     into something checkable — and the most expensive on paper: fifteen rows
+     of it costs about eight lines of a fifty-nine line page, for detail the
+     reader is about to see stated properly under Experience anyway.
+
+     estimateLines() drops the same cells. If these two ever disagree, the
+     budget readout describes a page that does not exist (§3.9). */
+  .print-resume .evidence {
+    display: none;
+  }
 
   /* Thirteen rows of "Software · Python · Intermediate" waste two thirds of
      every line. Three columns is how the same list is set in resume.pdf, and
      it costs ~48mm less. Opt in per table with data-resume-columns. */
-  .print-resume .grid-table[data-resume-columns="3"] tbody{
-    column-count:3;
-    column-gap:7mm;
+  .print-resume .grid-table[data-resume-columns="3"] tbody {
+    column-count: 3;
+    column-gap: 7mm;
   }
-  .print-resume .grid-table[data-resume-columns] tbody tr{
-    break-inside:avoid;
-    -webkit-column-break-inside:avoid;
+
+  .print-resume .grid-table[data-resume-columns] tbody tr {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
   }
 
   /* The letterhead collapses to the two lines resume.pdf uses: the name, then
      the contact details running inline. The five-cell grid is a screen idea. */
-  .print-resume .masthead-meta{
-    display:block;
-    padding-top:.3rem;
-    border-top:.5pt solid #999;
+  .print-resume .masthead-meta {
+    display: block;
+    padding-top: .3rem;
+    border-top: .5pt solid #999;
   }
+
   /* Working, Studying and Focus are already stated by About, Education and the
      role line; on a résumé the letterhead is location and contact only. */
-  .print-resume .masthead-meta > div{ display:none; }
-  .print-resume .masthead-meta > div[data-resume]{ display:inline; }
-  .print-resume .masthead-meta > div[data-resume] ~ div[data-resume]::before{
-    content:" | ";
-    color:#666;
+  .print-resume .masthead-meta>div {
+    display: none;
   }
-  .print-resume .masthead-meta dt{ display:none; }   /* "From", "Contact" — the values say it */
-  .print-resume .masthead-meta dd{ display:inline; font-size:9.5pt; }
-  .print-resume .masthead-role{ font-size:9pt; margin-top:.2rem; }
 
-  .print-resume .grid-table{
-    font-size:10pt;
-    display:block;
-    line-height:1.3;
+  .print-resume .masthead-meta>div[data-resume] {
+    display: inline;
   }
-  .print-resume .grid-table thead{ display:none; }   /* a column label means nothing in a line */
-  .print-resume .grid-table tbody{ display:block; }
 
-  .print-resume .grid-table tr{
-    display:block;
-    padding:.12rem 0;
-    border:0;
-    break-inside:avoid;
-    page-break-inside:avoid;
+  .print-resume .masthead-meta>div[data-resume]~div[data-resume]::before {
+    content: " | ";
+    color: #666;
   }
+
+  .print-resume .masthead-meta dt {
+    display: none;
+  }
+
+  /* "From", "Contact" — the values say it */
+  .print-resume .masthead-meta dd {
+    display: inline;
+    font-size: 9.5pt;
+  }
+
+  .print-resume .masthead-role {
+    font-size: 9pt;
+    margin-top: .2rem;
+  }
+
+  .print-resume .grid-table {
+    font-size: 10pt;
+    display: block;
+    line-height: 1.3;
+  }
+
+  .print-resume .grid-table thead {
+    display: none;
+  }
+
+  /* a column label means nothing in a line */
+  .print-resume .grid-table tbody {
+    display: block;
+  }
+
+  .print-resume .grid-table tr {
+    display: block;
+    padding: .12rem 0;
+    border: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .print-resume .grid-table th,
-  .print-resume .grid-table td{
-    display:inline;
-    border:0;
-    padding:0;
-    background:transparent;
+  .print-resume .grid-table td {
+    display: inline;
+    border: 0;
+    padding: 0;
+    background: transparent;
   }
+
   /* The row's own label leads in bold; the rest follow after a middot, drawn
      between cells so it never precedes the first one. */
-  .print-resume .grid-table tbody th[scope="row"]{ font-weight:700; }
-  .print-resume .grid-table tbody th[scope="row"] + td::before,
-  .print-resume .grid-table tbody td + td::before{ content:" · "; color:#666; }
+  .print-resume .grid-table tbody th[scope="row"] {
+    font-weight: 700;
+  }
+
+  .print-resume .grid-table tbody th[scope="row"]+td::before,
+  .print-resume .grid-table tbody td+td::before {
+    content: " · ";
+    color: #666;
+  }
 
   /* Everything tightens: this mode is buying lines. */
-  .print-resume .section{ padding:.5rem 0 0 0; border:0; }
-  .print-resume .section-title{ font-size:12pt; margin-bottom:.25rem; }
-  .print-resume .subhead{ font-size:10pt; margin:.35rem 0 .15rem 0; }
-  .print-resume .masthead{ padding-bottom:.4rem; margin-bottom:.5rem; }
-  .print-resume .masthead-name{ font-size:17pt; }
-  .print-resume .masthead-meta{ margin-top:.4rem; gap:.2rem 1.2rem; }
-  .print-resume .section-body p{ font-size:10pt; margin:.3rem 0; }
-  .print-resume .note{ font-size:9.5pt; margin:.3rem 0; padding:.2rem 0 .2rem .5rem; }
-  .print-resume .table-wrap{ margin:.2rem 0; }
+  .print-resume .section {
+    padding: .5rem 0 0 0;
+    border: 0;
+  }
 
-  .note{ border-left-color:#999; font-size:10pt; }
-  .hint{ display:none; }
-  .section-body p{ font-size:11pt; }
+  .print-resume .section-title {
+    font-size: 12pt;
+    margin-bottom: .25rem;
+  }
 
-  a{ color:#000; text-decoration:none; }
+  .print-resume .subhead {
+    font-size: 10pt;
+    margin: .35rem 0 .15rem 0;
+  }
+
+  .print-resume .masthead {
+    padding-bottom: .4rem;
+    margin-bottom: .5rem;
+  }
+
+  .print-resume .masthead-name {
+    font-size: 17pt;
+  }
+
+  .print-resume .masthead-meta {
+    margin-top: .4rem;
+    gap: .2rem 1.2rem;
+  }
+
+  .print-resume .section-body p {
+    font-size: 10pt;
+    margin: .3rem 0;
+  }
+
+  .print-resume .note {
+    font-size: 9.5pt;
+    margin: .3rem 0;
+    padding: .2rem 0 .2rem .5rem;
+  }
+
+  .print-resume .table-wrap {
+    margin: .2rem 0;
+  }
+
+  .note {
+    border-left-color: #999;
+    font-size: 10pt;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .section-body p {
+    font-size: 11pt;
+  }
+
+  a {
+    color: #000;
+    text-decoration: none;
+  }
 
   /* Print the destination of links a reader might actually need to type in.
      Deliberately not applied to the Projects table — 22 repo URLs in the
@@ -1166,29 +2395,42 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   .masthead a[href^="http"]::after,
   .masthead a[href^="mailto"]::after,
   #links a[href^="http"]::after,
-  #certificates a[href^="assets"]::after{
-    content:" (" attr(href) ")";
-    font-size:8.5pt;
-    color:#444;
-    word-break:break-all;
+  #certificates a[href^="assets"]::after {
+    content: " (" attr(href) ")";
+    font-size: 8.5pt;
+    color: #444;
+    word-break: break-all;
   }
 
   /* `@page` cannot be scoped to a class, so the narrower résumé margin is the
      one declared, and the full record pays the difference back as padding on
      <main>. 12.7mm is 0.5in — the floor stated in §3.10, sat on exactly. */
-  @page{ margin:12.7mm; }
-  body:not(.print-resume) main{ padding:1.3mm; }
+  @page {
+    margin: 12.7mm;
+  }
+
+  body:not(.print-resume) main {
+    padding: 1.3mm;
+  }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce){
-  html{ scroll-behavior:auto; }
-  *,*::before,*::after{
-    animation-duration:.01ms !important;
-    animation-iteration-count:1 !important;
-    transition-duration:.01ms !important;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
   /* The shimmer is the whole point of the skeleton; without motion it becomes
      a plain static bar, which still communicates "content is coming". */
-  .skeleton-bar{ background:var(--surface-2); }
+  .skeleton-bar {
+    background: var(--surface-2);
+  }
 }

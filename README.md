@@ -19,9 +19,10 @@ GitHub API. Content-Security-Policy locked to same-origin, keyboard skip link,
 | `style.css` | All styling. Colour tokens at the top of the file. |
 | `script.js` | Fetches repos from the GitHub API and fills the Projects table. |
 | `assets/` | Static files. **Currently empty — see the résumé note below.** |
-| `CLAUDE.md` | Design rules that must not be broken. Read before changing anything. |
-| `rulebook/UI-UX_Rulebook.md` | General UI/UX reference. Not project-specific. |
-| `rulebook/SECURITY_Rulebook.md` | General security reference. Not project-specific. |
+| `CLAUDE.md` | Hard constraints, and the index to everything below. Read before changing anything. |
+| `docs/` | The reasons behind the rules — one file per area. Start at `docs/README.md`. |
+| `docs/UI-UX_Rulebook.md` | General UI/UX reference. Not project-specific. |
+| `docs/SECURITY_Rulebook.md` | General security reference. Not project-specific. |
 | `.claude/launch.json` | Local dev-server config for Claude Code. |
 | `.claude/skills/` | Skills Claude uses to work on this site — see below. |
 

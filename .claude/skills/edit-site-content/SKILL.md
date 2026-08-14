@@ -8,6 +8,9 @@ description: Add or edit a section, table, or piece of copy on the portfolio sit
 All copy lives in `index.html`. There is no CMS, no data file and no templating —
 what is in the file is what ships.
 
+Read first: `docs/content-rules.md` for what may be written into the page and
+whose details may not, and `docs/layout.md` for the sticky-header offset trap.
+
 ## The three rules that bite
 
 1. **No inline `style` attributes, ever.** The CSP blocks them and they fail

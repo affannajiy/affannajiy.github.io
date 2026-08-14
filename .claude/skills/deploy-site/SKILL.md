@@ -8,6 +8,9 @@ description: Deploy the portfolio to GitHub Pages and diagnose deploy failures �
 Push **is** the deploy. There is no build step and no pipeline to break — GitHub
 Pages serves the repo verbatim.
 
+Run the `verify-site` round before pushing; there is no CI to catch anything.
+Background in `docs/deployment.md`.
+
 ## Preconditions — check these before touching Pages
 
 Both are silent failures. Neither produces a useful error message.

@@ -9,6 +9,16 @@ The site has no tests and no build step, so verification is manual and must be
 done the same way every time. **Measure, do not eyeball** — several regressions
 here (contrast, tap targets, header height) are invisible to the naked eye.
 
+**This is the general round.** Four sibling skills go deeper where a change
+warrants it, and each writes its result into `docs/verification-log.md`:
+
+| Skill | When |
+| --- | --- |
+| `check-accessibility` | A colour changed, or a control or animation was added |
+| `verify-print` | The print block, a printed section, or the export dialog changed |
+| `audit-untrusted-input` | The render path, the cache shape, or a sanitising helper changed |
+| `preview-pane-quirks` | Something here measures wrong and may be the harness, not the site |
+
 ## 1. Serve over HTTP
 
 Never verify from `file://` — it breaks the GitHub API fetch with a CORS error
@@ -156,3 +166,5 @@ and confirm the href falls back to the profile URL and no `<img>` element exists
 - All measured contrast ≥ 4.5:1
 - All tap targets ≥ 40px
 - Sort, filter and Retry each exercised, not just read
+- Anything newly measured written into `docs/verification-log.md` (the
+  `record-decision` skill says where)

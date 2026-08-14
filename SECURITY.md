@@ -1,6 +1,6 @@
 # Security posture
 
-What this site actually does about the principles in `rulebook/SECURITY_Rulebook.md`.
+What this site actually does about the principles in `docs/SECURITY_Rulebook.md`.
 The rulebook says what the principles *are*; this file says how this project stands
 against them, including where it deliberately falls short.
 
@@ -16,8 +16,9 @@ published in `assets/`**.
 
 | Asset | Threat | Control |
 | --- | --- | --- |
-| The page a visitor sees | Injected script via the GitHub API response | CSP `default-src 'none'`, plus escaping and URL validation at the render boundary |
-| The page a visitor sees | Injected script via a tampered `localStorage` cache | Same render boundary, plus shape validation on cache read |
+| The page a visitor sees | Injected script via the GitHub API response | CSP `default-src 'none'`, plus a render path that builds DOM nodes instead of parsing HTML, plus URL scheme and host validation |
+| The page a visitor sees | Injected script via a tampered `localStorage` cache | Same render path, plus shape, count and length validation on read, and deletion of any entry that fails |
+| The reader's browser | A poisoned cache with unbounded rows or fields hanging the render | Hard caps: 200 repositories, 100/300/40-character name, description and language |
 | Visitor privacy | Third-party tracking, fingerprinting, cookies | None exist. No analytics, no fonts, no CDN, no cookies, nothing to consent to |
 | Third parties named in published files | Their contact details becoming crawlable forever | Rule 2.8/2.10 in `CLAUDE.md`: PDFs are read with `pdftotext` before they are committed |
 | The repository | A leaked credential | No credential exists. The API is called unauthenticated (rule 2.2) |
@@ -34,14 +35,41 @@ file is wrong and must be rewritten before that change ships.
 | §1.3 | Least privilege | The API call is unauthenticated and read-only. There is no token that could be stolen because there is no token |
 | §1.5 | Minimize attack surface | Four source files, zero dependencies, zero build step, no server-side code, no form that submits anywhere (`form-action 'none'`) |
 | §1.7 | Fail securely | An API failure renders a stated error, never a stale hardcoded list. A malformed response shape throws a named error instead of a `TypeError`. A rejected repo URL falls back to the profile URL rather than being rendered as given |
-| §2.4 | Defense in depth | The CSP is the outer layer; `escapeHTML`, `safeRepoURL`, `safeCount` and field coercion are the inner one. Either alone would stop most of this; both are kept |
+| §2.4 | Defense in depth | The CSP is the outer layer; the node-building render path, `safeRepoURL`, `safeTopics` and `narrow` are the inner one. This is not theoretical here — see §2a |
 | §2.9 | Economy of mechanism | No framework and no build step means the entire attack surface is three files a person can read in one sitting |
 | §2.11 | Open design | The repository is public. Nothing here relies on any of it being secret |
 | §2.16 | Leveraging existing components | Native `<details>`, native `<dialog>`, native `window.print()`, the browser's own URL parser for validation — rather than hand-rolled equivalents |
 | §3.3 | Secrets management | No secrets in the repo, and no place a secret would be needed |
-| §3.5 | Rate limiting | The unauthenticated API allows 60 requests/hour/IP. The 6-hour `localStorage` cache reduces calls; exhaustion degrades to a stated error with a Retry control, not a broken page |
-| §3.6 | Input validation at the boundary | Every remote field is escaped, coerced or scheme-checked before it reaches `innerHTML` — from both the API and the cache |
+| §3.5 | Rate limiting | The unauthenticated API allows 60 requests/hour/IP. The 6-hour `localStorage` cache reduces calls; the Retry button rate-limits itself to one request per 3 seconds and says so; the fetch carries a 10-second deadline; exhaustion degrades to a stated error, not a broken page |
+| §3.6 | Input validation at the boundary | One function, `narrow()`, is the only path either source takes to become a rendered row: shape, count, length, topic slug and URL scheme are all checked there. The API is the more trusted source, but "more trusted" is not a shape check, so it goes through the same gate |
 | §3.7 | PII-safe logging | Nothing is logged anywhere. There is no server to log to |
+
+## 2a. The one vulnerability this site has had
+
+Fixed 2026-08-14. Recorded because the shape of it is more useful than the fix.
+
+`escapeHTML()` was `div.textContent = value; return div.innerHTML`. That escapes
+`&`, `<` and `>` — and **not quotes**, because a text node has no attribute
+context to escape them for. Every call site put the result inside one.
+
+A repository name of `x" onmouseover="..." ` therefore closed the attribute and
+opened a new one. Confirmed with a poisoned cache: a real `onmouseover`
+attribute appeared on a real button in the Projects table.
+
+**It was not exploitable in practice, for two reasons stacked on each other.**
+GitHub repository names cannot contain a quote, so the live API could never
+carry the payload; and `script-src 'self'` blocks inline event handlers, so even
+with the attribute present the handler did not run. Defence in depth did exactly
+what it is for.
+
+But a first layer that only holds because the second one caught it is not
+holding. The fix was to remove the parser from the path entirely: every remote
+value now goes through `textContent` and `setAttribute` on nodes built by hand,
+and `escapeHTML()` was **deleted rather than repaired** — an unused escaper sat
+in the file reads as permission to concatenate HTML again.
+
+No user data was at risk at any point: there is none. Nothing needs to be
+rotated, because there are no credentials.
 
 ## 3. Known gaps, accepted deliberately
 
@@ -52,8 +80,10 @@ These are real, and listed rather than quietly ignored (§2.3: no security guara
    `frame-ancestors` cannot be set. `frame-ancestors` is *ignored* in a `<meta>` CSP,
    so **this site can be framed by anyone.** For a static portfolio with no
    authenticated action, clickjacking has nothing to steal — there is no button whose
-   click does anything on the visitor's behalf. Accepted. It would not be acceptable
-   the moment any state-changing control is added.
+   click does anything on the visitor's behalf. Accepted, and deliberately not papered
+   over with a JavaScript frame-buster: that would look like a control while protecting
+   nothing, and would be cited later as though the risk were handled. It would not be
+   acceptable the moment any state-changing control is added.
 2. **No CI scanning (§3.1) and no dependency scanning (§3.2).** There are no
    dependencies to scan, and no pipeline — push is the deploy. The mitigation is that
    there is nothing in the supply chain to compromise.
