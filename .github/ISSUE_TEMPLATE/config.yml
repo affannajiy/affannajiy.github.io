@@ -1,0 +1,12 @@
+# blank_issues_enabled: false would force every report through a template.
+# Left true on purpose — a template that does not fit is a reason to write
+# nothing, and a badly formatted report still beats silence.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/affannajiy/affannajiy.github.io/security/policy
+    about: Do not open a public issue. Read the security policy and report privately.
+  - name: Contact me directly
+    url: mailto:najiyaffan@gmail.com
+    about: For anything that is not a bug — questions, work, or a conversation.

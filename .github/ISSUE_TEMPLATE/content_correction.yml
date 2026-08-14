@@ -1,0 +1,45 @@
+name: Content correction
+description: Something on the page is factually wrong, misspelled, or out of date.
+title: "[Content] "
+labels: ["content"]
+body:
+  - type: dropdown
+    id: section
+    attributes:
+      label: Which section?
+      options:
+        - Masthead
+        - 01 — About
+        - 02 — Education
+        - 03 — Experience
+        - 04 — Skills
+        - 05 — Certificates
+        - 06 — Projects
+        - 07 — Links
+        - 08 — Résumé
+        - The PDF export
+    validations:
+      required: true
+
+  - type: textarea
+    id: says
+    attributes:
+      label: What it currently says
+      description: Quote it, so I can find the exact line.
+    validations:
+      required: true
+
+  - type: textarea
+    id: should
+    attributes:
+      label: What it should say
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Please do not include anyone else's contact details** — a phone
+        number or an email address belonging to a referee, a signatory, or a
+        committee member. This repository has a rule against committing those,
+        and an issue is as public as the site is.

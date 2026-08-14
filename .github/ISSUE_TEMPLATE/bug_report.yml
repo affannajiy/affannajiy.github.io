@@ -1,0 +1,73 @@
+name: Bug report
+description: Something on the site is broken — a link, the layout, the Projects table, the PDF export.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The browser and the viewport width are the two
+        things a report is usually missing, and they are the two that decide
+        whether I can reproduce it — please fill them in.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+      placeholder: |
+        The Projects table stayed on skeleton rows and never loaded.
+        I expected the repository list.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open https://affannajiy.github.io/
+        2. Scroll to 06 — Projects
+        3. Wait
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Firefox 141 on Windows 11
+    validations:
+      required: true
+
+  - type: dropdown
+    id: width
+    attributes:
+      label: Roughly how wide was the window?
+      description: The site has one breakpoint, at 640px, so which side of it you were on matters.
+      options:
+        - Phone (under 640px)
+        - Tablet or a narrow window (640–1000px)
+        - Desktop (over 1000px)
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: >
+        Open the developer console (F12) and paste anything red. If it mentions
+        Content Security Policy, please include the whole line — that directive
+        is deliberate and the exact text says which rule fired.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: This is not a security vulnerability. (Those go to the address in `SECURITY.md`, not to a public issue.)
+          required: true

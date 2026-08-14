@@ -14,6 +14,27 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
+<!-- Sharing preview. A link pasted into LinkedIn, Slack or WhatsApp is scraped
+     by that service, not rendered by this page, so none of this touches the
+     CSP. Deliberately imageless: an og:image would be a binary in assets/ that
+     silently goes stale the day a job title changes, and a text card already
+     carries the name and the role. -->
+<link rel="canonical" href="https://affannajiy.github.io/">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://affannajiy.github.io/">
+<meta property="og:site_name" content="Affan Najiy">
+<meta property="og:title" content="Affan Najiy — Computer Science Undergraduate">
+<meta property="og:description" content="Computer Science undergraduate at Universiti Teknologi PETRONAS, focused on data analytics. Education, experience, skills, projects and contact.">
+<meta property="og:locale" content="en_MY">
+<meta name="twitter:card" content="summary">
+
+<!-- The GitHub API call is the only thing on the page that waits on a network
+     round trip. Opening the TCP + TLS connection while the CSS is still parsing
+     takes that handshake off the critical path: the request goes out on a warm
+     connection instead of paying DNS, TCP and TLS first. -->
+<link rel="preconnect" href="https://api.github.com" crossorigin>
+<link rel="dns-prefetch" href="https://api.github.com">
+
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#faf8f5">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23111010'/><text x='16' y='23' font-size='20' font-family='monospace' font-weight='bold' fill='%23f97316' text-anchor='middle'>A</text></svg>">
@@ -30,9 +51,10 @@
     <a href="#education">Education</a>
     <a href="#experience">Experience</a>
     <a href="#skills">Skills</a>
-    <a href="#resume">Résumé</a>
+    <a href="#certificates">Certificates</a>
     <a href="#projects">Projects</a>
     <a href="#links">Links</a>
+    <a href="#resume">Résumé</a>
   </nav>
 </header>
 
@@ -44,32 +66,42 @@
     <h1 class="masthead-name">‘Affan Najiy bin Rusdi</h1>
     <p class="masthead-role">Computer Science Undergraduate · Data Analytics</p>
     <dl class="masthead-meta">
-      <div><dt>Based in</dt><dd>Sungai Petani, Kedah, Malaysia</dd></div>
+      <div data-resume><dt>From</dt><dd>Sungai Petani, Kedah</dd></div>
+      <div><dt>Working</dt><dd>Software Development Engineer Intern, Keysight Technologies Malaysia</dd></div>
       <div><dt>Studying</dt><dd>BSc Computer Science, Universiti Teknologi PETRONAS</dd></div>
-      <div><dt>Focus</dt><dd>Data analytics, databases, software engineering</dd></div>
-      <div><dt>Contact</dt><dd><a class="text-link" href="mailto:najiyaffan@gmail.com">najiyaffan@gmail.com</a></dd></div>
+      <div><dt>Focus</dt><dd>Data processing and automation, databases, data analytics</dd></div>
+      <div data-resume><dt>Contact</dt><dd><a class="text-link" href="mailto:najiyaffan@gmail.com">najiyaffan@gmail.com</a></dd></div>
     </dl>
   </section>
 
   <section id="about" class="section" aria-labelledby="about-title">
-    <h2 class="section-title" id="about-title"><span class="num">01</span> — About</h2>
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="about-title"><span class="num">01</span> — About</h2></summary>
     <div class="section-body">
-      <p>
-        I am a Computer Science undergraduate at Universiti Teknologi PETRONAS,
-        working mainly on data analytics and databases. I like turning messy data
-        into decisions somebody can actually act on, and I like building things
-        that stay simple enough to still make sense a year later.
+      <p data-resume>
+        I am a Software Development Engineer Intern at Keysight Technologies
+        Malaysia, working with the Materials Engineering team on data processing
+        and automation using mostly Python and SQL against SQL Server. I am also a
+        Computer Science undergraduate at Universiti Teknologi PETRONAS.
       </p>
       <p>
-        Outside coursework I lead community projects and run the column writing
-        desk at the UTP Journalism Club — so a fair amount of my time goes into
-        organising people and writing clearly, not only into code.
+        I like turning messy data into decisions somebody can actually act on,
+        and I like building things that stay simple enough to still make sense a
+        year later. This site is the same idea: plain HTML, CSS and JavaScript,
+        no build step.
+      </p>
+      <p>
+        Outside coursework I have directed community projects and run the column
+        writing desk at the UTP Journalism Club and also a fair amount of my time
+        goes into organising people and writing clearly, not only into code.
       </p>
     </div>
+    </details>
   </section>
 
   <section id="education" class="section" aria-labelledby="education-title">
-    <h2 class="section-title" id="education-title"><span class="num">02</span> — Education</h2>
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="education-title"><span class="num">02</span> — Education</h2></summary>
     <div class="section-body">
 
       <div class="table-wrap">
@@ -84,25 +116,38 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr data-resume>
               <th scope="row">BSc Computer Science</th>
               <td>Universiti Teknologi PETRONAS</td>
-              <td>May 2024 – Present</td>
+              <td>May 2024 – Aug 2027 (expected)</td>
               <td>3.85</td>
             </tr>
-            <tr>
+            <tr data-resume>
               <th scope="row">Foundation in Computer Science</th>
               <td>Universiti Teknologi PETRONAS</td>
               <td>May 2023 – Apr 2024</td>
               <td>3.98</td>
             </tr>
+            <tr>
+              <th scope="row">SPM, Natural Sciences</th>
+              <td>Sekolah Menengah Sains Raja Tun Azlan Shah (SERATAS)</td>
+              <td>Jan 2018 – Mar 2023</td>
+              <td>5A+ 4A</td>
+            </tr>
+            <tr>
+              <th scope="row">UPSR</th>
+              <td>Sekolah Kebangsaan Saujana Indah (SKSI)</td>
+              <td>Jan 2012 – Dec 2017</td>
+              <td>6A</td>
+            </tr>
           </tbody>
         </table>
       </div>
 
-      <p class="note">
+      <p class="note" data-resume>
         <strong>Dean's List</strong> — six consecutive semesters:
         May 2023, September 2023, January 2024, May 2024, September 2024, January 2025.
+        Also awarded the CFS Dean's Award by the Centre for Foundation Studies.
       </p>
 
       <h3 class="subhead">Coursework projects</h3>
@@ -117,17 +162,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr data-resume>
               <th scope="row">HR Management System</th>
               <td>C#, Firestore</td>
               <td>Built an employee management application; owned the Firestore integration for employee records.</td>
             </tr>
-            <tr>
+            <tr data-resume>
               <th scope="row">Restaurant Database System</th>
               <td>SQL, Oracle</td>
               <td>Designed and built a database for a restaurant near campus, including a 70-table enhanced entity-relationship diagram.</td>
             </tr>
-            <tr>
+            <tr data-resume>
               <th scope="row">Weather Prediction Software</th>
               <td>Python, Jupyter</td>
               <td>Trained a linear regression model on European weather data and documented the work as a notebook.</td>
@@ -137,52 +182,180 @@
       </div>
 
     </div>
+    </details>
   </section>
 
   <section id="experience" class="section" aria-labelledby="experience-title">
-    <h2 class="section-title" id="experience-title"><span class="num">03</span> — Experience</h2>
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="experience-title"><span class="num">03</span> — Experience</h2></summary>
     <div class="section-body">
+      <h3 class="subhead">Keysight Technologies Malaysia</h3>
       <div class="table-wrap">
         <table class="grid-table">
-          <caption class="sr-only">Leadership and volunteering experience</caption>
+          <caption class="sr-only">Experience at Keysight Technologies Malaysia</caption>
           <thead>
             <tr>
               <th scope="col">Role</th>
-              <th scope="col">Organisation</th>
+              <th scope="col">Team</th>
+              <th scope="col">Period</th>
+              <th scope="col">Highlights</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-resume>
+              <th scope="row">Software Development Engineer Intern</th>
+              <td>Materials Engineering — Penang</td>
+              <td>Jan 2026 – Present</td>
+              <td>Data processing and automation in Python. Querying and managing databases in SQL through SQL Server Management Studio.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="subhead">Universiti Teknologi PETRONAS</h3>
+      <div class="table-wrap">
+        <table class="grid-table">
+          <caption class="sr-only">Leadership and volunteering experience at Universiti Teknologi PETRONAS</caption>
+          <thead>
+            <tr>
+              <th scope="col">Role</th>
+              <th scope="col">Club or project</th>
+              <th scope="col">Period</th>
+              <th scope="col">Highlights</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-resume>
+              <th scope="row">Project Director</th>
+              <td>MPU4 Sahom Sejahtera</td>
+              <td>Jun 2025 – Nov 2025</td>
+              <td>Led a riverbank clean-up and tree planting for erosion control at Dataran Sungai Dipang, plus an environmental awareness talk and a workshop making plant pots from reusable materials. Secured tree donations from Jabatan Perhutanan Negeri Perak.</td>
+            </tr>
+            <tr>
+              <th scope="row">Member</th>
+              <td>Open Computing Club (OCC)</td>
+              <td>May 2025 – Present</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <th scope="row">Committee, Public Relations</th>
+              <td>National Writing Competition — UTP Journalism Club</td>
+              <td>Dec 2024 – Nov 2025</td>
+              <td>Public relations for the club's national-level writing competition.</td>
+            </tr>
+            <tr>
+              <th scope="row">Head of Public Relations</th>
+              <td>TechTurtle (MPU4 project)</td>
+              <td>Oct 2024 – Feb 2025</td>
+              <td>Managed the committee approaching organisations for sponsorship and collaboration on a University Corporate Social Responsibility project.</td>
+            </tr>
+            <tr>
+              <th scope="row">Secretary</th>
+              <td>Forum Beradab Sebelum Berilmu &amp; Dean's List Award — Rakan Masjid UTP</td>
+              <td>Oct 2024 – Nov 2024</td>
+              <td>Owned event documentation: minutes of meetings and the event proposal.</td>
+            </tr>
+            <tr>
+              <th scope="row">Committee, Masterpiece &amp; Publication</th>
+              <td>Rakan Masjid UTP</td>
+              <td>Aug 2024 – Feb 2025</td>
+              <td>Content maker for the Weekly Story series on Islam and science, writing on scientific history and breakthroughs by notable figures in Islam.</td>
+            </tr>
+            <tr data-resume>
+              <th scope="row">Head of Column Writing</th>
+              <td>UTP Journalism Club</td>
+              <td>May 2024 – Nov 2025</td>
+              <td>Created a standard format for column submissions and edited writers' work for grammar and structure. Published articles with Bichara Malaya, Universiti Malaya.</td>
+            </tr>
+            <tr>
+              <th scope="row">Secretary</th>
+              <td>Pre-Marriage Course — Rakan Masjid UTP</td>
+              <td>May 2024 – Aug 2024</td>
+              <td>Wrote the event proposal, memorandum applications and minutes of meetings. The course was cancelled after planning.</td>
+            </tr>
+            <tr>
+              <th scope="row">Committee, Academic &amp; Intellectual</th>
+              <td>Rakan Masjid UTP</td>
+              <td>Jan 2024 – Feb 2025</td>
+              <td>—</td>
+            </tr>
+            <tr data-resume>
+              <th scope="row">Project Director</th>
+              <td>Down To Earth — Sharing the Nur of Ramadhan</td>
+              <td>Jan 2024 – Mar 2024</td>
+              <td>Led distribution of 45 boxes of food supplies to villagers in Kampung Indah, Pantai Remis before Ramadan. Presented the project at the 9th Regional Conference on Student Activism (RECONSA).</td>
+            </tr>
+            <tr>
+              <th scope="row">Group Leader</th>
+              <td>Oh My Code — ZakatEZy</td>
+              <td>Sep 2023 – Nov 2023</td>
+              <td>Led a five-person team building the ZakatEZy application for Visual Programming and Introduction to Business Information Systems.</td>
+            </tr>
+            <tr>
+              <th scope="row">Writer</th>
+              <td>Writing Department — UTP Journalism Club</td>
+              <td>May 2023 – Present</td>
+              <td>Movie reviews, column writing and event coverage of campus events.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="subhead">Malaysia Board of Technologists</h3>
+      <div class="table-wrap">
+        <table class="grid-table">
+          <caption class="sr-only">Experience with the Malaysia Board of Technologists</caption>
+          <thead>
+            <tr>
+              <th scope="col">Role</th>
+              <th scope="col">Department</th>
               <th scope="col">Period</th>
               <th scope="col">Highlights</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <th scope="row">Project Director</th>
-              <td>Community Engagement Project (MPU4) — Sahom Sejahtera</td>
-              <td>May 2025 – Present</td>
-              <td>Leading a team planting 40 trees at Kampung Sahom, Kampar. Secured a collaboration with Jabatan Perhutanan Negeri Perak for tree donations.</td>
+              <th scope="row">Committee</th>
+              <td>Business &amp; Sponsorship — MBOT-UTP Student Chapter</td>
+              <td>Jan 2024 – Sep 2025</td>
+              <td>—</td>
             </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="subhead">Pemuzik Tradisional (PETRA) UTP</h3>
+      <div class="table-wrap">
+        <table class="grid-table">
+          <caption class="sr-only">Experience with Pemuzik Tradisional PETRA UTP</caption>
+          <thead>
             <tr>
-              <th scope="row">Head of Column Writing</th>
-              <td>UTP Journalism Club</td>
-              <td>May 2024 – Present</td>
-              <td>Created a standard format for column submissions. Published articles with Bichara Malaya, Universiti Malaya.</td>
+              <th scope="col">Role</th>
+              <th scope="col">Event</th>
+              <th scope="col">Period</th>
+              <th scope="col">Highlights</th>
             </tr>
+          </thead>
+          <tbody>
             <tr>
-              <th scope="row">Project Director</th>
-              <td>Down To Earth — NurRizq</td>
-              <td>Jan 2024 – Mar 2024</td>
-              <td>Led distribution of 45 boxes of food supplies to villagers in Kampung Indah, Pantai Remis before Ramadan. Presented the project at the 9th Regional Conference on Student Activism (RECONSA).</td>
+              <th scope="row">Committee, Public Relations</th>
+              <td>Vinyl of Nusantara 2024</td>
+              <td>Mar 2024 – Sep 2024</td>
+              <td>Approached companies and government agencies for event sponsorship. My first large campus event.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+    </details>
   </section>
 
   <section id="skills" class="section" aria-labelledby="skills-title">
-    <h2 class="section-title" id="skills-title"><span class="num">04</span> — Skills</h2>
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="skills-title"><span class="num">04</span> — Skills</h2></summary>
     <div class="section-body">
       <div class="table-wrap">
-        <table class="grid-table">
+        <table class="grid-table" data-resume-columns="3">
           <caption class="sr-only">Technical, professional and language skills with proficiency</caption>
           <thead>
             <tr>
@@ -195,7 +368,10 @@
             <tr><th scope="row">Software</th><td>Python</td><td>Intermediate</td></tr>
             <tr><th scope="row">Software</th><td>C#</td><td>Intermediate</td></tr>
             <tr><th scope="row">Software</th><td>SQL / Oracle</td><td>Intermediate</td></tr>
+            <tr><th scope="row">Software</th><td>React.js</td><td>Intermediate</td></tr>
             <tr><th scope="row">Software</th><td>Jupyter Notebook</td><td>Beginner</td></tr>
+            <tr><th scope="row">Platform</th><td>Linux</td><td>Intermediate</td></tr>
+            <tr><th scope="row">Platform</th><td>SQL Server Management Studio</td><td>Beginner</td></tr>
             <tr><th scope="row">Technical</th><td>Technical writing</td><td>Intermediate</td></tr>
             <tr><th scope="row">Technical</th><td>Photography</td><td>Intermediate</td></tr>
             <tr><th scope="row">Technical</th><td>Videography</td><td>Basic</td></tr>
@@ -206,31 +382,104 @@
         </table>
       </div>
       <p class="hint">
-        Languages also appearing in my public repositories — TypeScript, JavaScript,
-        C++ and R — are listed by the Projects table below rather than claimed here.
+        Other languages appearing in my public repositories — TypeScript, C++ and
+        R — are listed by the Projects table below rather than claimed here.
       </p>
     </div>
+    </details>
   </section>
 
-  <section id="resume" class="section" aria-labelledby="resume-title">
-    <h2 class="section-title" id="resume-title"><span class="num">05</span> — Résumé</h2>
+  <section id="certificates" class="section" data-resume-default="off" aria-labelledby="certificates-title">
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="certificates-title"><span class="num">05</span> — Certificates</h2></summary>
     <div class="section-body">
-      <p>
-        Everything on this page is drawn from my résumé. The full PDF is available
-        on request, or by email.
-      </p>
-      <p class="resume-actions" id="resume-actions">
-        <a class="button" href="mailto:najiyaffan@gmail.com?subject=R%C3%A9sum%C3%A9%20request">Request the PDF by email</a>
-      </p>
+      <div class="table-wrap">
+        <table class="grid-table">
+          <caption class="sr-only">Certificates by year, most recent first. Each row links to the certificate PDF.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Year</th>
+              <th scope="col">Certificate</th>
+              <th scope="col">Issuer</th>
+              <th scope="col">Type</th>
+              <th scope="col">PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">2026</th>
+              <td>AI Fundamentals</td>
+              <td>Google, via Coursera</td>
+              <td>Training</td>
+              <td><a class="text-link" href="assets/certificates/coursera-google-ai-fundamentals.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+            <tr>
+              <th scope="row">2026</th>
+              <td>AI-Assisted Travel Planning</td>
+              <td>DataCamp</td>
+              <td>Training</td>
+              <td><a class="text-link" href="assets/certificates/datacamp-ai-assisted-travel-planning.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+            <tr>
+              <th scope="row">2026</th>
+              <td>Understanding Cloud Computing</td>
+              <td>DataCamp</td>
+              <td>Training</td>
+              <td><a class="text-link" href="assets/certificates/datacamp-understanding-cloud-computing.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+            <tr>
+              <th scope="row">2026</th>
+              <td>Claude Code 101</td>
+              <td>DataCamp</td>
+              <td>Training</td>
+              <td><a class="text-link" href="assets/certificates/datacamp-claude-code-101.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+            <tr>
+              <th scope="row">2025</th>
+              <td>Strategic Business Analysis Essentials</td>
+              <td>PMI Registered Education Provider</td>
+              <td>Training</td>
+              <td><a class="text-link" href="assets/certificates/pmi-strategic-business-analysis-essentials.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+            <tr>
+              <th scope="row">2025</th>
+              <td>9th Regional Conference on Student Activism (RECONSA)</td>
+              <td>Centre of Student Development, UTP</td>
+              <td>Co-curricular</td>
+              <td><a class="text-link" href="assets/certificates/reconsa-2025-appreciation.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+            <tr>
+              <th scope="row">2024</th>
+              <td>Vinyl of Nusantara 2024 — Public Relations &amp; Business Committee</td>
+              <td>Pemuzik Tradisional (PETRA) UTP</td>
+              <td>Co-curricular</td>
+              <td><a class="text-link" href="assets/certificates/vinyl-of-nusantara-2024-appreciation.pdf" target="_blank" rel="noopener noreferrer">View PDF</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint scroll-hint">Table scrolls sideways &rarr; for issuer, type and the PDF link.</p>
+      <!-- Say what the link does before it is clicked, not after (Rulebook
+           §1.1). A PDF that opens in a new tab, or downloads outright on a
+           browser configured that way, is a surprise worth spending a line on. -->
+      <p class="hint">Each certificate is a PDF and opens in a new tab.</p>
     </div>
+    </details>
   </section>
 
-  <section id="projects" class="section" aria-labelledby="projects-title">
-    <h2 class="section-title" id="projects-title"><span class="num">06</span> — Projects</h2>
+
+  <section id="projects" class="section" data-resume-default="off" aria-labelledby="projects-title">
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="projects-title"><span class="num">06</span> — Projects</h2></summary>
     <div class="section-body">
 
       <div class="filter-row">
         <label class="filter-label" for="projects-filter">Filter</label>
+        <!-- The shortcut is stated, not folklore: an accelerator nobody is told
+             about serves only the person who wrote it (Rulebook §1.7, §1.6).
+             The hint is removed by JS when there is no keyboard to press it
+             with, so it never promises something the device cannot do. -->
+        <span class="filter-key" id="filter-key" hidden>Press <kbd>/</kbd> to search</span>
         <input
           type="search"
           id="projects-filter"
@@ -260,10 +509,12 @@
 
       <p class="hint scroll-hint">Table scrolls sideways &rarr; for language, stars and date.</p>
     </div>
+    </details>
   </section>
 
-  <section id="links" class="section" aria-labelledby="links-title">
-    <h2 class="section-title" id="links-title"><span class="num">07</span> — Links</h2>
+  <section id="links" class="section" data-resume-default="off" aria-labelledby="links-title">
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="links-title"><span class="num">07</span> — Links</h2></summary>
     <div class="section-body">
       <div class="table-wrap">
         <table class="grid-table">
@@ -276,13 +527,98 @@
         </table>
       </div>
     </div>
+    </details>
+  </section>
+
+  <!-- data-print-default="off": this section is about how to obtain a PDF, so
+       inside that PDF it is noise. Its checkbox in the export dialog starts
+       unticked; the reader can still tick it. -->
+  <section id="resume" class="section" aria-labelledby="resume-title" data-print-default="off">
+    <details class="section-fold" open>
+      <summary class="section-summary"><h2 class="section-title" id="resume-title"><span class="num">08</span> — Résumé</h2></summary>
+    <div class="section-body">
+      <p>
+        Everything on this page is drawn from my résumé. The PDF opens in a new
+        tab — read it there, or download it from your browser if you want a copy.
+      </p>
+      <p class="resume-actions" id="resume-actions">
+        <button type="button" class="button" id="export-open">Build a PDF…</button>
+        <a class="button button-quiet" href="assets/resume.pdf" target="_blank" rel="noopener noreferrer">View the fixed PDF</a>
+        <a class="button button-quiet" href="mailto:najiyaffan@gmail.com?subject=R%C3%A9sum%C3%A9%20request">Ask me by email</a>
+      </p>
+      <p class="hint">
+        “Build a PDF” lets you choose which sections to include, then hands the
+        page to your browser's own “Save as PDF”. The result keeps selectable
+        text and working links — it is not a screenshot.
+      </p>
+    </div>
+    </details>
   </section>
 
 </main>
 
+<!-- Export dialog. A native <dialog> so the modal behaviour, focus trap and
+     Escape-to-close come from the browser rather than from hand-written JS.
+     It never generates a PDF itself: it decides what is visible, then calls
+     window.print() and lets the browser's own "Save as PDF" do the work. -->
+<dialog id="export-dialog" class="export-dialog" aria-labelledby="export-title">
+  <form method="dialog" class="export-form" id="export-form">
+    <h2 class="export-title" id="export-title">Build a PDF</h2>
+    <p class="export-intro">
+      Choose what to include. Your browser's print window opens next — pick
+      “Save as PDF” as the destination.
+    </p>
+
+    <fieldset class="export-group">
+      <legend>Format</legend>
+      <label class="export-check">
+        <input type="radio" name="mode" value="resume" checked>
+        <span><strong>One-page résumé</strong> — selected highlights, compact, no table borders</span>
+      </label>
+      <label class="export-check">
+        <input type="radio" name="mode" value="record">
+        <span><strong>Full record</strong> — everything, as the bordered tables on this page</span>
+      </label>
+      <p class="export-budget" id="export-budget" role="status"></p>
+    </fieldset>
+
+    <fieldset class="export-group">
+      <legend>Sections</legend>
+      <div class="export-checks" id="export-sections"></div>
+    </fieldset>
+
+    <fieldset class="export-group">
+      <legend>Level of detail</legend>
+      <label class="export-check">
+        <input type="radio" name="detail" value="everything" checked>
+        <span><strong>Everything</strong> — include rows inside collapsed sections</span>
+      </label>
+      <label class="export-check">
+        <input type="radio" name="detail" value="expanded">
+        <span><strong>What is open now</strong> — print only the sections I have expanded</span>
+      </label>
+    </fieldset>
+
+    <fieldset class="export-group" id="export-projects-group">
+      <legend>Projects</legend>
+      <label class="export-check" for="export-language">
+        <span class="export-label-text">Limit to language</span>
+      </label>
+      <select id="export-language" class="export-select">
+        <option value="">All languages</option>
+      </select>
+    </fieldset>
+
+    <div class="export-actions">
+      <button type="submit" value="print" class="button">Open print window</button>
+      <button type="submit" value="cancel" class="button button-quiet">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
 <footer class="site-footer">
   <span>&copy; 2026 ‘Affan Najiy bin Rusdi</span>
-  <span>Plain HTML, CSS and JavaScript. No frameworks, no build step, no trackers.</span>
+  <span>Plain HTML, CSS and JavaScript</span>
   <a href="#top">Back to top</a>
 </footer>
 

@@ -37,8 +37,18 @@
   --accent-mid:  #fed7aa;
   --accent-rgb:  249, 115, 22;
 
-  --mono:  "Geist Mono", ui-monospace, "SF Mono", "Courier New", Courier, monospace;
-  --serif: Georgia, "Times New Roman", Times, serif;
+  /* One family, screen and paper. Arial on Windows, Helvetica on macOS,
+     Liberation Sans (metrically identical to Arial) on Linux — all installed
+     by default, so rule 1.3 holds: nothing is downloaded. Calibri, Aptos and
+     Garamond are deliberately absent; they ship with Microsoft Office or not
+     at all, so on a Mac or a Linux box they would silently fall back to
+     something unchosen.
+
+     The former serif/mono split is gone by decision: resume convention wants
+     one or two families, and this is the family a hiring reader and an ATS
+     parser both expect. Hierarchy is now carried by weight, size, letter
+     spacing and case instead of by typeface. */
+  --sans: Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
 
   --maxw: 1000px;
 }
@@ -52,7 +62,7 @@ html,body{
   padding:0;
   background:var(--bg);
   color:var(--text);
-  font-family:var(--serif);
+  font-family:var(--sans);
   font-size:16px;
   line-height:1.55;
   -webkit-text-size-adjust:100%;
@@ -79,7 +89,7 @@ html,body{
   padding:.6rem .9rem;
   background:var(--fg);
   color:var(--bg);
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.8rem;
   text-decoration:none;
   transition:top .12s ease;
@@ -110,7 +120,7 @@ a.text-link:focus-visible{
 }
 
 code{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.9em;
   background:var(--surface-2);
   padding:.1em .35em;
@@ -138,7 +148,7 @@ code{
 }
 
 .wordmark{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-weight:700;
   letter-spacing:.08em;
   text-decoration:none;
@@ -155,7 +165,7 @@ code{
   display:flex;
   flex-wrap:wrap;
   gap:0 1.1rem;
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.82rem;
 }
 
@@ -197,7 +207,7 @@ main{
 }
 
 .masthead-name{
-  font-family:var(--serif);
+  font-family:var(--sans);
   font-size:clamp(2.4rem, 7vw, 4rem);
   line-height:1.05;
   letter-spacing:-.02em;
@@ -207,7 +217,7 @@ main{
 }
 
 .masthead-role{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.85rem;
   letter-spacing:.16em;
   text-transform:uppercase;
@@ -226,7 +236,7 @@ main{
 .masthead-meta > div{ min-width:0; }
 
 .masthead-meta dt{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.68rem;
   letter-spacing:.12em;
   text-transform:uppercase;
@@ -248,7 +258,7 @@ main{
 .section:last-of-type{ border-bottom:none; }
 
 .section-title{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.95rem;
   font-weight:700;
   letter-spacing:.1em;
@@ -259,13 +269,17 @@ main{
 
 .section-title .num{ color:var(--accent-text); }
 
+/* Prose runs the full content column and reflows with the viewport rather than
+   stopping at a fixed measure. The 1000px cap on the column is what bounds the
+   line length — roughly 105ch at 1280px — so there is no runaway on a wide
+   monitor without a second cap here. */
 .section-body p{
-  max-width:65ch;
+  max-width:100%;
   margin:0 0 1rem 0;
 }
 
 .hint{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.75rem;
   line-height:1.5;
   color:var(--muted);
@@ -274,7 +288,7 @@ main{
 
 /* Sub-heading inside a section (e.g. "Coursework projects"). */
 .subhead{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.78rem;
   font-weight:700;
   letter-spacing:.08em;
@@ -303,11 +317,31 @@ main{
 }
 
 .filter-label{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.72rem;
   letter-spacing:.1em;
   text-transform:uppercase;
   color:var(--muted);
+}
+
+/* The "/" shortcut, stated where the field is rather than left as folklore.
+   Revealed by JS only on a device with a hover-capable pointer, so a phone is
+   never told to press a key it does not have. */
+.filter-key{
+  font-family:var(--sans);
+  font-size:.72rem;
+  color:var(--muted);
+  order:3;                 /* after the input, so it never splits label from field */
+}
+.filter-key kbd{
+  font-family:var(--sans);
+  font-size:.72rem;
+  padding:.05rem .3rem;
+  border:1px solid var(--border);
+  border-bottom-width:2px;
+  border-radius:3px;
+  background:var(--surface);
+  color:var(--text);
 }
 
 .filter-input{
@@ -316,7 +350,7 @@ main{
   max-width:26rem;
   min-height:40px;
   padding:0 .7rem;
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.82rem;
   color:var(--text);
   background:var(--surface);
@@ -337,7 +371,7 @@ main{
 
 /* Loading / count / error line for the Projects table. */
 .status{
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.75rem;
   color:var(--muted);
   margin:0 0 .75rem 0 !important;
@@ -358,7 +392,7 @@ main{
   padding:0 1.1rem;
   background:var(--fg);
   color:var(--bg);
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.8rem;
   letter-spacing:.04em;
   text-decoration:none;
@@ -367,6 +401,20 @@ main{
 }
 .button:hover,
 .button:focus-visible{
+  background:transparent;
+  color:var(--fg);
+  border-color:var(--accent);
+}
+
+/* Secondary action next to the primary one. Outlined rather than filled so the
+   two buttons do not compete: the PDF is the main path, email is the fallback. */
+.button-quiet{
+  background:transparent;
+  color:var(--fg);
+  border-color:var(--border);
+}
+.button-quiet:hover,
+.button-quiet:focus-visible{
   background:transparent;
   color:var(--fg);
   border-color:var(--accent);
@@ -391,9 +439,13 @@ main{
 .grid-table{
   width:100%;
   border-collapse:collapse;
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.82rem;
   background:var(--surface);
+  /* Monospace used to line the star counts and dates up by accident. With a
+     proportional face the digits are different widths, so tabular figures are
+     asked for explicitly — otherwise a column of numbers reads ragged. */
+  font-variant-numeric:tabular-nums;
 }
 
 .grid-table th,
@@ -503,11 +555,34 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   background:transparent;
   border:1px solid var(--fg);
   color:var(--fg);
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.75rem;
   cursor:pointer;
 }
 .retry-btn:hover{ border-color:var(--accent); color:var(--accent-text); }
+
+/* Copy the email address. A mailto: on a machine with no mail client does
+   nothing at all and says nothing about why — this is the way out (§1.3).
+   Built in JS, so a browser without the Clipboard API gets no button rather
+   than one that fails quietly. The label changes to "Copied" in words, not by
+   colour, and reverts, so the confirmation cannot be missed or misread. */
+.copy-btn{
+  display:inline-flex;
+  align-items:center;
+  min-height:40px;
+  margin-left:.5rem;
+  padding:0 .55rem;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-family:var(--sans);
+  font-size:.7rem;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  cursor:pointer;
+  vertical-align:middle;
+}
+.copy-btn:hover{ border-color:var(--accent); color:var(--accent-text); }
 
 /* A scrollbar shows on desktop, but a touch device shows nothing until the
    user already guessed. Say it in words, only where it applies. */
@@ -524,7 +599,7 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   margin:0 auto;
   padding:1.25rem;
   border-top:2px solid var(--rule);
-  font-family:var(--mono);
+  font-family:var(--sans);
   font-size:.72rem;
   color:var(--muted);
 }
@@ -554,15 +629,24 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   .masthead{ padding:2.25rem 0 1.75rem; }
   .masthead-meta{ gap:.9rem; margin-top:1.5rem; }
 
-  /* Seven nav items wrap to two rows here, making the sticky header ~124px.
+  /* Eight nav items wrap to two rows here, making the sticky header ~124px.
      The offset must clear it or anchor links land underneath the nav. */
-  .section{ padding:2rem 0; scroll-margin-top:9rem; }
+  /* 11.5rem = 172px against a 124px header. The extra headroom is deliberate:
+     a ninth nav item would wrap the nav to three rows (~160px) and anchors
+     would land under it. Better to carry the slack than to break silently. */
+  .section{ padding:2rem 0; scroll-margin-top:11.5rem; }
 
-  .grid-table{ font-size:.74rem; }
+  /* .74rem on a 15px root read as 11.1px — legible on a desktop monitor,
+     not on a phone held at arm's length. .88rem = 13.2px, which sits close
+     enough to the 15px prose to stop the tables feeling like fine print.
+     The padding is tightened to buy back the width the larger type costs,
+     so the 5-column Projects table does not scroll any further than before. */
+  .grid-table{ font-size:.88rem; }
+  .grid-table thead th{ font-size:.8rem; }
   .grid-table th,
-  .grid-table td{ padding:.45rem .55rem; }
-  .grid-table thead th:not(:has(.sort-btn)){ padding:.45rem .55rem; }
-  .sort-btn{ padding:.45rem .55rem; }
+  .grid-table td{ padding:.5rem .6rem; }
+  .grid-table thead th:not(:has(.sort-btn)){ padding:.5rem .6rem; }
+  .sort-btn{ padding:.5rem .6rem; }
 
   .scroll-hint{ display:block; }
 
@@ -570,7 +654,508 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   .filter-input{ font-size:16px; }
   .filter-row{ flex-wrap:wrap; }
 
+  /* ── Condensed header ──────────────────────────────────
+     Eight nav items on two rows cost 124px of a 667px phone screen, held
+     there by position:sticky for the whole read. Once the masthead is off
+     screen the header drops to one row (~48px) and hands 76px back.
+
+     Nothing is removed — the row scrolls sideways instead, and the mask
+     fade on the right edge is what says so. A hard clipped edge would read
+     as the end of the list (Gestalt §2.4, closure), which is the one thing
+     it must not do. JS keeps the current section scrolled into view. */
+  .nav-condensed .site-header{
+    flex-direction:row;
+    align-items:center;
+    gap:0 .75rem;
+  }
+  .nav-condensed .wordmark{
+    flex:0 0 auto;
+    font-size:.8rem;
+    min-height:40px;
+  }
+  .nav-condensed .site-nav{
+    flex:1 1 0;
+    min-width:0;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+    /* Slack the width of the fade, so the last item can scroll clear of it.
+       Without this Résumé is permanently half-faded whenever it is the
+       marked section — the scroll range simply ends underneath the mask. */
+    padding:0 2.25rem 0 0;
+    -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+    mask-image:linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+  }
+  .nav-condensed .site-nav::-webkit-scrollbar{ display:none; }
+  .nav-condensed .site-nav a{
+    flex:0 0 auto;
+    white-space:nowrap;
+    min-height:40px;
+  }
+
+  /* The offset is sized for the tall header. Against the condensed one it
+     would strand every heading 76px down the page, so it shrinks with it. */
+  .nav-condensed .section{ scroll-margin-top:4.5rem; }
+
   .site-footer{ padding:1rem; }
+}
+
+/* ── Collapsible sections ─────────────────────────────────
+   Native <details>, so keyboard operation, the expanded/collapsed state
+   announcement, and find-in-page auto-expansion all come from the browser.
+   Every section is open on load: a reader who never clicks still sees
+   everything, and collapsing is an affordance rather than a gate. */
+.section-summary{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+  min-height:40px;                    /* tap-target floor */
+  cursor:pointer;
+  list-style:none;                    /* Firefox default marker */
+}
+.section-summary::-webkit-details-marker{ display:none; }
+
+/* The marker is drawn from the open state, so what is shown and what is
+   announced cannot drift apart — the same rule the sort arrows follow.
+
+   A chevron rather than a +/− glyph: it is drawn from borders rather than set
+   in type, so its weight and size are controlled rather than inherited from
+   whatever the font happens to give a plus sign. Down = collapsed (content is
+   below, press to bring it out), up = expanded (press to fold it away), which
+   is the convention every accordion the reader has already used (Jakob's Law). */
+.section-summary::after{
+  content:"";
+  margin-left:auto;
+  flex:0 0 auto;
+  width:.62rem;
+  height:.62rem;
+  margin-top:-.28rem;                 /* optical centring of a rotated square */
+  border-right:2.5px solid var(--accent-text);
+  border-bottom:2.5px solid var(--accent-text);
+  transform:rotate(45deg);            /* chevron pointing down — collapsed */
+  transition:transform .15s ease;
+}
+.section-fold[open] > .section-summary::after{
+  margin-top:.22rem;
+  transform:rotate(-135deg);          /* chevron pointing up — expanded */
+}
+.section-summary:hover::after{
+  border-right-color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+.section-summary:hover .section-title{ color:var(--accent-text); }
+.section-summary:focus-visible{
+  outline:2px solid rgba(var(--accent-rgb), .9);
+  outline-offset:3px;
+}
+.section-summary .section-title{ margin-bottom:0; }
+.section-fold[open] > .section-summary .section-title{ margin-bottom:1.25rem; }
+
+/* One control for eight folds. Quiet by design: it is an accelerator for the
+   reader who wants everything, not a competing call to action (Nielsen §1.7,
+   §1.8). Added by script.js, so it never appears without the JS to run it. */
+.fold-controls{
+  margin:1.5rem 0 0 0;
+  padding:0;
+}
+
+.fold-toggle{
+  display:inline-flex;
+  align-items:center;
+  min-height:40px;
+  padding:0 .1rem;
+  background:none;
+  border:0;
+  font-family:var(--sans);
+  font-size:.72rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  cursor:pointer;
+  border-bottom:1px solid var(--accent-mid);
+}
+.fold-toggle:hover{ color:var(--accent-text); border-bottom-color:var(--accent); }
+.fold-toggle:focus-visible{
+  outline:2px solid rgba(var(--accent-rgb), .9);
+  outline-offset:3px;
+}
+
+/* ── Export dialog ────────────────────────────────────────
+   Native <dialog>: the browser owns the focus trap, the inertness of the page
+   behind it, and Escape-to-close. */
+.export-dialog{
+  width:min(34rem, calc(100vw - 2rem));
+  padding:0;
+  border:2px solid var(--rule);
+  background:var(--surface);
+  color:var(--text);
+}
+.export-dialog::backdrop{ background:rgba(17,16,16,.55); }
+
+.export-form{ padding:1.5rem; }
+
+.export-title{
+  font-family:var(--sans);
+  font-size:.9rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  margin:0 0 .5rem 0;
+}
+.export-intro{
+  font-size:.9rem;
+  color:var(--muted);
+  margin:0 0 1.25rem 0;
+}
+
+.export-group{
+  border:0;
+  border-top:1px solid var(--border);
+  padding:1rem 0 0 0;
+  margin:0 0 1rem 0;
+}
+.export-group legend{
+  font-family:var(--sans);
+  font-size:.7rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  padding:0 .5rem 0 0;
+}
+
+/* The one-page estimate. Stated in words and not in colour alone — over
+   budget reads as over budget with the sound off (Rulebook §4). */
+.export-budget{
+  margin:.7rem 0 0 0;
+  padding:.45rem .6rem;
+  background:var(--surface-2);
+  border-left:3px solid var(--border);
+  font-size:.8rem;
+  color:var(--muted);
+}
+.export-budget.is-over{
+  background:var(--accent-soft);
+  border-left-color:var(--accent);
+  color:var(--accent-text);
+}
+
+.export-checks{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(9rem, 1fr));
+  gap:.15rem 1rem;
+}
+
+.export-check{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  min-height:40px;
+  font-size:.9rem;
+  cursor:pointer;
+}
+.export-check input{ accent-color:var(--accent); flex:0 0 auto; }
+.export-check input:focus-visible{
+  outline:2px solid rgba(var(--accent-rgb), .9);
+  outline-offset:2px;
+}
+
+.export-select{
+  min-height:40px;
+  width:100%;
+  padding:0 .6rem;
+  font-family:var(--sans);
+  font-size:.85rem;
+  color:var(--text);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:0;
+}
+.export-select:focus-visible{
+  border-color:var(--accent);
+  outline:2px solid rgba(var(--accent-rgb), .9);
+  outline-offset:1px;
+}
+
+.export-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.75rem;
+  border-top:1px solid var(--border);
+  padding-top:1.25rem;
+}
+
+/* ── Print / Save as PDF ──────────────────────────────────
+   The printed page is a résumé, not a screenshot of a website: no nav, no
+   controls, no colour fills, and links that still work on paper because the
+   URL is printed after the text. */
+@media print{
+  /* Ink is expensive and cream backgrounds print as grey haze. */
+  /* Ink is expensive and cream backgrounds print as grey haze.
+     Sizes follow résumé convention: body 10–12pt, headings 14–16pt. */
+  html,body{
+    background:#fff;
+    color:#000;
+    font-family:var(--sans);
+    font-size:11pt;
+    line-height:1.35;
+  }
+
+  .site-header,
+  .site-footer,
+  .skip-link,
+  .filter-row,
+  .status,
+  .scroll-hint,
+  .resume-actions,
+  .fold-controls,
+  .copy-btn,
+  .export-dialog,
+  .sort-btn::after{
+    display:none !important;
+  }
+
+  /* Sections the reader unticked in the export dialog. */
+  .print-hidden{ display:none !important; }
+
+  main{ padding:0; max-width:none; }
+
+  /* The masthead becomes the letterhead. */
+  .masthead{
+    padding:0 0 .75rem 0;
+    border-bottom:1.5pt solid #000;
+    margin-bottom:1rem;
+  }
+  .masthead-name{ font-size:20pt; letter-spacing:0; }
+  .masthead-role{ font-size:10pt; color:#000; letter-spacing:.06em; }
+  .masthead-meta{ gap:.4rem 1.5rem; margin-top:.75rem; }
+  .masthead-meta dt{ font-size:8.5pt; }     /* a field label, not body copy */
+  .masthead-meta dd{ font-size:10pt; }
+
+  .section{ padding:.9rem 0 0 0; scroll-margin-top:0; }
+
+  /* A section heading stranded at the foot of a page is a wasted page. */
+  .section-title{
+    font-size:14pt;
+    letter-spacing:.04em;
+    break-after:avoid;
+    page-break-after:avoid;
+  }
+  .section-title .num{ color:#000; }
+  .section-summary::after{ display:none; }   /* no +/− marker on paper */
+  .subhead{
+    font-size:11pt;
+    color:#000;
+    break-after:avoid;
+    page-break-after:avoid;
+  }
+
+  /* ── Tables stay tables on paper ────────────────────────
+     The printed grid mirrors the screen's McMaster grid: same columns, same
+     order, a hairline rule on every cell edge so a value can never be read
+     against the wrong heading.
+
+     This replaced an earlier one-line-per-row linearisation aimed at applicant
+     tracking systems, which parse a multi-column table badly. That trade is
+     now made the other way, deliberately: this PDF is written for a person to
+     read, and `assets/resume.pdf` remains the plain copy to hand a portal.
+     Do not reintroduce the linearisation without moving that copy too. */
+  .table-wrap{
+    overflow:visible;
+    border:0;
+    background:transparent;
+    break-inside:auto;
+  }
+
+  .grid-table{
+    width:100%;
+    font-size:10pt;                          /* the floor in §3.10; never lower */
+    border-collapse:collapse;
+    table-layout:auto;                       /* long cells wrap, columns self-size */
+  }
+
+  /* A table running past a page break must reprint its headings, or the
+     second page is a grid of unlabelled columns. */
+  .grid-table thead{ display:table-header-group; }
+  .grid-table tfoot{ display:table-footer-group; }
+
+  .grid-table thead th{
+    position:static;                         /* sticky is meaningless on paper */
+    background:#eee;
+    color:#000;
+    font-size:8.5pt;                         /* a column label, not body copy */
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    white-space:nowrap;
+    padding:.12rem .28rem;
+    border:.5pt solid #999;
+    border-bottom:1pt solid #000;            /* the header/body divide is the strong one */
+  }
+  /* The sort control is a button on screen; on paper it is just its own text. */
+  .grid-table thead th .sort-btn{
+    display:inline;
+    min-height:0;
+    padding:0;
+    font:inherit;
+    letter-spacing:inherit;
+    text-transform:inherit;
+    color:#000;
+  }
+
+  .grid-table th,
+  .grid-table td{
+    border:.5pt solid #999;
+    padding:.12rem .28rem;
+    text-align:left;
+    vertical-align:top;
+    overflow-wrap:break-word;                /* a long description wraps, never overflows */
+  }
+  .grid-table tbody th[scope="row"]{ font-weight:700; color:#000; }
+
+  /* The screen drops the outer edges so the wrapper's own border can supply
+     them. That wrapper has no border on paper, so the edges are put back —
+     matching the selectors that removed them, or specificity keeps them off. */
+  .grid-table th:last-child,
+  .grid-table td:last-child{ border-right:.5pt solid #999; }
+  .grid-table tbody tr:last-child > *{ border-bottom:.5pt solid #999; }
+  .grid-table thead th:not(:has(.sort-btn)){ padding:.12rem .28rem; }
+
+  /* Zebra striping prints as grey haze and the grid already separates rows. */
+  .grid-table tbody tr:nth-child(even) > *{ background:transparent; }
+
+  /* A row split across a page break puts a role on one page and its dates on
+     the next. Rows stay whole; the table itself may break between them. */
+  .grid-table tbody tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  /* ── One-page résumé mode ───────────────────────────────
+     A second print layout, switched on by `body.print-resume` from the export
+     dialog. The full record above is the archive; this is the thing a recruiter
+     reads in twenty seconds.
+
+     One page is a SELECTION problem, not a typography one. A4 at 12.7mm
+     margins leaves ~272mm of live height; 10pt at 1.3 line-height is ~4.6mm a
+     line, so the page holds about 59 lines. The full record is 66 table rows
+     before a single heading, so no margin or font setting can fit it — rows are
+     dropped instead, and the grid gives way to one line per row.
+
+     That one-line form is the linearisation this stylesheet used to apply to
+     every print. It was the wrong default but it is the right résumé: compact,
+     and read correctly by an applicant tracking system, which walks a PDF's
+     text in document order and interleaves the columns of a real table. */
+
+  /* Curation is per SECTION, not per table. A section that marks anything is
+     curated, so its unmarked rows and paragraphs drop — including whole tables
+     that marked nothing, which is what removes the one-row Malaysia Board of
+     Technologists and PETRA UTP tables from the résumé without special-casing
+     them. A section that marks nothing (Skills) prints whole.
+     `.resume-curated` is set in JS, since CSS cannot ask whether an ancestor
+     contains a matching descendant. */
+  .print-resume .resume-curated tbody tr:not([data-resume]){ display:none; }
+  .print-resume .resume-curated .section-body > p:not([data-resume]){ display:none; }
+
+  /* A table whose rows have all gone, and the sub-heading introducing it, are
+     hidden together — a heading over nothing is worse than neither. Emptiness
+     is not a CSS question, so JS sets this at print time. */
+  .print-resume .resume-empty{ display:none; }
+
+  /* Thirteen rows of "Software · Python · Intermediate" waste two thirds of
+     every line. Three columns is how the same list is set in resume.pdf, and
+     it costs ~48mm less. Opt in per table with data-resume-columns. */
+  .print-resume .grid-table[data-resume-columns="3"] tbody{
+    column-count:3;
+    column-gap:7mm;
+  }
+  .print-resume .grid-table[data-resume-columns] tbody tr{
+    break-inside:avoid;
+    -webkit-column-break-inside:avoid;
+  }
+
+  /* The letterhead collapses to the two lines resume.pdf uses: the name, then
+     the contact details running inline. The five-cell grid is a screen idea. */
+  .print-resume .masthead-meta{
+    display:block;
+    padding-top:.3rem;
+    border-top:.5pt solid #999;
+  }
+  /* Working, Studying and Focus are already stated by About, Education and the
+     role line; on a résumé the letterhead is location and contact only. */
+  .print-resume .masthead-meta > div{ display:none; }
+  .print-resume .masthead-meta > div[data-resume]{ display:inline; }
+  .print-resume .masthead-meta > div[data-resume] ~ div[data-resume]::before{
+    content:" | ";
+    color:#666;
+  }
+  .print-resume .masthead-meta dt{ display:none; }   /* "From", "Contact" — the values say it */
+  .print-resume .masthead-meta dd{ display:inline; font-size:9.5pt; }
+  .print-resume .masthead-role{ font-size:9pt; margin-top:.2rem; }
+
+  .print-resume .grid-table{
+    font-size:10pt;
+    display:block;
+    line-height:1.3;
+  }
+  .print-resume .grid-table thead{ display:none; }   /* a column label means nothing in a line */
+  .print-resume .grid-table tbody{ display:block; }
+
+  .print-resume .grid-table tr{
+    display:block;
+    padding:.12rem 0;
+    border:0;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .print-resume .grid-table th,
+  .print-resume .grid-table td{
+    display:inline;
+    border:0;
+    padding:0;
+    background:transparent;
+  }
+  /* The row's own label leads in bold; the rest follow after a middot, drawn
+     between cells so it never precedes the first one. */
+  .print-resume .grid-table tbody th[scope="row"]{ font-weight:700; }
+  .print-resume .grid-table tbody th[scope="row"] + td::before,
+  .print-resume .grid-table tbody td + td::before{ content:" · "; color:#666; }
+
+  /* Everything tightens: this mode is buying lines. */
+  .print-resume .section{ padding:.5rem 0 0 0; border:0; }
+  .print-resume .section-title{ font-size:12pt; margin-bottom:.25rem; }
+  .print-resume .subhead{ font-size:10pt; margin:.35rem 0 .15rem 0; }
+  .print-resume .masthead{ padding-bottom:.4rem; margin-bottom:.5rem; }
+  .print-resume .masthead-name{ font-size:17pt; }
+  .print-resume .masthead-meta{ margin-top:.4rem; gap:.2rem 1.2rem; }
+  .print-resume .section-body p{ font-size:10pt; margin:.3rem 0; }
+  .print-resume .note{ font-size:9.5pt; margin:.3rem 0; padding:.2rem 0 .2rem .5rem; }
+  .print-resume .table-wrap{ margin:.2rem 0; }
+
+  .note{ border-left-color:#999; font-size:10pt; }
+  .hint{ display:none; }
+  .section-body p{ font-size:11pt; }
+
+  a{ color:#000; text-decoration:none; }
+
+  /* Print the destination of links a reader might actually need to type in.
+     Deliberately not applied to the Projects table — 22 repo URLs in the
+     margin is noise, and the repo names are searchable on their own. */
+  .masthead a[href^="http"]::after,
+  .masthead a[href^="mailto"]::after,
+  #links a[href^="http"]::after,
+  #certificates a[href^="assets"]::after{
+    content:" (" attr(href) ")";
+    font-size:8.5pt;
+    color:#444;
+    word-break:break-all;
+  }
+
+  /* `@page` cannot be scoped to a class, so the narrower résumé margin is the
+     one declared, and the full record pays the difference back as padding on
+     <main>. 12.7mm is 0.5in — the floor stated in §3.10, sat on exactly. */
+  @page{ margin:12.7mm; }
+  body:not(.print-resume) main{ padding:1.3mm; }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */

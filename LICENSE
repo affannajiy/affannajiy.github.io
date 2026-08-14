@@ -1,0 +1,43 @@
+MIT License
+
+Copyright (c) 2026 'Affan Najiy bin Rusdi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+NOT COVERED BY THIS LICENCE
+
+The MIT grant above applies to the *code* in this repository: `index.html`,
+`style.css`, `script.js`, and the documentation describing how they work.
+
+It does not grant any right to the personal content this site carries, which
+remains all rights reserved:
+
+  - the name '"Affan Najiy bin Rusdi" and any use of it that implies
+    authorship, endorsement, or identity
+  - the biographical prose, the employment and education record, and the
+    résumé in any form
+  - everything in `assets/`, including `assets/resume.pdf` and every
+    certificate PDF in `assets/certificates/`
+
+Take the layout, the print stylesheet, the export dialog, the whole thing.
+Do not republish someone else's academic record under your own name, and do
+not redistribute the certificates — they are documents about a person, not
+sample data.

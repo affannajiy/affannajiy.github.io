@@ -1,0 +1,63 @@
+name: Accessibility problem
+description: A contrast failure, a keyboard trap, something a screen reader announces wrongly, a tap target too small.
+title: "[A11y] "
+labels: ["accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These are the reports I most want, because I cannot test every
+        combination of browser and assistive technology myself.
+
+        The site holds itself to a stated floor: all text at 4.5:1 or better,
+        never colour alone, a visible focus ring on everything interactive,
+        and no tap target under 40px. If you found one of those broken, that
+        is a bug, not a preference.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is inaccessible
+      description: Which element, on which section, and what goes wrong.
+      placeholder: |
+        Tabbing into the Build a PDF dialog, focus escapes to the page behind it.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - Contrast or legibility
+        - Keyboard navigation or focus
+        - Screen reader announcement
+        - Tap or click target too small
+        - Motion (something ignores prefers-reduced-motion)
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: tech
+    attributes:
+      label: Assistive technology, if any
+      placeholder: NVDA 2024.4 with Firefox / VoiceOver on iOS 18 / keyboard only
+    validations:
+      required: false
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 139 on macOS 15
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen instead
+      description: If you know the fix, say it. If you only know it is wrong, that is still worth filing.
+    validations:
+      required: false
