@@ -569,9 +569,16 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
 .copy-btn{
   display:inline-flex;
   align-items:center;
-  min-height:40px;
+  /* The 40px tap target is a HIT AREA, not a box — see ::after below. Sizing
+     the box itself to 40px pushed the masthead's Contact line to 40px against
+     24px for every other value, and the Links table's Email row to 58px
+     against 39px. One row half again as tall as its neighbours reads as a
+     mistake, because in every other table here it would be one. */
+  min-height:0;
+  position:relative;
   margin-left:.5rem;
-  padding:0 .55rem;
+  padding:.1rem .55rem;
+  line-height:1.5;
   background:transparent;
   border:1px solid var(--border);
   color:var(--muted);
@@ -582,6 +589,21 @@ th[aria-sort="descending"] .sort-btn::after{ content:"↓"; opacity:1; color:var
   cursor:pointer;
   vertical-align:middle;
 }
+/* The tap target, spent as an invisible overlay instead of as line height.
+   §3.3 asks that nothing interactive be smaller than 40px to hit; it does not
+   ask that every control be 40px tall. The overlay is centred on the chip and
+   only ever spans the chip's own width, so it cannot swallow a click meant for
+   the address beside it. */
+.copy-btn::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  height:40px;
+  transform:translateY(-50%);
+}
+
 .copy-btn:hover{ border-color:var(--accent); color:var(--accent-text); }
 
 /* A scrollbar shows on desktop, but a touch device shows nothing until the
