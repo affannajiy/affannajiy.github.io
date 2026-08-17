@@ -46,9 +46,20 @@ Related: [design-system.md](design-system.md) tokens ·
 
 ## Tap targets smaller than they look
 
-`.anchor-btn`, `.detail-btn`, `.copy-btn` are 16–17px boxes with a **40px
-invisible hit overlay**. `.anchor-btn` uses `::before` because `::after` already
-carries its "copied" text.
+`.detail-btn` and `.copy-btn` are 16–17px boxes with a **40px invisible hit
+overlay** — spending the target as height rather than box size, so a control
+inside a table row does not set the row's height.
+
+**`.anchor-btn` is now 40×40 and out of the `<summary>`.** Interactive content
+inside a `<summary>` is disallowed — the browser owns that element's activation,
+so a nested button is not consistently reachable by keyboard or AT. Chrome
+reported it for all eight sections. It is now the `.section`'s **first** child,
+so a keyboard pass meets it before the heading it belongs to, positioned back
+into the heading band by CSS. Out of flow, the 40px box costs nothing: sized to
+40 inside the summary it would have set the height of every section heading,
+which is why it used to spend an invisible `::before` overlay that only ever
+bought the height (the box stayed ~19px wide). The `stopPropagation` in its click
+handler is gone with the nesting — the fold is no longer an ancestor.
 
 Inline `.text-link`s stay below 40px — words in a sentence, not controls. Same
 for `.ev-link` (15px): evidence phrases read as prose. `.related-btn` is a
@@ -90,6 +101,34 @@ Header now carries a visible Search control, **40px**, revealed only once
 are `display: flex`, so both rendered while `hidden` was true — the Search
 button would have shown for a reader with no JS, pointing at a dialog that could
 never open. Each needs its own `[hidden] { display: none }`.
+
+## Stacked tables keep their controls and their labels
+
+Below 640px a row is a card ([layout.md](layout.md) §1b). Two things that would
+have quietly gone missing:
+
+- **Sorting.** The sort buttons live in `<thead>`; hiding it stacked would take
+  sorting off every phone. `<thead>` is kept wherever `:has(.sort-btn)` matches,
+  drawn as a "Sort by" bar. Same rule as the header Search control: *a feature
+  gated behind something a device cannot produce is a feature that device does
+  not have.*
+- **Which column a value came from.** Each cell draws its `data-label` in a
+  `::before`. Generated content, so nothing enters the DOM and `readableText()`
+  cannot pick it up — but a screen reader still gets the column from the real
+  `<th>`, which is what `scope` was always for.
+
+**The sort buttons had to be redrawn as buttons.** `.sort-btn` is
+`color: inherit`, and on desktop it inherits cream on the dark header row —
+17.9:1, and obviously a control. Lifted into a bar sitting on cream with no
+column beneath it, that inheritance turned into muted grey words that read as
+decoration: *it was not clear there was anything to press.* Each is now a
+bordered chip in `--fg`, and the pressed state is orange, **drawn from
+`aria-sort`** like the arrow is, so filled and announced cannot drift.
+
+Measured, all ≥ 4.5:1 — cell label on a card **5.35**, "Sort by" **5.35**, row
+header **5.05**, `.anchor-btn` **5.05**, sort chip at rest **17.92**, sort chip
+pressed **4.72** (`--accent-text` on `--accent-soft`). Never `--accent` itself for
+the text: 2.64:1 on cream. Chips measured **71×40**.
 
 ## Marking, not removing
 

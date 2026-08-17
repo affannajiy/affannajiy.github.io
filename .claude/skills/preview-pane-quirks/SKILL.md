@@ -1,11 +1,11 @@
 ---
 name: preview-pane-quirks
-description: Work around the Claude Code preview pane's four failure modes when testing the portfolio site — injected inline styles that look like CSP violations, no scrolling, no painting so requestAnimationFrame never fires, and a restored scroll position at load. Use whenever a measurement in the preview pane looks wrong, a screenshot times out, or scroll- or animation-dependent behaviour appears broken.
+description: Work around the Claude Code preview pane's seven failure modes when testing the portfolio site — injected inline styles that look like CSP violations, no scrolling, no painting so requestAnimationFrame never fires, a restored scroll position at load, a stale layout viewport after a resize preset, deleted images still served from cache, and a stale style.css across a reload. Use whenever a measurement in the preview pane looks wrong, a screenshot times out, a CSS edit appears to have no effect, or scroll- or animation-dependent behaviour appears broken.
 ---
 
 # Preview-pane quirks
 
-The Claude Code preview pane is not a normal browser. Four things fail there and
+The Claude Code preview pane is not a normal browser. Seven things fail there and
 are **not** site bugs. Every one of them has produced a false bug report before.
 
 **Prefer measuring computed values over looking at pixels.** Screenshots
@@ -95,6 +95,28 @@ new Promise(function (res) {
 
 Same family as the stale `script.js` trap: `?v=` on the HTML does not bust a
 subresource.
+
+## 7. `location.reload()` can serve the old `style.css`
+
+A CSS edit measures as if it never happened — and the giveaway is that the rule is
+missing from the CSSOM, not merely losing the cascade. **Check before
+diagnosing specificity:**
+
+```js
+[].filter.call(document.styleSheets[0].cssRules, function (r) {
+  return r.selectorText && r.selectorText.indexOf('your-class') > -1;
+}).map(function (r) { return r.cssText; })
+```
+
+Absent means stale. Swap in a cache-busted copy — same origin, so `style-src
+'self'` allows it:
+
+```js
+var l = document.querySelector('link[rel=stylesheet]');
+var n = l.cloneNode(); n.href = 'style.css?bust=' + Date.now();
+n.onload = function () { l.remove(); /* measure */ };
+document.head.appendChild(n);
+```
 
 ---
 

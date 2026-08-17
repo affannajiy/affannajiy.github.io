@@ -177,6 +177,11 @@ that means nothing on paper.
   folds and the Projects filter go into a `restore` object, reverted on
   `afterprint` plus a timed fallback — not every browser fires that event. A page
   left mangled after a cancelled print is worse than no export.
+- **`.cert-verify` does not print.** URLs are emitted only for
+  `#certificates a[href^="assets"]`, so a verification link would print as the
+  bare word "Verify" — and a 100-character accomplishment hash is not a URL
+  anybody types. The ` · ` separator lives **inside** the span, so both go
+  together rather than leaving the cell ending in a dot.
 - Print block drops header, nav, footer, filter, status line and all buttons;
   repeats `<thead>` per page; forbids a row splitting across a break. Link URLs
   print only in the masthead, Links and Certificates — never for Projects.

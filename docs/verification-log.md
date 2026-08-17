@@ -9,6 +9,58 @@ behind it is a number nobody has checked.**
 
 ---
 
+## Round: 2026-08-17, one scroll direction on mobile
+
+Nine of twenty `.table-wrap`s overflowed at 375px, so nine tables took a second
+gesture to read. Below 640px rows stack instead. Plus: every dialog centred, and
+the `#` button moved out of `<summary>`.
+
+| Check | Result |
+| --- | --- |
+| Page overflow | `scrollWidth === innerWidth` at **320px**, **375px** and **1280px**. Walked every element in `main` and the footer: **0 offenders** at 320px |
+| Scrolling table wraps | **9 → 0**. `syncScrollableTables()` strips the `tabindex` and `role=region` by itself — 9 keyboard stops that no longer lead anywhere |
+| Still scroll on purpose | `.ascii-wrap` (fixed-width art) and `#compare-table` inside its own dialog |
+| Cell labels | 253 `data-label`s across `main`, all derived from `<thead>`. Education row reads `Qualification / Institution / Period / Result`, each cell 344px wide |
+| Labels survive a render | 40 on the Projects table after sort, 12 of 12 cells after filtering to 3 rows |
+| Search index / JSON / budget leak | none. An attribute is invisible to `readableText()`; budget **`About 58 lines of the ~59 a page holds`**, unmoved |
+| `<thead>` stacked | Projects and Education **kept** (sort bar, 65px: a "Sort by" label over 40px buttons). "Year by year", which has no sort, **hidden** — every cell names its own column |
+| Plain header inside the sort bar | `Description` has no sort button and is `display: none` — not a dead label in a control bar |
+| Sorting stacked | `aria-sort="ascending"` follows the click, rows reorder, filter status reads `Showing 3 of 10 repositories matching "py", sorted by name, ascending.` |
+| Desktop unchanged | `display: table` / `table-row` / `table-header-group`, `thead th` still `sticky`, label `::before` computes `none` |
+| Contrast | cell label **5.35**, "Sort by" **5.35**, row header **5.05**, `.anchor-btn` **5.05** |
+| Dialogs centred | all **7** — export, repo, QR, compare, search, keys, JSON. Both axes, gaps equal to within 2px. The palette lives inside the search dialog, so it inherits |
+| Search dialog while typing | fixed `height: min(82vh, 34rem)` rather than a max. Centred with an auto height, the box grows symmetrically and slides the input out from under the finger |
+| Export dialog on a 375×812 screen | UA clamps it to 773px against 842px of content, and computed `overflow-y: auto` — it scrolls inside. **Not clipped** |
+| `#` button out of `<summary>` | `summary .anchor-btn` **0**, `.section > .anchor-btn` **8**. Chrome's "interactive element inside `<summary>`" for 8 elements is gone |
+| `#` tap target | **40×40**, up from ~19×40 — out of flow, the box can just be the target. Aligned to the heading band (`top` 780 = summary `top` 780), 22px clear of the fold chevron |
+| `#` no longer toggles the fold | clicked, `details.open` unchanged. The `stopPropagation` guard deleted with the nesting |
+| Console | zero site-owned errors, `[style]` count **0** |
+| Projects table | 10 rows live from the API, status states the count |
+
+**Follow-up the same day** — the stacked sort bar, and certificate verification:
+
+| Check | Result |
+| --- | --- |
+| Sort chip at rest | **17.92:1**, `--fg` on `--bg`, 1px `--border`, **71×40**. Was muted grey inherited from a header row it no longer sits on — 5-ish and reading as decoration |
+| Sort chip pressed | `aria-sort="ascending"` → `--accent-text` on `--accent-soft`, `--accent` border, arrow recoloured. **4.72:1**. Drawn from `aria-sort`, so filled and announced cannot drift |
+| Unpressed sibling | unchanged in the same click — one chip fills, not all |
+| Keyboard-shortcuts button on touch | **already `hidden`.** Gated on `(hover: hover)`, not on width: emulated touch reports `hover: false`, `pointer: coarse` → hidden; 1280px desktop → shown. Nothing changed |
+| Certificate verify links | 4 of 7, `.cert-verify`. **Zero tracking parameters** — LinkedIn's `?trk=` and `lipi=` stripped |
+| Column header | `PDF` → `Record`, and `data-label` follows it automatically |
+| Print | `.cert-verify` `display: none`, asset URL still emitted, verify URL not, **no dangling `·`**. Masthead 67.3mm, budget **58 of ~59** — both unmoved |
+| Certificates **Reset** alignment | was **4.8px** low — `.retry-btn`'s `margin-top: .6rem` (9.6px) on a `align-items: center` row, which centres the *margin* box, so the visible box drops by half. Now `delta: 0`, tops **and** bottoms flush, heights equal. Own grid row below 640px keeps the 9px, **58×40** |
+| Failure path, unplanned | rate-limited mid-round. Rendered **10 rows from a 12-minute-old cache**, stated the reason, offered Retry, cleared `aria-busy`. Working as designed |
+
+**New harness trap.** Flipping `@media print` to `all` does **not** switch off
+`@media screen and (max-width: 640px)`, so at 375px the print reading came back
+`display: block` with cell labels — the stacked layout, not a print leak.
+**Measure print above 640px.**
+
+**Lighthouse, live site, Moto G Power / slow 4G:** 99 / 100 / 100 / 92. Nothing
+actionable. SEO 92 is the missing `robots.txt`, rejected on purpose; CSP-in-meta,
+HSTS, COOP and XFO are response headers GitHub Pages does not let the repo set;
+minify and unused-JS want a build step (constraint 1.2). CLS **0**.
+
 ## Round: 2026-08-17, QR code
 
 A committed PNG, not a generated one — a QR encoder is Reed–Solomon arithmetic and

@@ -457,6 +457,10 @@ main {
 
 /* ── Sections ────────────────────────────────────────────── */
 .section {
+  /* The containing block for the section's own "copy a link" button, which is
+     positioned out of flow precisely so that it can sit beside the heading
+     without living inside the <summary>. See .anchor-btn. */
+  position: relative;
   border-bottom: 1px solid var(--border);
   padding: 2.75rem 0;
   scroll-margin-top: 5rem;
@@ -900,8 +904,13 @@ th[aria-sort="descending"] .sort-btn::after {
   color: var(--accent-text);
 }
 
-/* A scrollbar shows on desktop, but a touch device shows nothing until the
-   user already guessed. Say it in words, only where it applies. */
+/* A scrollbar shows on desktop, but a touch device shows nothing until the user
+   already guessed. Say it in words, only where it applies.
+
+   **Only the ASCII diagram applies now.** Tables stopped scrolling sideways
+   below 640px (layout.md §1b), so the two hints on the Skills and Certificates
+   tables were removed rather than kept describing a gesture the page no longer
+   asks for. Never put this back on a table without checking one still scrolls. */
 .scroll-hint {
   display: none;
 }
@@ -1112,7 +1121,18 @@ th[aria-sort="descending"] .sort-btn::after {
   color: var(--muted);
 }
 
-.compare-bar .retry-btn {
+/* `.retry-btn`'s `margin-top` is for the standalone case — the Retry that appears
+   under a failed status line and needs separating from it. Anywhere the button
+   sits *inline in a row*, that margin is a misalignment: with `align-items:
+   center` the flex box centres the **margin** box, so a 9.6px top margin drops
+   the border box by half of it. Measured: Reset sat **4.8px** below three selects
+   whose tops were identical.
+
+   Zeroed per container rather than removed from the base rule, because the
+   standalone case is the common one. See also the 640px block, where the Reset
+   becomes its own grid row and the separation is wanted again. */
+.compare-bar .retry-btn,
+.filter-row .retry-btn {
   margin-top: 0;
 }
 
@@ -1186,38 +1206,45 @@ body.density-compact .sort-btn {
 }
 
 /* ── Copy a link to a section ─────────────────────────────
-   Lives inside the <summary>, so its click handler stops propagation — without
-   that, copying the link would also collapse the section, which reads as the
-   copy having broken something. */
+   **Out of the <summary>, on purpose.** It used to be appended to the
+   `.section-title`, which is the summary's only child, and interactive content
+   inside a <summary> is disallowed: the browser owns that element's activation,
+   so a button nested in it is not consistently reachable by keyboard or by
+   assistive tech. Chrome reports it, and it was reported for all eight sections.
+
+   So the button is a child of the `.section` instead — first child, so the tab
+   order still meets it before the heading it belongs to — and positioned out of
+   flow into the heading band. `right` clears the fold chevron, which sits at the
+   summary's right edge. The old click handler no longer needs to stop the event
+   from reaching the fold, because the fold is no longer an ancestor.
+
+   Being out of flow is also what buys the 40px tap target honestly: sized to 40
+   inside the <summary> it would have set the height of every section heading,
+   which is why it used to spend an invisible ::before overlay instead. */
 .anchor-btn {
-  position: relative;
-  margin-left: .5rem;
+  position: absolute;
+  top: 2.75rem;
+  /* .section's padding-top: aligns with the heading's 40px band */
+  right: 1.5rem;
+  /* clear of the chevron */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 40 in both directions, which the ::before overlay never managed: it was
+     `left: 0; right: 0`, so it inherited the box's ~19px width and only ever
+     bought the height. Out of flow, the box can simply be the tap target. */
+  min-width: 40px;
+  min-height: 40px;
   padding: 0 .35rem;
   background: transparent;
   border: 1px solid transparent;
   color: var(--muted);
   font-family: var(--sans);
-  font-size: .9em;
+  font-size: .85rem;
   cursor: pointer;
-  vertical-align: baseline;
 }
 
-/* The 40px tap target, spent as an invisible overlay rather than as box
-   height — the same trade .copy-btn and .detail-btn make. Sizing the button
-   itself to 40px would set the height of every section heading, since it sits
-   inside the <summary>. ::before, not ::after: ::after already carries the
-   "copied" confirmation, and one pseudo-element cannot do both jobs. */
-.anchor-btn::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 40px;
-  transform: translateY(-50%);
-}
-
-.section-title:hover .anchor-btn {
+.section:hover .anchor-btn {
   border-color: var(--border);
 }
 
@@ -1286,11 +1313,18 @@ body.density-compact .sort-btn {
 
 /* ── Search dialog ────────────────────────────────────────
    Wider and taller than the export dialog because it holds a list that grows;
-   the results scroll inside it rather than growing the modal past the screen. */
+   the results scroll inside it rather than growing the modal past the screen.
+
+   Centred like every other dialog, and given a **fixed** height rather than a
+   maximum to make that safe. Centred plus auto height means the box grows
+   symmetrically as results arrive, so the input slides upward out from under the
+   finger already typing into it. A stable height keeps the input still and lets
+   the list scroll inside — which is what `.search-results` was already for.
+   This replaced a 6vh top offset, which held the input still by not centring. */
 .search-dialog {
   width: min(46rem, 94vw);
-  max-height: 82vh;
-  margin: 6vh auto auto auto;
+  height: min(82vh, 34rem);
+  margin: auto;
   padding: 0;
   border: 2px solid var(--rule);
   background: var(--bg);
@@ -1304,7 +1338,8 @@ body.density-compact .sort-btn {
 .search-form {
   display: flex;
   flex-direction: column;
-  max-height: 82vh;
+  height: 100%;
+  box-sizing: border-box;
   padding: 1.1rem;
 }
 
@@ -1750,6 +1785,12 @@ body.focus-mode .section:not(.focus-target) {
     scroll-margin-top: 11.5rem;
   }
 
+  /* Tracks the section's padding-top above: the button is positioned into the
+     heading band, so the two numbers have to move together. */
+  .anchor-btn {
+    top: 2rem;
+  }
+
   /* .74rem on a 15px root read as 11.1px — legible on a desktop monitor,
      not on a phone held at arm's length. .88rem = 13.2px, which sits close
      enough to the 15px prose to stop the tables feeling like fine print.
@@ -1887,9 +1928,12 @@ body.focus-mode .section:not(.focus-target) {
     align-items: center;
   }
 
+  /* On its own row now, not beside the selects, so the separation the base rule
+     provides is wanted back. */
   .filter-row-multi .retry-btn {
     grid-column: 1 / -1;
     justify-self: start;
+    margin-top: .6rem;
   }
 
   .detail-list {
@@ -1904,7 +1948,7 @@ body.focus-mode .section:not(.focus-target) {
 
   .search-dialog {
     width: 96vw;
-    margin: 2vh auto auto auto;
+    height: min(88vh, 34rem);
   }
 
   .search-form {
@@ -1913,6 +1957,228 @@ body.focus-mode .section:not(.focus-target) {
 
   .colophon-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Narrow screens: rows stack, nothing scrolls sideways ──
+   A four- or five-column table cannot fit 375px and stay a table, and the
+   wrapper's sideways scroll was the price paid for keeping every column. That
+   price is now refused: below 640px each row becomes a stacked card, so the
+   whole record is reachable by scrolling one direction only.
+
+   `screen and`, deliberately. Print has its own linearisation in
+   `body.print-resume`, driven by what the reader ticked rather than by the
+   width of a page, and these rules must not reach it.
+
+   The cell labels come from each table's own `<thead>`, set as `data-label` by
+   `labelCells()` in script.js. Nothing is hand-tagged, and an attribute is
+   invisible to `readableText()`, so the search index, the JSON view and the
+   résumé line budget are untouched by any of this. */
+@media screen and (max-width: 640px) {
+
+  /* Nothing overflows now, so `syncScrollableTables()` strips the tabindex and
+     role=region by itself — 9 keyboard stops that no longer lead anywhere. The
+     wrapper's own frame goes too: the card border is the frame now, and two
+     nested boxes around one row reads as a mistake. */
+  .table-wrap {
+    overflow-x: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .grid-table {
+    display: block;
+    background: transparent;
+  }
+
+  /* The header row survives only where it is a control. Where it carries sort
+     buttons it stays, as a wrapped bar above the cards — a sort reachable only
+     by a column header is a sort a phone does not have, which is the trap the
+     header Search control was added to close. Where it carries plain column
+     names it goes: every cell now states its own column, so leaving it would
+     print the same words twice. */
+  .grid-table thead {
+    display: none;
+  }
+
+  .grid-table thead:has(.sort-btn) {
+    display: block;
+    margin-bottom: .7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .grid-table thead::before {
+    content: "Sort by";
+    display: block;
+    padding: .5rem .6rem 0;
+    font-family: var(--sans);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .grid-table thead tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    padding: .45rem .6rem .6rem;
+  }
+
+  /* `position: static` matters: the header cells are sticky against the
+     wrapper's scroll on wider screens, and a sticky box inside a bar that no
+     longer scrolls is a box that can drift out of it. */
+  .grid-table thead th {
+    display: block;
+    position: static;
+    flex: 0 0 auto;
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  /* A column with no sort button is a dead label inside a control bar. */
+  .grid-table thead th:not(:has(.sort-btn)) {
+    display: none;
+  }
+
+  /* ── The sort buttons have to look like buttons ─────────
+     `.sort-btn` is `color: inherit`, and a table header inherits the muted grey
+     that reads as a *label* on a column it is sitting on top of. Lifted out into
+     a bar with no column under it, three grey words on cream read as decoration:
+     it was not clear there was anything to press. So each becomes a bordered chip
+     in full `--fg`, and the full-width flex of the desktop header goes with it.
+
+     **Orange is the pressed state, and it is drawn from `aria-sort`** — the same
+     rule the arrow follows, so what is announced and what is filled cannot
+     drift. `--accent-soft` behind `--accent-text`, the pair already carrying the
+     search highlight; never `--accent` itself, which is 2.64:1 on cream. */
+  .grid-table thead .sort-btn {
+    width: auto;
+    gap: .35rem;
+    padding: .45rem .65rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--fg);
+  }
+
+  /* The "not sorted by this" arrow. .35 was set against a column header the eye
+     had already found; on a chip it is the only thing saying the chip sorts. */
+  .grid-table thead .sort-btn::after {
+    opacity: .6;
+  }
+
+  .grid-table thead th[aria-sort="ascending"] .sort-btn,
+  .grid-table thead th[aria-sort="descending"] .sort-btn {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+  }
+
+  /* `--accent-mid` is a pale peach: legible as a tint behind text, not as the
+     glyph itself once the chip around it is filled. */
+  .grid-table thead th[aria-sort="ascending"] .sort-btn::after,
+  .grid-table thead th[aria-sort="descending"] .sort-btn::after {
+    color: var(--accent-text);
+  }
+
+  .grid-table tbody,
+  .grid-table tbody tr,
+  .grid-table tbody th,
+  .grid-table tbody td {
+    display: block;
+  }
+
+  .grid-table tbody tr {
+    margin-bottom: .7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .grid-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Hairlines now separate the fields of one row rather than the columns of a
+     grid, so the right-hand edge each cell carried has nothing left to divide.
+     The screen rules that strip the outer edges are keyed to `:last-child`,
+     which under a stacked row means the last *field* — they are restated here
+     against the row instead. */
+  .grid-table tbody th,
+  .grid-table tbody td {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: .5rem .7rem;
+  }
+
+  .grid-table tbody tr> :last-child {
+    border-bottom: 0;
+  }
+
+  /* The row header is the card's title. */
+  .grid-table tbody th[scope="row"] {
+    background: var(--bg);
+    font-weight: 600;
+  }
+
+  .grid-table tbody [data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: .15rem;
+    font-family: var(--sans);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Long descriptions and URLs are the two things that can still push a card
+     past the screen once the columns are gone. */
+  .grid-table tbody td {
+    overflow-wrap: anywhere;
+  }
+
+  /* ── The one exception ──────────────────────────────────
+     The comparison matrix is repositories against attributes, not a list of
+     rows: stacked, each card would hold one attribute across every repository
+     and the comparison — the entire point — would be gone. It stays a table and
+     keeps scrolling inside its own dialog, which is what the dialog is for. The
+     rule this section is written against is about the page a reader scrolls,
+     not about a matrix they opened on purpose. */
+  #compare-table,
+  #compare-table thead,
+  #compare-table tbody,
+  #compare-table tr,
+  #compare-table th,
+  #compare-table td {
+    display: revert;
+  }
+
+  #compare-table thead::before {
+    content: none;
+  }
+
+  #compare-table thead th {
+    position: sticky;
+    top: 0;
+  }
+
+  #compare-table th,
+  #compare-table td {
+    border-right: 1px solid var(--border);
+    padding: .5rem .6rem;
+  }
+
+  #compare-table th:last-child,
+  #compare-table td:last-child {
+    border-right: 0;
+  }
+
+  #compare-dialog .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    background: var(--surface);
   }
 }
 
@@ -2252,6 +2518,11 @@ img {
   .filter-row,
   .status,
   .scroll-hint,
+  /* A verification URL is 100+ characters of hash and nobody types one. The
+     print rule below prints only `href^="assets"`, so on paper "Verify" would be
+     a word with no destination. The separator is inside the span, so both leave
+     together and the cell does not end in a dangling dot. */
+  .cert-verify,
   .resume-actions,
   .fold-controls,
   .copy-btn,

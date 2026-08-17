@@ -707,7 +707,6 @@
               </tbody>
             </table>
           </div>
-          <p class="hint scroll-hint">Table scrolls sideways &rarr; for level and evidence.</p>
           <p class="hint">
             Other languages appearing in my public repositories — TypeScript, C++ and
             R — are listed by the Projects table below rather than claimed here.
@@ -747,14 +746,16 @@
           <div class="table-wrap">
             <table class="grid-table" id="cert-table" data-sortable>
               <caption class="sr-only">Certificates by year, most recent first. Column headers sort the table. Each row
-                links to the certificate PDF.</caption>
+                links to the certificate PDF, and to the issuer's verification page where one is published.</caption>
               <thead>
                 <tr>
                   <th scope="col">Year</th>
                   <th scope="col">Certificate</th>
                   <th scope="col">Issuer</th>
                   <th scope="col">Type</th>
-                  <th scope="col">PDF</th>
+                  <!-- "PDF" until the cell held two kinds of link. A header naming
+                   one of the two things under it is a header that misleads. -->
+                  <th scope="col">Record</th>
                 </tr>
               </thead>
               <tbody>
@@ -763,9 +764,15 @@
                   <td>AI Fundamentals</td>
                   <td>Google, via Coursera</td>
                   <td>Training</td>
+                  <!-- The separator lives inside .cert-verify, so print drops both
+                   together rather than leaving a dash at the end of the cell. -->
                   <td><a class="text-link" href="assets/certificates/coursera-google-ai-fundamentals.pdf"
                       target="_blank" rel="noopener noreferrer">View PDF<span class="sr-only"> (opens in a new
-                        tab)</span></a></td>
+                        tab)</span></a><span class="cert-verify"> ·
+                      <a class="text-link"
+                        href="https://www.coursera.org/account/accomplishments/verify/6GCWNZNB2MIW" target="_blank"
+                        rel="noopener noreferrer">Verify<span class="sr-only"> with Coursera (opens in a new
+                          tab)</span></a></span></td>
                 </tr>
                 <tr>
                   <th scope="row">2026</th>
@@ -783,7 +790,11 @@
                   <td>Training</td>
                   <td><a class="text-link" href="assets/certificates/datacamp-understanding-cloud-computing.pdf"
                       target="_blank" rel="noopener noreferrer">View PDF<span class="sr-only"> (opens in a new
-                        tab)</span></a></td>
+                        tab)</span></a><span class="cert-verify"> ·
+                      <a class="text-link"
+                        href="https://www.datacamp.com/completed/statement-of-accomplishment/course/4eb3e37f3530b271b85a129f9a642a838571b7cd"
+                        target="_blank" rel="noopener noreferrer">Verify<span class="sr-only"> with DataCamp (opens in a
+                          new tab)</span></a></span></td>
                 </tr>
                 <tr>
                   <th scope="row">2026</th>
@@ -791,16 +802,29 @@
                   <td>DataCamp</td>
                   <td>Training</td>
                   <td><a class="text-link" href="assets/certificates/datacamp-claude-code-101.pdf" target="_blank"
-                      rel="noopener noreferrer">View PDF<span class="sr-only"> (opens in a new tab)</span></a></td>
+                      rel="noopener noreferrer">View PDF<span class="sr-only"> (opens in a new
+                        tab)</span></a><span class="cert-verify"> ·
+                      <a class="text-link"
+                        href="https://www.datacamp.com/completed/statement-of-accomplishment/course/2df3da7075c71a132aef539752309ec4ecc72959"
+                        target="_blank" rel="noopener noreferrer">Verify<span class="sr-only"> with DataCamp (opens in a
+                          new tab)</span></a></span></td>
                 </tr>
                 <tr>
                   <th scope="row">2025</th>
                   <td>Strategic Business Analysis Essentials</td>
                   <td>PMI Registered Education Provider</td>
                   <td>Training</td>
+                  <!-- The issuer's own share URL carried `?trk=share_certificate`
+                   and a `lipi=` page-view token. Both are LinkedIn's tracking of
+                   whoever follows the link, and rule 1.6 says this page carries
+                   none — the bare certificate path resolves on its own. -->
                   <td><a class="text-link" href="assets/certificates/pmi-strategic-business-analysis-essentials.pdf"
                       target="_blank" rel="noopener noreferrer">View PDF<span class="sr-only"> (opens in a new
-                        tab)</span></a></td>
+                        tab)</span></a><span class="cert-verify"> ·
+                      <a class="text-link"
+                        href="https://www.linkedin.com/learning/certificates/2cf92c2385e8d0d1fcaaf6c16f4126b61e25017bea0046b9c564bd046e5024e9"
+                        target="_blank" rel="noopener noreferrer">Verify<span class="sr-only"> with LinkedIn Learning
+                          (opens in a new tab)</span></a></span></td>
                 </tr>
                 <tr data-hide-in="developer">
                   <th scope="row">2025</th>
@@ -822,19 +846,19 @@
               </tbody>
             </table>
           </div>
-          <p class="hint scroll-hint">Table scrolls sideways &rarr; for issuer, type and the PDF link.</p>
           <!-- Say what the link does before it is clicked, not after (Rulebook
            §1.1). A PDF that opens in a new tab, or downloads outright on a
            browser configured that way, is a surprise worth spending a line on. -->
           <p class="hint">Each certificate is a PDF and opens in a new tab.</p>
-          <!-- Labelled as unfinished rather than left as a silent gap (rule 2.5).
-           No verification URL is invented: where an issuer publishes one it
-           will join the PDF link in the same cell, and where none exists the
-           PDF is the record. -->
+          <!-- No verification URL is invented (rule 2.5). Where the issuer
+           publishes one it sits beside the PDF in the same cell; where none
+           exists the PDF is the record, and the gap is stated rather than
+           papered over. -->
           <p class="hint">
-            <strong>Not yet done:</strong> issuer verification links. Coursera and
-            DataCamp publish them; the others do not. They will sit beside the PDF
-            link in the same cell as they are collected.
+            Four of the seven carry a “Verify” link to the issuer’s own record —
+            Coursera, DataCamp and LinkedIn Learning publish them. The two UTP
+            co-curricular certificates and the DataCamp travel-planning course do
+            not, so for those the PDF is the record.
           </p>
         </div>
       </details>
@@ -940,7 +964,6 @@
             </table>
           </div>
 
-          <p class="hint scroll-hint js-only">Table scrolls sideways &rarr; for language and date.</p>
           <p class="hint js-only">
             Every row links to the repository on GitHub. “Details” opens what is
             already known about it here, without another request to GitHub.

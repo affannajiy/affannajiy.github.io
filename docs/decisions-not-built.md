@@ -84,6 +84,23 @@ Not rejected, just **not ours**: response headers (SCP-162), HSTS (SCP-143),
 `nosniff`. Pages sends `nosniff` and `github.io` is HSTS-preloaded; neither is
 configurable from the repo.
 
+**Re-confirmed against a live Lighthouse run, 2026-08-17** (99 / 100 / 100 / 92,
+CLS 0). Every item it flags is already on this page: `robots.txt` above, the
+headers above, and minify / unused-CSS / unused-JS, which all want the build step
+rule 1.2 forbids. **Nothing was changed for it.** A 92 bought with a fifth
+top-level file is a worse repo with a rounder number.
+
+## Rejected from the mobile-width round (2026-08-17)
+
+| Thing | Why not |
+| --- | --- |
+| **Dropping columns on narrow screens** instead of stacking | Hidden data, the same reason the Stars column went. A table showing three of five columns with no control saying so reads as three being all there are. |
+| **Stacking `#compare-table` too** | It is repositories against attributes. Stacked, each card holds one attribute across every repository and the comparison — the whole feature — is gone. It keeps its dialog's scroll. |
+| **Reflowing the ASCII diagram** | Fixed-width art. Reflowed it is not a diagram. |
+| **Un-scrolling the condensed nav strip** | It scrolls sideways deliberately, with a `mask-image` fade saying so ([layout.md](layout.md) §3). It is a control strip, not content, and the alternative is dropping destinations. |
+| **Hiding `<thead>` unconditionally when stacked** | Takes sorting off every phone. Kept wherever it holds a `.sort-btn`. |
+| **Hiding the "Keyboard shortcuts" button by width** | It is already gated on `(hover: hover)`, which is the honest test: a phone never sees it, and a laptop in a narrow window — a keyboard behind a small screen — still does. A `max-width` rule would break exactly that case. |
+
 ## Rejected because they would go stale or gate content
 
 | Thing | Why not |

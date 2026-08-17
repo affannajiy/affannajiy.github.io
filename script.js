@@ -398,6 +398,7 @@
     }
 
     tbody.appendChild(frag);
+    labelCells(table);
     syncNavEmpty();
   }
 
@@ -1320,6 +1321,53 @@
   window.addEventListener("resize", syncScrollableTables);
   document.addEventListener("viewmodechange", syncScrollableTables);
 
+  /* Below 640px a table row is drawn as a stacked card, and a cell standing on
+     its own line has nothing left saying which column it came from. The label
+     is taken from the table's own <thead> and written onto the cell as
+     `data-label`, which CSS reads with attr().
+
+     Derived, never hand-written: the header text is already there and already
+     correct, and a second copy typed into the markup is a second thing to keep
+     in sync — the same bargain `syncScrollableTables()` makes with <caption>.
+
+     An attribute is also invisible to `readableText()`, so the search index, the
+     JSON view and the résumé line budget cannot pick these up. Setting one
+     parses nothing, which is what makes it safe on the Projects table, where
+     every cell is remote text.
+
+     A cell spanning columns — the empty-state row's single "No repositories
+     match" cell — is left unlabelled: there is no one column it came from. */
+  function labelCells(tbl) {
+    if (!tbl) return;
+
+    var headRow = tbl.querySelector("thead tr");
+    var body = tbl.querySelector("tbody");
+    if (!headRow || !body) return;
+
+    var labels = [].map.call(headRow.cells, function (th) {
+      return readableText(th).replace(/\s+/g, " ").trim();
+    });
+
+    [].forEach.call(body.rows, function (row) {
+      [].forEach.call(row.cells, function (cell, i) {
+        if (cell.colSpan > 1 || !labels[i]) {
+          cell.removeAttribute("data-label");
+          return;
+        }
+        cell.setAttribute("data-label", labels[i]);
+      });
+    });
+  }
+
+  /* The comparison matrix is excluded by CSS from stacking at all, so labelling
+     it would write attributes nothing reads. */
+  function labelAllCells() {
+    [].forEach.call(
+      document.querySelectorAll("main table.grid-table:not(#compare-table)"),
+      labelCells
+    );
+  }
+
   function initFoldControls() {
     var folds = document.querySelectorAll("details.section-fold");
     var main = document.getElementById("main");
@@ -1547,7 +1595,7 @@
      No destination is removed: all eight links stay, on one row that scrolls
      sideways behind a fade. A clipped edge would read as "finished" and hide
      data (Gestalt §2.4), so the fade is the affordance that says otherwise —
-     the same bargain the tables already make with .scroll-hint — and the
+     the same bargain the ASCII diagram makes with .scroll-hint — and the
      scrollspy scrolls the current section back into view, so the reader never
      has to hunt for where they are.
 
@@ -1746,6 +1794,7 @@
     }
 
     body.appendChild(frag);
+    labelCells(body.closest("table"));
     wrap.hidden = false;
   }
 
@@ -3726,12 +3775,7 @@
       said.setAttribute("role", "status");
 
       var timer;
-      btn.addEventListener("click", function (event) {
-        // The button sits inside <summary>; without this the click toggles the
-        // fold as well as copying, which looks like the copy broke something.
-        event.preventDefault();
-        event.stopPropagation();
-
+      btn.addEventListener("click", function () {
         var url =
           window.location.origin + window.location.pathname + "#" + section.id;
         navigator.clipboard.writeText(url).then(
@@ -3750,8 +3794,17 @@
         }, 2500);
       });
 
-      title.appendChild(btn);
-      title.appendChild(said);
+      /* Not into the title. The title is the <summary>'s only child, and
+         interactive content inside a <summary> is disallowed — the browser owns
+         that element's activation, so a button nested in it is not consistently
+         reachable by keyboard or by assistive tech. Chrome reported it for all
+         eight sections. It goes into the `.section` instead, positioned back into
+         the heading band by CSS.
+
+         **First child**, so a keyboard pass meets the button before the heading
+         it belongs to rather than after everything the section holds. */
+      section.insertBefore(said, section.firstChild);
+      section.insertBefore(btn, section.firstChild);
     });
   }
 
@@ -3807,6 +3860,11 @@
   // Order-independent: buildCommands() runs on every palette render, not once at
   // init, so the button only has to be revealed before anyone opens the palette.
   initQR();
+
+  // After initStaticSort, which replaces each header's text with a button — the
+  // labels are read through readableText() either way, but a header rewritten
+  // after they were taken would leave them describing the old markup.
+  labelAllCells();
 
   /* Last, and after every control that can change a table's width has been
      built. A closed fold reports a clientWidth of 0, so this also runs whenever

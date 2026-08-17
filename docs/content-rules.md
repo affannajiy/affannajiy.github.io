@@ -36,7 +36,18 @@ supervisor, referee or colleague is named as a contact.
 - **Tag repositories on GitHub** with `featured` to light up the Selected
   projects band. Optionally `academic` / `coursework` for more topic chips —
   only topics used more than once get one.
-- **Certificate verification URLs** where Coursera and DataCamp publish them.
-  Currently marked unfinished with a visible `.hint`; no URL was invented.
+- ~~**Certificate verification URLs.**~~ **Done 2026-08-17** — four of seven, from
+  Coursera, DataCamp ×2 and LinkedIn Learning, beside the PDF in the same cell
+  inside `.cert-verify`. The header changed `PDF` → `Record`: a header naming one
+  of the two things under it misleads. The remaining three publish none, and the
+  `.hint` now **states which**, rather than promising links that are coming.
+  - **Tracking parameters are stripped from a supplied URL.** LinkedIn's share
+    link carried `?trk=share_certificate` and a `lipi=` page-view token; the bare
+    certificate path resolves on its own. Rule 1.6 says this page carries no
+    trackers — pasting an issuer's is still carrying one.
+  - **`.cert-verify` does not print.** Print emits `href` only for
+    `^="assets"`, so on paper "Verify" would be a word with no destination — and
+    a 100-character hash is not a URL anybody types. The separator sits inside
+    the span so both leave together and the cell ends clean.
 - **Keep the availability dates in "Currently seeking" current.**
 - `assets/resume.pdf` still says the internship is ongoing.

@@ -20,6 +20,8 @@ review against [UI-UX_Rulebook.md](UI-UX_Rulebook.md) and
 | Skip link | First focusable element, jumps to `#main` | [accessibility.md](accessibility.md) | **Raised to the 40px floor** — measured 37px |
 | Colophon | Data sources, live system panel, how it is built, JSON view | [state-and-data.md](state-and-data.md) §1 | — |
 | ASCII work diagram | Areas of work, drawn in text so it needs no image | [layout.md](layout.md) §4 | — |
+| Stacked tables below 640px | One card per row, each cell under its column name — a phone scrolls one direction only | [layout.md](layout.md) §1b, [tables.md](tables.md) §1a | **New.** 9 sideways-scrolling tables → 0 |
+| Copy a section link (`#`) | Copies a deep link to the section | [accessibility.md](accessibility.md) | **Moved out of `<summary>`**, and 40×40 rather than 19×40 |
 
 ## 2. Projects, from the GitHub API
 
@@ -46,6 +48,7 @@ review against [UI-UX_Rulebook.md](UI-UX_Rulebook.md) and
 | Generic sorting | Any `[data-sortable]` table with 3+ rows | [tables.md](tables.md) §2 | Reads cells through `readableText()` |
 | Period-aware sort | Sorts "May 2024 – Aug 2027" by start date, not month name | [tables.md](tables.md) §2 | — |
 | Certificate filters | Year, issuer, type — selects built from the rows | [state-and-data.md](state-and-data.md) §2 | — |
+| Certificate verification links | 4 of 7 link to the issuer's own record beside the PDF; the other three publish none and the hint says so | [content-rules.md](content-rules.md) §4 | **New.** Screen only — a 100-char hash does not print |
 | Experience year bar | Filters roles by the years they ran | [state-and-data.md](state-and-data.md) §2 | **An employer left with no roles in the year is collapsed, sub-heading and all** |
 | Density toggle | Compact rows, remembered in `localStorage` | [state-and-data.md](state-and-data.md) §6 | — |
 | Skills evidence column | Every skill points at a row elsewhere on the page | [printing.md](printing.md) §3 | **Now real links, not prose** |

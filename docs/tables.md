@@ -21,6 +21,21 @@ Related: [state-and-data.md](state-and-data.md) filtering ·
   default. The invariant is about the record.
 - **No persisted fold state** — see §6 of [state-and-data.md](state-and-data.md).
 
+## 1a. Below 640px a row is a card
+
+Full rules in [layout.md](layout.md) §1b. What matters when touching a table:
+
+- **Add a column and nothing needs doing.** The label comes from `<thead>` via
+  `labelCells()`. **Build rows from JS and you must call it** — `renderRows()`
+  and `buildStats()` do; a third render path that forgets will ship cards whose
+  cells say nothing.
+- **A cell spanning columns is left unlabelled.** The empty-state row is one
+  `td[colSpan=4]`; there is no single column it came from.
+- **`<thead>` is kept only where it holds a `.sort-btn`.** Add `data-sortable` to
+  a table under three rows and `initStaticSort()` skips it, so its header
+  correctly disappears on a phone rather than standing there as a dead label.
+- **`#compare-table` is excluded by name.** A matrix does not stack.
+
 ## 2. Sorting the static tables
 
 - Any `table.grid-table[data-sortable]` gets clickable headers, built by JS from

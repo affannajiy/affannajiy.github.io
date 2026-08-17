@@ -85,8 +85,12 @@ keeps wide tables from pushing the page sideways at 375px:
 - The **first cell of each body row is `<th scope="row">`**, not `<td>`. It is a
   label, and it is styled as one (muted, no wrap).
 - `scope` on every header cell, both directions.
-- If the table has more than ~4 columns, check for horizontal overflow at 375px
-  and make sure `.scroll-hint` covers it.
+- Columns cost nothing on a phone: below 640px every row stacks into a card and
+  each cell draws its column name from `<thead>` (`docs/layout.md` §1b). **Check
+  375px anyway** — `scrollWidth === innerWidth`, and no `.scroll-hint` on a
+  table, since no table scrolls sideways there any more.
+- **Building rows from JS? Call `labelCells(table)` after the render**, or the
+  cards ship with nothing saying which column each value came from.
 
 ## Editing copy
 

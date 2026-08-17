@@ -22,6 +22,23 @@ Flip it, measure, flip it back:
 2. Reload and read computed values.
 3. **Change it back.** Never commit with it flipped.
 
+**Measure at a viewport wider than 640px.** Flipping print to `all` adds the
+print rules; it does not switch the *screen* ones off. Below 640px
+`@media screen and (max-width: 640px)` stacks every table into cards, so the
+reading comes back `display: block` with cell labels and looks like the stacked
+layout leaking into print. It is not — `screen` never matches when printing.
+
+**Non-invasive alternative**, no file edit and nothing to forget to revert:
+
+```js
+var s = document.styleSheets[0], r = null, i;
+for (i = 0; i < s.cssRules.length; i++)
+  if (s.cssRules[i].conditionText === 'print') r = s.cssRules[i];
+r.media.mediaText = 'all';
+// ... measure ...
+r.media.mediaText = 'print';
+```
+
 Sizes to confirm against the table in `docs/printing.md`: body 11pt, tables
 10pt, section headings 14pt, name 20pt, printed URLs 8.5pt.
 
