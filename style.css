@@ -174,6 +174,58 @@ a.text-link:focus-visible {
   text-decoration-color: var(--accent);
 }
 
+/* A table scroller that JS has made focusable, because it overflows. Inset so
+   the ring is not clipped by the wrap's own edge, which is where the scroll
+   happens. */
+.table-wrap:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), .9);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* A neighbouring repository, inside the detail dialog. Underlined and coloured
+   like a link because it behaves like one; a button because it swaps the dialog
+   rather than navigating. min-height carries the 40px tap floor without setting
+   a height that would clip the text at large font sizes. */
+.related-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-mid);
+  text-underline-offset: 2px;
+}
+
+.related-btn:hover,
+.related-btn:focus-visible {
+  color: var(--accent-text);
+  text-decoration-color: var(--accent);
+}
+
+/* Evidence links carry the same underline as any other link — a dotted or
+   colour-only treatment would be a second link convention on one page, and
+   colour alone is not a cue (Rulebook §4). They are dense, several to a cell,
+   so the accent is left for hover rather than lit at rest. */
+a.ev-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-mid);
+  text-underline-offset: 2px;
+  transition: color .12s ease, text-decoration-color .12s ease;
+}
+
+a.ev-link:hover,
+a.ev-link:focus-visible {
+  color: var(--accent-text);
+  text-decoration-color: var(--accent);
+}
+
 :where(a, button, [tabindex]):focus-visible {
   outline: 2px solid rgba(var(--accent-rgb), .9);
   outline-offset: 2px;
@@ -256,6 +308,90 @@ code {
   color: var(--fg);
   font-weight: 700;
   border-bottom-color: var(--accent);
+}
+
+/* A section a view mode has emptied. Marked, never removed: a nav item that
+   vanishes takes the reader's map with it and gives no reason, where a marked
+   one says "this exists, your current view has nothing in it" and stays
+   clickable. Dimming is not the signal — the dotted rule is, so the mark does
+   not depend on colour (WCAG 1.4.1). The words come from an sr-only span the
+   JS writes, because a title attribute is unreachable by keyboard. */
+.site-nav a[data-empty="true"] {
+  color: var(--muted);
+  border-bottom-style: dotted;
+  border-bottom-color: var(--border);
+}
+
+/* ── Header tools ─────────────────────────────────────────
+   The search control and the position readout. Pushed to the end of the
+   header's flex row, and allowed to shrink to nothing before the nav does —
+   the nav is the map, this is the accelerator. */
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.doc-position {
+  font-family: var(--sans);
+  font-size: .7rem;
+  letter-spacing: .1em;
+  color: var(--muted);
+  white-space: nowrap;
+  /* Reserve the widest it will ever be, so the nav does not shift sideways by a
+     character every time the reader crosses a section boundary. */
+  min-width: 3.2em;
+  text-align: right;
+}
+
+/* Both controls below set `display`, which beats the UA rule the `hidden`
+   attribute relies on — so without these they would render while claiming to be
+   hidden. The Search button starts hidden and is only revealed once the dialog
+   is known to work, which means without this rule a reader with no JavaScript
+   gets a Search button that opens nothing. Same per-component pattern as
+   .topic-chips[hidden] and .featured-band[hidden] above. */
+.header-search[hidden],
+.focus-exit[hidden],
+.qr-btn[hidden] {
+  display: none;
+}
+
+.header-search {
+  font-family: var(--sans);
+  font-size: .78rem;
+  letter-spacing: .04em;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  /* 40px tap target (Rulebook §3.7) without a 40px-tall box. */
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 40px;
+  padding: 0 .7rem;
+}
+
+.header-search:hover,
+.header-search:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.header-key {
+  display: flex;
+  gap: .2rem;
+  color: var(--muted);
+}
+
+.header-key kbd {
+  font-family: var(--sans);
+  font-size: .66rem;
+  padding: .05rem .28rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
 }
 
 /* ── Layout ──────────────────────────────────────────────── */
@@ -1015,6 +1151,14 @@ th[aria-sort="descending"] .sort-btn::after {
   display: none;
 }
 
+/* A sub-heading and the table under it, once a filter has taken every row in
+   it. Set by syncEmptyBlocks() in script.js, because emptiness cannot be asked
+   in CSS. Deliberately NOT .resume-empty: that one is print-only and is
+   stripped from every element on afterprint, which would silently undo this. */
+.block-empty {
+  display: none;
+}
+
 /* ── View modes ───────────────────────────────────────────
    Full is the default and hides nothing. A mode hides rows and blocks that
    carry data-hide-in, and nothing else — the toggle is always visible, so no
@@ -1221,6 +1365,155 @@ body.density-compact .sort-btn {
   color: var(--accent-text);
 }
 
+/* ── Command palette ──────────────────────────────────────
+   Commands share the results list with content hits rather than living in a
+   second panel: one list means one set of arrow keys and one Enter. They are
+   told apart by a group heading and a leading marker, not by position, because
+   position changes with the query. */
+.search-group {
+  font-family: var(--sans);
+  font-size: .64rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .5rem .35rem .25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-hit button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: .55rem .35rem;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* A content hit stacks: source line, then matched text. A command has no
+   source line, so its label sits beside the marker instead of under it —
+   `.search-what` is shared, and its `display: block` would wrap a one-line
+   command onto two. */
+.search-hit button .search-what {
+  display: inline;
+}
+
+.search-hit button:hover,
+.search-hit button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+/* The marker is a character, not an icon font and not an image — same reason
+   the work diagram is drawn in text. */
+.search-cmd-mark {
+  color: var(--muted);
+  margin-right: .5rem;
+}
+
+.search-hit button:hover .search-cmd-mark,
+.search-hit button:focus-visible .search-cmd-mark {
+  color: var(--accent-text);
+}
+
+/* ── The searched-for text, once you land on it ───────────
+   CSS Custom Highlight API. It paints a Range without wrapping it in a node,
+   which is the whole reason it is used here: a <mark> inserted into a cell
+   would be read back out by readableText(), and readableText() feeds the
+   search index, the JSON view and the résumé line budget. That bug family has
+   already cost three rounds. Nothing to insert means nothing to unwrap and
+   nothing to leak. */
+::highlight(search-hit-mark) {
+  background-color: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+/* Where the API is missing the jump still lands; the row is flashed instead so
+   the reader is not left scanning for what matched. Held, not pulsed — one
+   fade is information, a repeating pulse is decoration. */
+.hit-flash {
+  animation: hit-flash 2.4s ease-out 1 forwards;
+}
+
+@keyframes hit-flash {
+  0%, 55% { background-color: var(--accent-soft); }
+  100%    { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Same duration, same information, no animation: the highlight is simply
+     there and then gone. */
+  .hit-flash {
+    animation: none;
+    background-color: var(--accent-soft);
+  }
+}
+
+/* ── Focus mode ───────────────────────────────────────────
+   The third and last thing on this page that hides content, alongside
+   .filtered-out (filters) and data-hide-in (view modes). It gets its own body
+   class rather than borrowing either, so no two mechanisms ever contend for
+   one attribute — see state-and-data.md §2. Nothing here announces focus mode
+   exists; the only time it is visible is while it is on. */
+body.focus-mode .masthead,
+body.focus-mode .fold-controls,
+body.focus-mode .section:not(.focus-target) {
+  display: none;
+}
+
+.focus-exit {
+  font-family: var(--sans);
+  font-size: .7rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--fg);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 .7rem;
+  white-space: nowrap;
+}
+
+.focus-exit:hover,
+.focus-exit:focus-visible {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ── What a jump just changed ─────────────────────────────
+   A search result can clear a filter or switch a view mode to reach its row.
+   That is a visible change to the page made by something the reader did not
+   quite ask for, so it is stated in words on the page rather than only to a
+   screen reader. Hidden — genuinely, with the hidden attribute — whenever it
+   has nothing to say, so a reader who never searches never meets it.
+
+   Fixed to the bottom rather than placed in the flow: the jump has just
+   scrolled the page somewhere, so a note sitting at the top of the document is
+   a message delivered to where the reader no longer is. Bottom rather than
+   under the header, so it never covers the nav or the section it just
+   revealed. */
+.jump-note {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 30;
+  max-width: min(30rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: .55rem .8rem;
+  font-family: var(--sans);
+  font-size: .76rem;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
+  box-shadow: 0 2px 8px rgba(17, 16, 16, .12);
+}
+
 /* ── Keyboard glyphs ──────────────────────────────────────
    Shared with the filter hint's own kbd, which was already styled above. */
 .grid-table kbd {
@@ -1400,9 +1693,16 @@ body.density-compact .sort-btn {
     font-size: 15px;
   }
 
+  /* Two rows, not three. A column of wordmark / nav / tools costs a whole 40px
+     band of a 812px-tall screen for a control that fits beside the wordmark
+     with room to spare — and the sticky header's height is subtracted from
+     every section's scroll-margin-top, so a third row is paid for on every
+     jump as well. Ordering the tools onto row one and giving the nav a full
+     basis holds the header at the 124px it was before it had any. */
   .site-header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: 0;
     padding: 0 1rem;
   }
@@ -1411,7 +1711,13 @@ body.density-compact .sort-btn {
     min-height: 40px;
   }
 
+  .header-tools {
+    order: 1;
+  }
+
   .site-nav {
+    order: 2;
+    flex-basis: 100%;
     gap: 0 .9rem;
     font-size: .78rem;
     padding-bottom: .15rem;
@@ -1504,8 +1810,24 @@ body.density-compact .sort-btn {
     min-height: 40px;
   }
 
+  /* Condensed, everything is on one 40px row and the nav is the part that
+     scrolls, so the tools go last and the readout goes away entirely. The
+     readout is a convenience restating what the nav already marks with
+     aria-current; the nav itself is the map, and taking 55px off a scrolling
+     strip to repeat a fact it already shows is the wrong trade. */
+  .nav-condensed .header-tools {
+    order: 2;
+    flex: 0 0 auto;
+  }
+
+  .nav-condensed .doc-position {
+    display: none;
+  }
+
   .nav-condensed .site-nav {
+    order: 1;
     flex: 1 1 0;
+    flex-basis: 0;
     min-width: 0;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -1708,6 +2030,47 @@ body.density-compact .sort-btn {
 /* ── Export dialog ────────────────────────────────────────
    Native <dialog>: the browser owns the focus trap, the inertness of the page
    behind it, and Escape-to-close. */
+/* The first raster image on the page, so the first chance for one to escape its
+   container. Without `max-width` a 512px code is wider than a 375px phone and
+   takes the whole document into horizontal scroll — the one layout failure this
+   file measures for on every round. Global, not scoped to the QR: the next image
+   added should inherit the rule rather than rediscover it.
+
+   `height: auto` alongside it because both images here carry width/height
+   attributes — those reserve the right space before the file loads, and without
+   `height: auto` the attribute wins over the scaled width and squashes the code. */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* A QR needs a quiet margin and a light backing to scan. The rest of the page
+   sits on cream; a code printed on cream still scans, but contrast is the whole
+   mechanism, so this one gets paper white. Capped at 15rem so it never exceeds a
+   phone's short side. */
+.qr-image {
+  display: block;
+  width: 100%;
+  max-width: 15rem;
+  margin: 0 auto 0.9rem;
+  padding: 0.6rem;
+  background: #fff;
+  border: 1px solid var(--rule);
+}
+
+.qr-address {
+  margin: 0 0 0.4rem;
+  font-family: var(--mono);
+  text-align: center;
+}
+
+/* Print only. `display: none` here rather than the `hidden` attribute: hidden
+   would have to be removed by JS to print, and the print path must not depend on
+   JS having run. */
+.masthead-qr {
+  display: none;
+}
+
 .export-dialog {
   width: min(34rem, calc(100vw - 2rem));
   padding: 0;
@@ -1837,6 +2200,35 @@ body.density-compact .sort-btn {
    URL is printed after the text. */
 @media print {
 
+  /* Page breaks. A heading stranded at the foot of a page, or one row of a table
+     carried alone onto the next, both read as an error in the document rather
+     than an artefact of pagination. `orphans`/`widows` are honoured by print
+     engines for block content; `break-after: avoid` keeps a heading with the
+     thing it names.
+
+     Deliberately not `break-inside: avoid` on a whole table: several here are
+     longer than a page, and forbidding a break inside them would push the entire
+     table to a fresh page and leave a half-page of white above it. */
+  p,
+  li,
+  dd {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .section-title,
+  .subhead,
+  thead {
+    break-after: avoid-page;
+    page-break-after: avoid;   /* the older name, still what some engines read */
+  }
+
+  tr,
+  .masthead-meta > div {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
   /* The new-tab marker is an affordance about clicking. Nothing on paper is
      clickable, and the URL is printed after the link text anyway. */
   a[target="_blank"]::after {
@@ -1879,8 +2271,42 @@ body.density-compact .sort-btn {
   #cert-status,
   #year-status,
   .search-dialog,
-  .colophon {
+  .jump-note,
+  .colophon,
+  /* The button is a control; the code it opens prints in the masthead instead. */
+  .qr-btn {
     display: none !important;
+  }
+
+  /* The printed QR floats, so it sits beside the masthead text instead of adding
+     a band above it — `estimateLines()` counts characters, an image has none, so
+     any height it added would be height the line budget could not see.
+
+     Two rules keep that promise, and both were measured rather than assumed. In
+     résumé mode the fact list drops to its two [data-resume] rows and the whole
+     masthead comes down to **21.6mm**, so a 22mm code overhung it by 0.4mm and
+     leaked into About. `flow-root` fixes the leak by making the masthead contain
+     its own float — but containment turns an overhang into *height*, and at 20mm
+     that was 2.5mm of page the character-counting estimate could not see.
+
+     So the code is sized to fit inside the shortest masthead the résumé can
+     produce: 18mm plus a 1mm margin is 19mm against 21.6mm of text, and the
+     measured masthead height is unchanged in both formats. ~0.62mm per module for
+     a URL this short — comfortably scannable off paper. Any future trim to the
+     masthead must re-measure this, which is what the numbers above are for. */
+  .masthead {
+    display: flow-root;
+  }
+
+  .masthead-qr {
+    display: block;
+    float: right;
+    width: 18mm;
+    height: 18mm;
+    margin: 0 0 1mm 4mm;
+    padding: 1.5mm;
+    background: #fff;
+    border: 0.2mm solid #000;
   }
 
   /* Sections the reader unticked in the export dialog. */
@@ -1899,6 +2325,46 @@ body.density-compact .sort-btn {
      printing what the reader chose to look at. */
   .filtered-out {
     display: table-row !important;
+  }
+
+  /* And the block that emptying those rows collapsed comes back with them. A
+     PDF exported while the year bar is on 2023 must not quietly drop two
+     affiliations — the year bar does not print, so nothing on the page would
+     explain the gap. Same reasoning as the rule above, one level up.
+     No !important, deliberately: this rule sits after the screen one in the
+     file and matches it for specificity, so it wins on order alone — while
+     `.print-resume .resume-empty` (two classes) still beats it. A block the
+     résumé curated away must stay away; curation IS a decision about what
+     prints, and a filter is not. */
+  .block-empty {
+    display: revert;
+  }
+
+  /* Focus mode is reversed too, for the third time and the same reason: the
+     Exit control lives in the header, the header does not print, so a PDF taken
+     while focused would be one section with nothing on the page to say the
+     other seven were set aside. Focus is a reading posture, not a decision
+     about what a document contains.
+
+     The `.print-hidden` guard below is not optional. `body.focus-mode .section`
+     carries two classes and an element, so it out-ranks a bare `.print-hidden`
+     and would print sections the reader had explicitly unticked in the export
+     dialog. Re-stating it at matching specificity is what keeps the dialog the
+     only thing that decides what prints. */
+  body.focus-mode .masthead,
+  body.focus-mode .section:not(.focus-target) {
+    display: revert;
+  }
+
+  body.focus-mode .section.print-hidden {
+    display: none !important;
+  }
+
+  /* A highlight left over from a search is a colour on paper that means nothing
+     to whoever is holding it. */
+  .hit-flash {
+    animation: none;
+    background: none !important;
   }
 
   /* New blocks, all content rather than chrome. */
@@ -2432,5 +2898,53 @@ body.density-compact .sort-btn {
      a plain static bar, which still communicates "content is coming". */
   .skeleton-bar {
     background: var(--surface-2);
+  }
+}
+/* ── Windows High Contrast / forced colours ───────────────
+   The OS replaces the whole palette, so anything that carried meaning purely as
+   a background fill stops carrying it: a pressed chip and an unpressed one
+   become the same shape, and `--accent-soft` behind a search hit disappears.
+   Restated as borders and system colour keywords, which forced-colors keeps.
+
+   The language bars need no rule — they are the block character `█`, text rather
+   than a painted box, which is exactly why they were drawn that way (layout.md
+   §4). A CSS-width bar would have vanished here. */
+@media (forced-colors: active) {
+
+  /* State that was a fill becomes a border. */
+  .chip[aria-pressed="true"],
+  .header-search,
+  .fold-toggle,
+  .sort-btn[aria-expanded="true"] {
+    border: 2px solid ButtonText;
+  }
+
+  /* Where you are, and what you matched, must survive the repaint. */
+  .site-nav a[aria-current="true"] {
+    border-bottom: 3px solid Highlight;
+  }
+
+  .hit-flash,
+  .search-hit button:hover,
+  .search-hit button:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  ::highlight(search-hit-mark) {
+    background-color: Highlight;
+    color: HighlightText;
+  }
+
+  /* A section a view mode emptied is marked with colour and a bracket; keep the
+     mark when the colour is gone. */
+  .site-nav a[data-empty] {
+    border-bottom: 1px dotted GrayText;
+  }
+
+  /* Focus rings are drawn from the accent, which no longer exists here. */
+  :where(a, button, [tabindex]):focus-visible,
+  .table-wrap:focus-visible {
+    outline: 2px solid Highlight;
   }
 }

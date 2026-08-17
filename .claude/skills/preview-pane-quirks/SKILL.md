@@ -65,6 +65,37 @@ So `scrollY` is not 0 at load. To measure the **un-scrolled** state, push
 `<main>` down with a *positive* `margin-top`; use a negative one for the
 scrolled state.
 
+## 5. A resize preset leaves a stale layout viewport
+
+`innerWidth` reports the new width while layout is still at the old one, so
+`documentElement.scrollWidth > window.innerWidth` reads **true** and looks like
+real horizontal overflow. Seen as 375 / 410.
+
+**Reload after any resize before believing an overflow number.** Confirm by
+re-measuring: a real offender is still there after the reload.
+
+Do not diagnose it by walking elements for `right > innerWidth` either — every
+`.grid-table` legitimately extends past the viewport inside its scrolling
+`.table-wrap`, so that probe reports 236 false offenders.
+
+## 6. A deleted image still loads from cache
+
+`img.complete` and `naturalWidth` stay truthy after the file is removed from disk,
+so the broken-image path cannot be tested by deleting the file and reloading. Probe
+it directly:
+
+```js
+new Promise(function (res) {
+  var i = new Image();
+  i.onload  = function () { res('still cached'); };
+  i.onerror = function () { res('404 — alt text would render'); };
+  i.src = 'assets/some-image.png?bust=' + Date.now();
+})
+```
+
+Same family as the stale `script.js` trap: `?v=` on the HTML does not bust a
+subresource.
+
 ---
 
 ## When something still looks wrong

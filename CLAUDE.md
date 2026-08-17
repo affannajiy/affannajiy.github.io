@@ -22,7 +22,7 @@ Never break these. Every one of them is enforced or load-bearing.
 | 1.4 | **Exactly four source files**: `index.html`, `style.css`, `script.js`, `assets/`. | Adding files is the first step toward needing a build step. See "What is not source" below. |
 | 1.5 | **No secrets in the repo.** Never add a GitHub token to `script.js`. | The file is public. A committed token is a leaked token. |
 | 1.6 | **No analytics, trackers, cookies, or consent banners.** | Nothing here needs consent. Keep it that way. |
-| 1.7 | **The CSP in `index.html` is load-bearing.** `default-src 'none'`, `script-src 'self'`, `style-src 'self'`, `connect-src https://api.github.com`. | It makes 1.1–1.3 something the browser enforces, not a convention. Never add `unsafe-inline` to silence a violation — fix the code. |
+| 1.7 | **The CSP in `index.html` is load-bearing.** `default-src 'none'`, `script-src 'self'`, `style-src 'self'`, `connect-src https://api.github.com`, `require-trusted-types-for 'script'`. | It makes 1.1–1.3 something the browser enforces, not a convention. Never add `unsafe-inline` to silence a violation — fix the code. Trusted Types means **any** `innerHTML` write now throws, clearing included: clear with `textContent = ""`. |
 | 1.8 | **No inline `style` attributes and no inline `<script>`.** Widths, colours and behaviour live in `style.css` / `script.js`. | The CSP blocks them, and a blocked inline style fails *silently* in layout. |
 
 **What is not source.** `CLAUDE.md`, `README.md`, `SECURITY.md`,
@@ -37,9 +37,14 @@ loads them. Pages will still serve them at their paths; that is harmless and is
   `textContent`. There is deliberately no `escapeHTML()` in `script.js` — the
   one it had left quotes unescaped and produced a live attribute injection, and
   repairing it would only have reset the trap (`docs/security-posture.md` §3).
+  Since 2026-08-17 the CSP enforces this in Chrome/Edge, so a string assigned to
+  `innerHTML` throws instead of shipping.
 - The CSP does **not** stop CSSOM writes, so a width set from JS is not blocked —
   it is an invariant broken quietly. Data bars are drawn with block characters
   instead (`docs/layout.md` §4).
+- **A rule that sets `display` overrides the `hidden` attribute.** Any component
+  styled `display: flex/grid/block` needs its own `[hidden] { display: none }`,
+  or it renders while claiming to be hidden (`docs/layout.md` §3a).
 - Never invent content to fill a gap. Unfinished content is marked with a visible
   `.hint` (`docs/content-rules.md` §2).
 
@@ -107,6 +112,21 @@ Three habits, because each has cost real time here:
 
 ## 5. Standing instructions from Affan
 
+- **Affan commits and pushes. Never run `git commit` or `git push`.** Not after a
+  clean verification round, not when a plan was agreed, not when he picked an
+  option that ended in the word "deploy" — a choice about *plan* is not consent to
+  edit his public site. Leave the work uncommitted and say so. Broken 2026-08-17;
+  the remote had to be force-rolled back.
+- If he does ask for a commit, **no `Co-Authored-By` trailer.**
+- **One release per commit, subject `vX.Y.Z - Title Case Summary`.** Read
+  `git log` first and continue the series — `v1.0.0 - First Release`,
+  `v1.0.1 - Layout Fixes`, `v1.1.0 - Added Features`. Patch = fixes only, minor =
+  anything new, major = something a reader relied on is gone. (`v.1.1.0` carries a
+  stray dot; the standard is `v1.1.0`, and history is not rewritten to fix it.)
+- **An uncommitted tree means he is still accumulating.** Work sitting modified is
+  not a forgotten commit — it is one bundle in progress, and it gets **one** version
+  number when he decides it is done. Never suggest splitting it into per-change
+  commits, and never number a release before he asks for one.
 - The site is about showcasing him. **No supervisor, referee or colleague is
   named as a contact** — see `docs/content-rules.md` §3.
 - **No dark mode.** Light-only is deliberate.

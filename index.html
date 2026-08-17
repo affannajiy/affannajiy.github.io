@@ -23,8 +23,18 @@
      real work — it is what stops an injected onclick= attribute from ever
      running, which is the exact shape of the one injection bug this file's
      escaper has actually had. -->
+  <!-- The last two directives are the "never assemble HTML from remote data"
+     rule, moved out of the documentation and into the browser. Trusted Types
+     makes every HTML-parsing sink — innerHTML, outerHTML, insertAdjacentHTML,
+     document.write, srcdoc — throw on a plain string, so the one class of bug
+     this file has actually shipped cannot come back quietly: it becomes a
+     TypeError in the console instead of a live injection. (eval and Function
+     were already dead — script-src has no 'unsafe-eval'.) `'none'` forbids even
+     declaring a policy, because a policy is the escape hatch and nothing here
+     needs one. Honoured in Chrome and Edge, ignored elsewhere — ignored is the
+     status quo, so there is nothing to lose. -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self'; font-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; media-src 'none'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+    content="default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; img-src 'self'; font-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; media-src 'none'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
   <!-- Sharing preview. A link pasted into LinkedIn, Slack or WhatsApp is scraped
@@ -73,6 +83,25 @@
       <a href="#links">Links</a>
       <a href="#resume">Résumé</a>
     </nav>
+
+    <!-- Search is the only way into the command palette, and until now it had
+       no visible trigger at all: "/" and Ctrl+K are installed behind
+       (hover: hover), so on a phone the whole dialog was unreachable rather
+       than merely undiscovered. This control is written in the markup rather
+       than built in JS so it is part of the header's layout from the first
+       paint; initSearch() only unhides it, and only once it has confirmed the
+       dialog actually works. Without JS it stays hidden — a search box that
+       cannot search is worse than none (Nielsen §1.5). -->
+    <p class="header-tools">
+      <!-- Where you are in the document, in the same coordinates the sections
+         are numbered in. aria-hidden because the nav already announces the
+         current section through aria-current; two voices saying the same thing
+         is noise, not redundancy. -->
+      <span class="doc-position" id="doc-position" aria-hidden="true"></span>
+      <button type="button" class="header-search js-only" id="search-open" hidden>
+        Search<span class="header-key" id="search-key" hidden><kbd>Ctrl</kbd><kbd>K</kbd></span>
+      </button>
+    </p>
   </header>
 
   <div id="top"></div>
@@ -80,6 +109,18 @@
   <main id="main">
 
     <section class="masthead">
+      <!-- Print only, and deliberately not in the Links section: Links carries
+         data-resume-default="off", so a QR living only there would be absent from
+         the one-page résumé — the sheet a recruiter is most likely to be holding.
+
+         First child, not next to the fact list, because it floats: a float only
+         has the block boxes *after* it to sit beside. In résumé mode the list is
+         down to its two [data-resume] rows, which is shorter than the code — so
+         placed lower it would hang below the masthead and add real height the
+         line budget cannot see, `estimateLines()` counting characters and an image
+         having none. From here it clears the name, the role and the list. -->
+      <img class="masthead-qr" src="assets/qrcode_affannajiy.github.io.png" width="450" height="450"
+        alt="QR code linking to affannajiy.github.io">
       <h1 class="masthead-name">‘Affan Najiy bin Rusdi</h1>
       <p class="masthead-role">Computer Science Undergraduate · Data Analytics</p>
       <dl class="masthead-meta">
@@ -312,19 +353,19 @@
                 </tr>
               </thead>
               <tbody>
-                <tr data-resume>
+                <tr data-resume id="ev-hr">
                   <th scope="row">HR Management System</th>
                   <td>C#, Firestore</td>
                   <td>Built an employee management application; owned the Firestore integration for employee records.
                   </td>
                 </tr>
-                <tr data-resume>
+                <tr data-resume id="ev-restaurant">
                   <th scope="row">Restaurant Database System</th>
                   <td>SQL, Oracle</td>
                   <td>Designed and built a database for a restaurant near campus, including a 70-table enhanced
                     entity-relationship diagram.</td>
                 </tr>
-                <tr data-resume>
+                <tr data-resume id="ev-weather">
                   <th scope="row">Weather Prediction Software</th>
                   <td>Python, Jupyter</td>
                   <td>Trained a linear regression model on European weather data and documented the work as a notebook.
@@ -353,7 +394,7 @@
           <div class="year-bar" id="year-bar" role="group" aria-label="Filter experience by year"></div>
           <p class="status" id="year-status" role="status" hidden></p>
 
-          <h3 class="subhead">Keysight Technologies Malaysia</h3>
+          <h3 class="subhead" id="ev-keysight">Keysight Technologies Malaysia</h3>
           <div class="table-wrap">
             <table class="grid-table">
               <caption class="sr-only">Experience at Keysight Technologies Malaysia</caption>
@@ -415,7 +456,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr data-resume>
+                <tr data-resume id="ev-sahom">
                   <th scope="row">Project Director</th>
                   <td>MPU4 Sahom Sejahtera</td>
                   <td>Jun 2025 – Nov 2025</td>
@@ -429,13 +470,13 @@
                   <td>May 2025 – Present</td>
                   <td>—</td>
                 </tr>
-                <tr data-hide-in="developer">
+                <tr data-hide-in="developer" id="ev-writing-comp">
                   <th scope="row">Committee, Public Relations</th>
                   <td>National Writing Competition — UTP Journalism Club</td>
                   <td>Dec 2024 – Nov 2025</td>
                   <td>Public relations for the club's national-level writing competition.</td>
                 </tr>
-                <tr data-hide-in="developer">
+                <tr data-hide-in="developer" id="ev-techturtle">
                   <th scope="row">Head of Public Relations</th>
                   <td>TechTurtle (MPU4 project)</td>
                   <td>Oct 2024 – Feb 2025</td>
@@ -455,7 +496,7 @@
                   <td>Content maker for the Weekly Story series on Islam and science, writing on scientific history and
                     breakthroughs by notable figures in Islam.</td>
                 </tr>
-                <tr data-resume>
+                <tr data-resume id="ev-column">
                   <th scope="row">Head of Column Writing</th>
                   <td>UTP Journalism Club</td>
                   <td>May 2024 – Nov 2025</td>
@@ -477,21 +518,21 @@
                 </tr>
                 <tr data-resume>
                   <th scope="row">Project Director</th>
-                  <td>Down To Earth — Sharing the Nur of Ramadhan</td>
+                  <td id="ev-dte">Down To Earth — Sharing the Nur of Ramadhan</td>
                   <td>Jan 2024 – Mar 2024</td>
                   <td>Led distribution of 45 boxes of food supplies to villagers in Kampung Indah, Pantai Remis before
                     Ramadan. Presented the project at the 9th Regional Conference on Student Activism (RECONSA).</td>
                 </tr>
                 <tr>
                   <th scope="row">Group Leader</th>
-                  <td>Oh My Code — ZakatEZy</td>
+                  <td id="ev-zakatezy">Oh My Code — ZakatEZy</td>
                   <td>Sep 2023 – Nov 2023</td>
                   <td>Led a five-person team building the ZakatEZy application for Visual Programming and Introduction
                     to Business Information Systems.</td>
                 </tr>
                 <tr data-hide-in="developer">
                   <th scope="row">Writer</th>
-                  <td>Writing Department — UTP Journalism Club</td>
+                  <td id="ev-writer">Writing Department — UTP Journalism Club</td>
                   <td>May 2023 – Present</td>
                   <td>Movie reviews, column writing and event coverage of campus events.</td>
                 </tr>
@@ -537,7 +578,7 @@
               <tbody>
                 <tr>
                   <th scope="row">Committee, Public Relations</th>
-                  <td>Vinyl of Nusantara 2024</td>
+                  <td id="ev-vinyl">Vinyl of Nusantara 2024</td>
                   <td>Mar 2024 – Sep 2024</td>
                   <td>Approached companies and government agencies for event sponsorship. My first large campus event.
                   </td>
@@ -576,37 +617,37 @@
                   <th scope="row">Software</th>
                   <td>Python</td>
                   <td>Intermediate</td>
-                  <td class="evidence">Keysight internship · Weather Prediction Software · public repositories</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-keysight">Keysight internship</a> · <a class="ev-link" href="#ev-weather">Weather Prediction Software</a> · <a class="ev-link" href="#projects">public repositories</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Software</th>
                   <td>SQL / Oracle</td>
                   <td>Intermediate</td>
-                  <td class="evidence">Keysight internship · Restaurant Database System (70-table EER diagram)</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-keysight">Keysight internship</a> · <a class="ev-link" href="#ev-restaurant">Restaurant Database System</a> (70-table EER diagram)</td>
                 </tr>
                 <tr>
                   <th scope="row">Software</th>
                   <td>C#</td>
                   <td>Intermediate</td>
-                  <td class="evidence">HR Management System · ZakatEZy · five public repositories</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-hr">HR Management System</a> · <a class="ev-link" href="#ev-zakatezy">ZakatEZy</a> · <a class="ev-link" href="#projects">five public repositories</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Software</th>
                   <td>React.js</td>
                   <td>Intermediate</td>
-                  <td class="evidence">Public repositories — see the Projects table</td>
+                  <td class="evidence"><a class="ev-link" href="#projects">Public repositories</a> — see the Projects table</td>
                 </tr>
                 <tr>
                   <th scope="row">Software</th>
                   <td>Jupyter Notebook</td>
                   <td>Beginner</td>
-                  <td class="evidence">Weather Prediction Software · two public repositories</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-weather">Weather Prediction Software</a> · <a class="ev-link" href="#projects">two public repositories</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Platform</th>
                   <td>SQL Server Management Studio</td>
                   <td>Beginner</td>
-                  <td class="evidence">Keysight internship — daily, for eight months</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-keysight">Keysight internship</a> — daily, for eight months</td>
                 </tr>
                 <tr>
                   <th scope="row">Platform</th>
@@ -618,32 +659,32 @@
                   <th scope="row">Technical</th>
                   <td>Technical writing</td>
                   <td>Intermediate</td>
-                  <td class="evidence">Head of Column Writing · event proposals and minutes · this site's documentation
+                  <td class="evidence"><a class="ev-link" href="#ev-column">Head of Column Writing</a> · event proposals and minutes · this site's documentation
                   </td>
                 </tr>
                 <tr data-hide-in="developer">
                   <th scope="row">Technical</th>
                   <td>Photography</td>
                   <td>Intermediate</td>
-                  <td class="evidence">Campus event coverage — UTP Journalism Club</td>
+                  <td class="evidence">Campus event coverage — <a class="ev-link" href="#ev-writer">UTP Journalism Club</a></td>
                 </tr>
                 <tr data-hide-in="developer">
                   <th scope="row">Technical</th>
                   <td>Videography</td>
                   <td>Basic</td>
-                  <td class="evidence">Campus event coverage — UTP Journalism Club</td>
+                  <td class="evidence">Campus event coverage — <a class="ev-link" href="#ev-writer">UTP Journalism Club</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Professional</th>
                   <td>Project direction</td>
                   <td>Intermediate</td>
-                  <td class="evidence">MPU4 Sahom Sejahtera · Down To Earth · TechTurtle</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-sahom">MPU4 Sahom Sejahtera</a> · <a class="ev-link" href="#ev-dte">Down To Earth</a> · <a class="ev-link" href="#ev-techturtle">TechTurtle</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Professional</th>
                   <td>Sponsorship &amp; PR</td>
                   <td>Intermediate</td>
-                  <td class="evidence">Vinyl of Nusantara 2024 · TechTurtle · National Writing Competition</td>
+                  <td class="evidence"><a class="ev-link" href="#ev-vinyl">Vinyl of Nusantara 2024</a> · <a class="ev-link" href="#ev-techturtle">TechTurtle</a> · <a class="ev-link" href="#ev-writing-comp">National Writing Competition</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Language</th>
@@ -655,7 +696,7 @@
                   <th scope="row">Language</th>
                   <td>English</td>
                   <td>Fluent</td>
-                  <td class="evidence">Published with Bichara Malaya, Universiti Malaya</td>
+                  <td class="evidence">Published with <a class="ev-link" href="#ev-column">Bichara Malaya, Universiti Malaya</a></td>
                 </tr>
                 <tr>
                   <th scope="row">Language</th>
@@ -934,6 +975,26 @@
                       rel="noopener noreferrer">linkedin.com/in/affannajiy<span class="sr-only"> (opens in a new
                         tab)</span></a></td>
                 </tr>
+                <!-- The address is written out as text as well as encoded, because a
+                   QR is unreadable to a screen reader and useless to someone already
+                   holding the device (accessibility.md — never information in the
+                   image alone).
+
+                   Drawn as a `.copy-btn`: it sits beside an address in this table
+                   exactly like the Copy chips do, and a filled `.button` here was
+                   the only control in the table shouting. That styling brings the
+                   40px invisible hit overlay with it — but not the command palette,
+                   which sources `button.button`, so `.qr-btn` is named in
+                   COMMAND_SOURCES by hand. -->
+                <tr>
+                  <th scope="row">This page</th>
+                  <!-- No separator glyph between the address and the button: the
+                     button is stripped by readableText(), so a dash here would be
+                     left dangling at the end of the row in the search index, the
+                     JSON view and the résumé budget. -->
+                  <td>affannajiy.github.io <button type="button" class="copy-btn qr-btn js-only" id="qr-open"
+                      hidden>QR code</button></td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -1056,6 +1117,30 @@
     </form>
   </dialog>
 
+  <!-- QR code. A committed file, not a generated one: a QR encoder is Reed-Solomon
+     arithmetic, and rule 1.3 forbids fetching one, so ~250 lines of arithmetic to
+     avoid a 2KB image is the wrong trade. Shown in a dialog rather than parked in
+     the page because the only two moments it is wanted — someone else's camera, or
+     a download to send on — both want it large, and neither wants it there the rest
+     of the time. The address is beside it as selectable text: the image is the
+     convenience, not the information. -->
+  <dialog id="qr-dialog" class="export-dialog" aria-labelledby="qr-title">
+    <form method="dialog" class="export-form">
+      <h2 class="export-title" id="qr-title">QR code for this page</h2>
+      <img class="qr-image" src="assets/qrcode_affannajiy.github.io.png" width="450" height="450"
+        alt="QR code linking to affannajiy.github.io">
+      <p class="qr-address">affannajiy.github.io</p>
+      <p class="hint">
+        Points at the site's front page, not at whatever you have filtered or
+        searched right now.
+      </p>
+      <div class="export-actions">
+        <a class="button" href="assets/qrcode_affannajiy.github.io.png" download="affannajiy-qr.png">Download the image</a>
+        <button type="submit" value="close" class="button button-quiet">Close</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Comparison. Not strictly necessary, which is why the selection lives in the
      detail dialog rather than as a checkbox column: the table stays a table for
      the many, and the feature costs the few an extra click. -->
@@ -1144,12 +1229,16 @@
               <td>Go to Résumé</td>
             </tr>
             <tr>
+              <th scope="row"><kbd>f</kbd></th>
+              <td>Focus the section you are reading — everything else is set aside</td>
+            </tr>
+            <tr>
               <th scope="row"><kbd>?</kbd></th>
               <td>This list</td>
             </tr>
             <tr>
               <th scope="row"><kbd>Esc</kbd></th>
-              <td>Close any dialog</td>
+              <td>Leave focus, or close any dialog</td>
             </tr>
           </tbody>
         </table>
@@ -1157,6 +1246,42 @@
       <p class="hint">
         Shortcuts stand down while you are typing in a field, so they never eat a
         character you meant to write.
+      </p>
+
+      <!-- The search syntax lives here rather than beside the search box: it is
+         an accelerator, and printing it above the input would put a manual in
+         front of everyone who only wanted to type a word. -->
+      <h3 class="subhead">Search syntax</h3>
+      <div class="table-wrap">
+        <table class="grid-table">
+          <caption class="sr-only">Prefixes accepted by the site-wide search</caption>
+          <tbody>
+            <tr>
+              <th scope="row"><kbd>&gt;</kbd></th>
+              <td>List every command, with nothing from the page mixed in</td>
+            </tr>
+            <tr>
+              <th scope="row"><code>section:</code></th>
+              <td>Search one section — <code>section:skills sql</code></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>type:</code></th>
+              <td>Rows, headings, text or sections — <code>type:row python</code></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>year:</code></th>
+              <td>Anything naming a year — <code>year:2026</code></td>
+            </tr>
+            <tr>
+              <th scope="row"><code>lang:</code></th>
+              <td>Repositories by GitHub language — <code>lang:python</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">
+        A prefix that is not on this list is searched for literally, and the
+        search says so rather than returning nothing.
       </p>
       <div class="export-actions">
         <button type="submit" value="close" class="button">Close</button>

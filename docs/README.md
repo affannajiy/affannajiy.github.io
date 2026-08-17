@@ -1,10 +1,10 @@
 # docs/
 
-The reasons behind the rules. `CLAUDE.md` at the repo root holds the eight hard
-constraints and routes here; **this directory holds the why**, one file per area.
+The reasons behind the rules. `CLAUDE.md` holds the eight hard constraints and
+routes here; **this directory holds the why**, one file per area.
 
-Nothing here is loaded by the site. These are notes for whoever — human or
-model — changes it next.
+Nothing here is loaded by the site. Notes for whoever — human or model — changes
+it next. **Write them terse:** keep the reasoning, cut the padding.
 
 | File | Covers |
 | --- | --- |
@@ -31,9 +31,9 @@ feature round.
 
 ## Adding to this directory
 
-Use the `record-decision` skill. In short: a *rule* goes in the matching file
-above, a *number* goes in `verification-log.md` under a dated round, a
-*procedure* is not a doc at all — it is a skill in `.claude/skills/`.
+Use the `record-decision` skill. Short version: a *rule* goes in the matching
+file above · a *number* goes in `verification-log.md` under a dated round · a
+*procedure* is not a doc at all, it is a skill in `.claude/skills/`.
 
-If you add a file here, add a row to this table **and** to the routing table in
+New file here → add a row to this table **and** to the routing table in
 `CLAUDE.md`. A doc nobody is routed to is a doc nobody reads.

@@ -1,13 +1,12 @@
 # Security posture — this project
 
-General theory is in [SECURITY_Rulebook.md](SECURITY_Rulebook.md). This file is
-what *this* site does. The re-testing procedure is the `audit-untrusted-input`
-skill; the last result is in [verification-log.md](verification-log.md).
+General theory: [SECURITY_Rulebook.md](SECURITY_Rulebook.md). This file is what
+*this* site does. Re-testing procedure: `audit-untrusted-input` skill. Last
+result: [verification-log.md](verification-log.md).
 
-The site is public, has no accounts, no server, no database and stores nothing
-about a visitor. That removes most of the classic categories outright and
-concentrates what is left into one question: **what happens when data this page
-did not write is rendered into it.**
+Public site, no accounts, no server, no database, stores nothing about a
+visitor. That removes most classic categories and leaves one question: **what
+happens when data this page did not write is rendered into it.**
 
 ---
 
@@ -20,110 +19,153 @@ style-src 'self';  style-src-attr 'none';
 img-src 'self'; font-src 'none'; object-src 'none';
 frame-src 'none'; worker-src 'none'; manifest-src 'none'; media-src 'none';
 connect-src https://api.github.com;
-base-uri 'none'; form-action 'none'
+base-uri 'none'; form-action 'none';
+require-trusted-types-for 'script'; trusted-types 'none'
 ```
 
-It is what turns "no frameworks, no CDN, no dependencies" from a convention into
-something the browser enforces. **Never add `unsafe-inline` to silence a
-violation — fix the code instead.**
+Turns "no frameworks, no CDN, no dependencies" from convention into something
+the browser enforces. **Never add `unsafe-inline` to silence a violation — fix
+the code.**
 
-**Every directive is written out even where `default-src 'none'` already covers
-it.** Implied is not the same as stated: a reviewer should not have to know the
-fallback chain to audit the line, and two of them are load-bearing on their own —
+**Every directive written out, even where `default-src 'none'` covers it.**
+Implied ≠ stated; a reviewer should not need the fallback chain to audit the
+line. Two are load-bearing alone:
 
-- **`script-src-attr 'none'`** blocks inline event handlers specifically. That
-  is the exact shape of the one injection this codebase has actually had (§3),
-  so it is named rather than inherited.
-- **`img-src 'self'`**, with no `data:`. The favicon used to be an inline
-  `data:` SVG and was the only reason the scheme was allowed; it is now
-  `assets/favicon.svg`, a file. One icon was not worth keeping a scheme open.
+- **`script-src-attr 'none'`** blocks inline event handlers — the exact shape of
+  the one injection this codebase has had (§3), so it is named, not inherited.
+- **`img-src 'self'`, no `data:`.** The favicon was an inline `data:` SVG and the
+  only reason the scheme was open; now `assets/favicon.svg`, a file. One icon was
+  not worth a scheme.
+- **`require-trusted-types-for 'script'` + `trusted-types 'none'`** make §3's rule
+  the browser's, not the reader's. Every HTML-parsing sink throws on a plain
+  string, so the injection shape in §3 cannot return as a quiet regression —
+  it returns as a `TypeError`. `'none'` bans declaring a policy: a policy is the
+  escape hatch, and nothing here needs one. **Prerequisite: three `innerHTML = ""`
+  clears became `textContent = ""`** — a clear is not an exception, and the other
+  17 clears in the file already did it that way. Chrome/Edge honour it; elsewhere
+  it is ignored, which is the status quo. Measured: `innerHTML` assignment
+  `TypeError`, `createPolicy` blocked, page renders unchanged.
 
-Consequences that are easy to trip over:
+Easy to trip over:
 
-- No inline `style` attributes, no inline `<script>`. A blocked inline style
-  fails *silently* in layout, which is worse than a loud error.
-- The CSP does **not** stop CSSOM writes. A width set from JS would not be
-  blocked; it would just be an invariant broken quietly. See §4 of
-  [layout.md](layout.md) for why data bars are drawn with text.
-- `<link rel="prefetch">` for this origin's own files is blocked too — see
+- No inline `style`, no inline `<script>`. A blocked inline style fails
+  **silently** in layout — worse than a loud error.
+- **The CSP does not stop CSSOM writes.** A width set from JS is not blocked,
+  just an invariant broken quietly. [layout.md](layout.md) §4.
+- `<link rel="prefetch">` for this origin's own files is blocked too —
   [decisions-not-built.md](decisions-not-built.md).
 
-**What the CSP cannot do here.** `frame-ancestors` is ignored in a `<meta>` CSP,
-and GitHub Pages sends no custom headers, so this site cannot forbid being
-framed. Accepted rather than worked around: there is no login, no session, no
-form and no state-changing control on the page, so there is nothing a clickjack
-could capture or trigger. A JavaScript frame-buster would be a control that
-looks like protection while protecting nothing. Revisit this the day the page
-grows an action worth hijacking.
+**What it cannot do.** `frame-ancestors` is ignored in a `<meta>` CSP and Pages
+sends no custom headers, so this site cannot forbid being framed. Accepted, not
+worked around: no login, no session, no form, no state-changing control, so a
+clickjack has nothing to capture. A JS frame-buster would look like protection
+while protecting nothing. Revisit if the page grows an action worth hijacking.
 
 ## 2. Three untrusted inputs, not one
 
-The API, the `localStorage` cache and the URL are all attacker-controllable in
-some scenario, and all three are narrowed on read.
+API, `localStorage` cache and URL are all attacker-controllable in some
+scenario. All narrowed on read.
 
 | Input | Guard |
 | --- | --- |
-| Every rendered field, from either source | `narrow()` — shape, count and length, in one place |
-| Repo URL | `safeRepoURL()` — only `https:` on `github.com`, else falls back to the profile URL. Escaping an attribute would not stop a `javascript:` scheme. |
-| `topics` | `safeTopics()` — keeps only `^[a-z0-9][a-z0-9-]{0,34}$`, caps at 12, de-duplicates, lowercases |
-| `?sort=` / `?dir=` / `?view=` | Checked against a known set with `hasOwnProperty`; anything else ignored, not assigned |
-| `?topic=` | Checked against `TOPIC_RE` |
+| Every rendered field, either source | `narrow()` — shape, count, length, in one place |
+| Repo URL | `safeRepoURL()` — only `https:` on `github.com`, else the profile URL. Escaping an attribute would not stop a `javascript:` scheme |
+| `topics` | `safeTopics()` — `^[a-z0-9][a-z0-9-]{0,34}$`, cap 12, de-duplicated, lowercased |
+| `?sort=` `?dir=` `?view=` | Known set via `hasOwnProperty`; else ignored, not assigned |
+| `?topic=` | `TOPIC_RE` |
+| `?focus=` | Slug pattern **and** must name a real `.section` |
+| `#hash` | `ID_RE` then `getElementById` — never `querySelector(raw)` |
 
-**One boundary, not two.** `narrow()` is the single function that turns either
-source into a row this page will render. The API is the more trusted of the two,
-but "more trusted" is not a shape check, so it goes through the same gate — a
-cache validated more loosely than the API is exactly the drift Security §2.12
-warns about.
+**One boundary, not two.** `narrow()` is the single function turning either
+source into a renderable row. The API is more trusted, but "more trusted" is not
+a shape check — a cache validated more loosely than the API is exactly the drift
+Security §2.12 warns about.
 
-**Size is part of validation.** A poisoned cache holding fifty thousand rows, or
-one row with a five-megabyte description, injects nothing and still hangs the
-render and destroys the layout. Bounds: 200 repositories, 100-character names,
-300-character descriptions, 40-character languages.
+**Size is part of validation.** Fifty thousand rows, or one five-megabyte
+description, injects nothing and still hangs the render. Bounds: 200 repos,
+100-char names, 300-char descriptions, 40-char languages.
 
-**The cache heals itself.** A cache entry that fails any check is *deleted*, not
-merely skipped. Corrupt JSON does not fix itself on the next visit, and a forged
-`time` far in the future would otherwise pin a poisoned cache permanently past
-its own expiry — so the timestamp is checked for being a finite number that is
-not in the future, as well as for age.
+**The cache heals itself.** A failing entry is *deleted*, not skipped. Corrupt
+JSON does not fix itself next visit, and a forged future `time` would pin a
+poisoned cache permanently past its own expiry — so the timestamp is checked for
+being a finite number, not in the future, as well as for age.
 
 ## 3. The one injection this codebase has had
 
-Recorded because the shape of the mistake matters more than the fix.
+Recorded because the shape matters more than the fix.
 
-`escapeHTML()` was `div.textContent = value; return div.innerHTML`. That looks
-airtight and is not: the HTML serialiser escapes `&`, `<` and `>` in a text node
-and **leaves quotes alone**, because a text node has no attribute context to
-break out of. Every call site dropped the result straight into one.
+`escapeHTML()` was `div.textContent = value; return div.innerHTML`. Looks
+airtight, is not: the serialiser escapes `&`, `<`, `>` in a text node and
+**leaves quotes alone** — a text node has no attribute context to break out of.
+Every call site dropped the result straight into one.
 
-A repository name of `x" onmouseover="…` therefore closed the attribute and
-opened a new one. Confirmed against a poisoned cache: a real `onmouseover`
-attribute appeared on a real button. `script-src 'self'` stopped the handler
-from running — defence in depth doing exactly its job (§2.4) — but a first layer
-that only holds because the second one caught it is not holding.
+A repo name of `x" onmouseover="…` closed the attribute and opened a new one.
+Confirmed against a poisoned cache: a real `onmouseover` on a real button.
+`script-src 'self'` stopped the handler running — defence in depth doing its job
+(§2.4) — but a first layer that only holds because the second caught it is not
+holding.
 
-**The fix was not a better escaper.** Fixing it would have left the same trap
-set for the next person to concatenate a string. Every remote value is now
-written through `textContent` and `setAttribute` on nodes built by hand, so
-there is no parser in the path and nothing to escape correctly (§2.9, economy of
-mechanism). `escapeHTML()` was deleted rather than repaired, because an unused
-escaper reads as permission to build strings again.
+**The fix was not a better escaper.** That would have left the trap set for the
+next person to concatenate a string. Every remote value now goes through
+`textContent` and `setAttribute` on hand-built nodes: no parser in the path,
+nothing to escape correctly (§2.9). `escapeHTML()` was **deleted, not repaired**
+— an unused escaper reads as permission to build strings again.
 
-> **The rule: never assemble HTML from remote data in `script.js`. Build nodes.
-> If you are reaching for an escaper, you are on the wrong path.**
+> **Never assemble HTML from remote data in `script.js`. Build nodes. Reaching
+> for an escaper means you are on the wrong path.**
 
 ## 4. No secrets, no tracking, no third parties
 
-- **No secrets in the repo.** Never add a GitHub token to `script.js`. The file
-  is public; a committed token is a leaked token. This is also why the API stays
-  unauthenticated rather than being "fixed" with a token or a proxy.
-- **No analytics, trackers, cookies or consent banners.** Nothing here needs
-  consent. Keep it that way.
-- **One outbound host, named in the CSP.** `api.github.com` and nothing else.
-- **Every link that leaves the page** carries `rel="noopener noreferrer"`,
-  built in one helper so it cannot be remembered in one place and forgotten in
-  another.
-- **Abuse of the shared budget is bounded.** The unauthenticated API allows 60
-  requests an hour per address, and the Retry button sits next to the message
-  that most invites repeated clicking, so it rate-limits itself and says why
-  (§3.5). The fetch also carries a 10-second deadline, so a hung request fails
-  as a failure instead of as a permanent "loading".
+- **No secrets in the repo.** Never add a GitHub token to `script.js` — the file
+  is public, so a committed token is a leaked token. Also why the API stays
+  unauthenticated rather than "fixed" with a token or a proxy.
+- **No analytics, trackers, cookies, consent banners.** Nothing here needs
+  consent.
+- **One outbound host, named in the CSP.** `api.github.com`, nothing else.
+- **Every outbound link** carries `rel="noopener noreferrer"`, from one helper,
+  so it cannot be remembered in one place and forgotten in another.
+- **The fetch discloses nothing.** `credentials: "omit"` (already the default —
+  written down so it is a decision, not an inherited one) and
+  `referrerPolicy: "no-referrer"`, which *is* new: the page-level
+  `strict-origin-when-cross-origin` was still handing GitHub this origin, and an
+  API that needs no referrer gets none. Verified the call still succeeds — a
+  `credentials` value of `include` would have broken CORS instead.
+- **Shared budget bounded.** 60 unauthenticated requests/hour per address, and
+  Retry sits next to the message that most invites repeated clicking — so it
+  rate-limits itself and says why (§3.5). The fetch also has a 10s deadline, so a
+  hang fails as a failure instead of a permanent "loading".
+
+## 6. Bounds and dictionaries
+
+- **Every URL parameter is bounded.** `sort`/`view` against known sets, `topic`
+  against `TOPIC_RE`, `focus` must name a real `.section` — and `q` is clamped to
+  `MAX_NAME`. `q` was the one taken at any length; it is echoed into the status
+  line and filtered on every keystroke. The clamped value is written back to the
+  URL, so the address bar cannot disagree with the filter.
+- **A dictionary keyed by remote text uses `Object.create(null)`.** `language` is
+  clamped but not charset-checked, so `"__proto__"` can arrive: on a plain object
+  `counts["__proto__"] = 1` writes the prototype slot, the count is silently
+  dropped and that language vanishes from the statistics. Silent wrong data, not
+  a crash — which is why it survived this long.
+- Note the server bound too: a 300,000-character query string never reaches the
+  page, since `http.server` and GitHub Pages both answer **414**. The clamp is
+  defence in depth, not the only limit.
+
+## 7. Against the OWASP Secure Coding Practices checklist
+
+Audited 2026-08-17 against [SECURITY_Rulebook.md](SECURITY_Rulebook.md) §2a, all
+213 items. The rulebook's rule applies: **not applicable is not the same claim as
+satisfied.** Stated here so a future reader does not read 150 blank rows as 150
+passes.
+
+| Category | Standing |
+| --- | --- |
+| Input Validation, Output Encoding | **In force** — §2 above is the whole answer. Validation is client-side only, which SCP-1 forbids — but there is no server to move it to, and nothing behind it to protect. The site is the trust boundary's far side. |
+| Data Protection, Communication Security | **In force** — §4. TLS and `nosniff` come from Pages; `github.io` is HSTS-preloaded. |
+| General Coding (204, 210–213) | **In force** — no dynamic execution, no third-party code, nothing for a reader to alter. |
+| System Configuration | **Mostly not ours.** Pages serves the repo; no directory listing, no configurable headers, no dev environment. 157 (remove test code) *is* ours and is enforced by hand — see the harness note in [verification-log.md](verification-log.md). |
+| Authn, Session, Access Control, Crypto, Error Logging, Database, File Management, Memory | **Not applicable.** No accounts, no sessions, no roles, no keys, no server log, no database, no upload, no manual allocation. Nothing was assessed and passed; there is nothing there. |
+
+Three checklist items were considered and **rejected** — reasons in
+[decisions-not-built.md](decisions-not-built.md): SRI on the site's own two files,
+`redirect: "error"` on the fetch, and a `robots.txt`.

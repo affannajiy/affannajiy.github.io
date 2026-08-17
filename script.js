@@ -34,6 +34,14 @@
   var query = "";
   var topic = "";      // active topic chip, "" for all
   var viewMode = "";   // "", "recruiter" or "developer" — "" is the full page
+
+  /* Declared up here with viewMode itself, not beside its first reader. Two
+     things now name a mode in a sentence — the jump announcement and the
+     certificate status — and the second runs during init, before the point
+     where this used to be declared. `var` hoists the name but not the value, so
+     the old position would have read undefined and thrown. */
+  var VIEW_LABEL = { recruiter: "Recruiter", developer: "Developer" };
+  var focusId = "";    // id of the one section focus mode is showing, "" for none
   var compare = [];    // repo names picked for the comparison table
 
   /* ── Helpers ─────────────────────────────────────────── */
@@ -163,7 +171,7 @@
      "linkedin.com/in/affannajiy (opens in a new tab)Copy" in both the search
      results and the exported JSON. The exclusion list lives here once, so a new
      control added to the page cannot be forgotten by four separate readers. */
-  var NOT_CONTENT = ".sr-only, .anchor-btn, .copy-btn, .detail-btn";
+  var NOT_CONTENT = ".sr-only, .anchor-btn, .copy-btn, .detail-btn, .qr-btn";
 
   function readableText(node) {
     if (!node) return "";
@@ -183,6 +191,59 @@
     var title = section.querySelector(".section-title");
     if (!title) return section.id;
     return readableText(title).replace(/^\s*\d+\s*—\s*/, "").trim() || section.id;
+  }
+
+  /* ── The undo register ───────────────────────────────────
+     Search can now land on a row that something is currently hiding — a closed
+     fold, a year filter, a view mode. Landing on a hidden row is landing on
+     nothing, so the jump clears whatever is in the way and says which control
+     it touched.
+
+     Filters register their own undo here rather than the jump hard-coding a
+     list of them. A filter that forgets to register leaves its rows unjumpable,
+     which shows up the first time anyone searches for one; a hard-coded list
+     would instead go quietly out of date the day a fourth filter is added.
+
+     `owns` answers "is this node mine to unhide", `active` answers "am I
+     currently hiding anything", `undo` puts the control back to showing
+     everything, and `name` is what the reader is told was changed. */
+  var undoRegister = [];
+
+  function registerUndo(name, owns, active, undo) {
+    undoRegister.push({ name: name, owns: owns, active: active, undo: undo });
+  }
+
+  /* Assigned by initViewModes(). A view mode is not a filter — it is not
+     reversed on paper and it is not in the register — but a jump still has to
+     be able to step out of one, so it is reachable through this instead. */
+  var leaveViewMode = null;
+
+  /* Assigned by initFocusMode(). Same reasoning: focus mode hides more than any
+     filter does, so a jump into a section that is not the focused one has to be
+     able to let go of it. */
+  var setFocusSection = null;
+
+  /* Assigned by initSearch(), which owns the visible `.jump-note`. Anything that
+     moves the page under the reader says so through this. A second status line
+     would be a second thing to keep in sync and a second thing to time out. */
+  var sayJump = null;
+
+  /* The section the reader is currently in, kept up to date by the scrollspy.
+     Read by whatever offers to focus "this" section and has to know which one
+     that is. */
+  var readingId = "";
+
+  /* Above the first section the scrollspy correctly reports no section at all,
+     and focusing nothing is not a thing anyone asked for. Falling back to the
+     first section keeps both entry points working from the very top of the
+     page — which is exactly where a reader who has never met focus mode is
+     standing. One function, because the palette and the `f` key disagreeing
+     about what "this section" means is the kind of bug nobody reports; they
+     just decide the key is broken. */
+  function sectionToFocus() {
+    var here = document.getElementById(readingId) ||
+               document.querySelector("main .section[id]");
+    return here || null;
   }
 
   /* ── Loading state ───────────────────────────────────────
@@ -310,6 +371,13 @@
       var r = view[i];
       var tr = el("tr");
 
+      /* The language, as an attribute as well as a cell, so search's `lang:`
+         prefix filters on what GitHub reported rather than on whether the word
+         happens to appear in a description. text() has already narrowed it;
+         setAttribute takes a string and parses nothing, so this is not a path
+         remote data can escape from. */
+      tr.setAttribute("data-lang", text(r.language));
+
       var nameCell = el("td");
       nameCell.appendChild(externalLink(safeRepoURL(r.html_url), text(r.name)));
       nameCell.appendChild(document.createTextNode(" "));
@@ -330,6 +398,7 @@
     }
 
     tbody.appendChild(frag);
+    syncNavEmpty();
   }
 
   // One sentence covering count, both filters and sort — the whole state of the
@@ -597,7 +666,19 @@
       if (ctrl) ctrl.abort();
     }, TIMEOUT_MS);
 
-    var options = { headers: { Accept: "application/vnd.github+json" } };
+    /* The call is stated in full rather than left to defaults. `credentials`
+       already defaults to same-origin, so no cookie was going to GitHub anyway
+       — writing it down is what makes that a decision instead of a default
+       somebody could change without noticing. `referrerPolicy` is the one that
+       does new work: the meta policy sends this page's origin to every
+       cross-origin request, and an API that needs no referrer should be told
+       nothing (Rulebook §1.3 — least privilege applies to what you disclose,
+       not only to what you can reach). */
+    var options = {
+      headers: { Accept: "application/vnd.github+json" },
+      credentials: "omit",
+      referrerPolicy: "no-referrer"
+    };
     if (ctrl) options.signal = ctrl.signal;
 
     fetch(API_URL, options)
@@ -642,9 +723,13 @@
         // An abort reads as "AbortError" in the console and as nothing useful
         // to a reader. What actually happened is that GitHub did not answer, so
         // that is what the message says.
+        // Bounded like every other string that reaches the DOM. This one is the
+        // platform's, not GitHub's, so it is short in practice — but "in
+        // practice" is not a length limit, and this is the only unclamped
+        // string left on a path a reader can see.
         var message = timedOut
           ? "GitHub did not answer within " + TIMEOUT_MS / 1000 + " seconds"
-          : err.message;
+          : clamp(err && err.message, 200) || "the request failed";
 
         setApiState("Unreachable — " + message);
         // With nothing on screen the failure is the whole story. With a cached
@@ -697,6 +782,22 @@
       query = filterEl.value;
       refresh();
     });
+
+    // Both Projects filters undo together. They compose as AND, so a repository
+    // hidden by the pair cannot be brought back by clearing only one of them,
+    // and clearing one while leaving the other would report a change the reader
+    // could not see.
+    registerUndo(
+      "the Projects filter",
+      function (node) { return !!(node.closest && node.closest("#projects")); },
+      function () { return !!(query.trim() || topic); },
+      function () {
+        query = "";
+        topic = "";
+        filterEl.value = "";
+        refresh();
+      }
+    );
   }
 
   /* ── Filter and sort state in the URL ────────────────────
@@ -728,7 +829,14 @@
     var d = params.get("dir");
     if (d === "ascending" || d === "descending") sortDir = d;
 
-    var q = params.get("q");
+    /* Clamped, like every remote string. This was the one URL parameter with no
+       bound on it: sort and view are checked against known sets, topic against a
+       charset, focus against a real element — but `q` was taken at whatever
+       length arrived. A link carrying a few hundred thousand characters would
+       have been echoed into the status line and filtered against on every
+       keystroke. Same ceiling as a repository name, since that is the longest
+       thing anyone could sensibly search for here. */
+    var q = clamp(params.get("q"), MAX_NAME);
     if (q) {
       query = q;
       if (filterEl) filterEl.value = q;
@@ -742,6 +850,16 @@
 
     var v = params.get("view");
     if (v && Object.prototype.hasOwnProperty.call(VIEW_MODES, v)) viewMode = v;
+
+    // A focused section is checked the same way everything else out of the URL
+    // is: it has to name a real section on this page before it is stored. An id
+    // from a query string is about to be put in a selector and written back
+    // out, so "it looks like an id" is not enough — it must BE one.
+    var f = params.get("focus");
+    if (f && /^[a-z][a-z0-9-]*$/.test(f)) {
+      var section = document.getElementById(f);
+      if (section && section.classList.contains("section")) focusId = f;
+    }
   }
 
   function syncURL() {
@@ -750,6 +868,7 @@
     if (query.trim()) params.set("q", query.trim());
     if (topic) params.set("topic", topic);
     if (viewMode) params.set("view", viewMode);
+    if (focusId) params.set("focus", focusId);
     // Only the non-default sort is written, so the plain URL stays plain.
     if (sortKey !== "updated" || sortDir !== "descending") {
       params.set("sort", sortKey);
@@ -960,6 +1079,11 @@
         });
 
         section.querySelectorAll("table.grid-table").forEach(function (table) {
+          // .block-empty is deliberately NOT skipped here. The print block
+          // reverses .filtered-out, so the rows that emptied the block come
+          // back on paper and the block comes back with them — the budget has
+          // to count a page that ignores the on-screen filter, or it describes
+          // one nobody is about to get. See printing.md §4.
           var rows = table.querySelectorAll(
             curated ? "tbody tr[data-resume]" : "tbody tr"
           );
@@ -1124,14 +1248,20 @@
      content. Scrolling someone to a heading whose body they cannot see is a
      dead end — the section is present, so the link promised something it did
      not deliver (Nielsen §1.3, Gestalt §2.4: hidden overflow is hidden data). */
+  /* The hash is treated as an id, not as a selector. It used to be handed
+     straight to `querySelector`, which meant a pasted `#a,*` was a valid
+     selector matching the first element on the page rather than the anchor it
+     claimed to be — a small consequence here, but selector injection all the
+     same, and the try/catch was only there because the raw string could throw.
+     `?focus=` in readStateFromURL already checks its value is a real id before
+     using it; this is the same rule applied to the same kind of input. */
+  var ID_RE = /^[A-Za-z][\w-]*$/;
+
   function revealTarget(hash) {
-    if (!hash || hash.length < 2) return;
-    var target;
-    try {
-      target = document.querySelector(hash);
-    } catch (e) {
-      return;                       // a malformed hash is not a selector
-    }
+    if (!hash || hash.charAt(0) !== "#") return;
+    var id = hash.slice(1);
+    if (!ID_RE.test(id)) return;
+    var target = document.getElementById(id);
     if (!target) return;
     var fold = target.querySelector("details.section-fold");
     if (fold && !fold.open) fold.open = true;
@@ -1152,6 +1282,44 @@
      Eight separate clicks to read everything is a toll on the reader who
      wants the whole record (Nielsen §1.7). The control is built in JS because
      without JS the folds are all open already and it would do nothing. */
+  /* ── Scrollable tables must be reachable by keyboard ─────
+     19 `.table-wrap` scrollers, and a table wider than its wrap could only be
+     scrolled by dragging. That is WCAG 2.1.1: content reachable by pointer only
+     is unreachable for anyone on a keyboard, and on a site made almost entirely
+     of wide tables it was the largest gap left.
+
+     Focusable **only while it actually overflows.** Making all 19 permanently
+     tabbable would add 19 stops to every keyboard pass through the page, most of
+     them onto boxes with nothing to scroll — trading one access problem for a
+     worse one. So it is re-evaluated on resize, and after anything that changes
+     a table's width: the density toggle, a filter, a view mode.
+
+     The label comes from the table's own `<caption>` rather than 19 hand-written
+     `aria-label`s. A caption is already required and already correct; a
+     duplicate written by hand is a second thing to keep in sync. */
+  function syncScrollableTables() {
+    [].forEach.call(document.querySelectorAll(".table-wrap"), function (wrap) {
+      var overflows = wrap.scrollWidth > wrap.clientWidth + 1;   // 1px slack for
+                                                                 // sub-pixel widths
+      if (overflows) {
+        if (!wrap.hasAttribute("tabindex")) {
+          wrap.setAttribute("tabindex", "0");
+          wrap.setAttribute("role", "region");
+          var caption = wrap.querySelector("caption");
+          var label = caption ? readableText(caption) : "";
+          if (label) wrap.setAttribute("aria-label", label + " (scrollable)");
+        }
+      } else if (wrap.hasAttribute("tabindex")) {
+        wrap.removeAttribute("tabindex");
+        wrap.removeAttribute("role");
+        wrap.removeAttribute("aria-label");
+      }
+    });
+  }
+
+  window.addEventListener("resize", syncScrollableTables);
+  document.addEventListener("viewmodechange", syncScrollableTables);
+
   function initFoldControls() {
     var folds = document.querySelectorAll("details.section-fold");
     var main = document.getElementById("main");
@@ -1242,11 +1410,35 @@
       return found;
     }
 
+    /* Where you are, in the coordinates the sections are already numbered in.
+       Not a percentage and not a bar: this document is a set of numbered
+       sections, and "04 / 08" is the same fact the headings state, where "43%"
+       would be a second scale the reader has to translate. */
+    var readout = document.getElementById("doc-position");
+
+    function pad(n) {
+      return (n < 10 ? "0" : "") + n;
+    }
+
     var marked;
     function update() {
       var current = currentId();
       if (current === marked) return;
       marked = current;
+      readingId = current || "";
+
+      var at = 0;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].id === current) at = i + 1;
+      }
+
+      if (readout) {
+        // Above the first section there is no section to be in, and an em dash
+        // says that where "00" would claim a section numbered zero.
+        readout.textContent =
+          (at ? pad(at) : "—") + " / " + pad(sections.length);
+      }
+
       for (var id in byId) {
         if (id === current) {
           byId[id].setAttribute("aria-current", "true");
@@ -1414,7 +1606,9 @@
     var box = document.getElementById("topic-chips");
     if (!box) return;
 
-    var counts = {};
+    // Same reason as the language counts. TOPIC_RE has no underscore, so
+    // "__proto__" cannot reach here today — this survives someone widening it.
+    var counts = Object.create(null);
     repos.forEach(function (r) {
       safeTopics(r.topics).forEach(function (t) {
         counts[t] = (counts[t] || 0) + 1;
@@ -1432,7 +1626,7 @@
       return;
     }
     box.hidden = false;
-    box.innerHTML = "";
+    box.textContent = "";
 
     // "All" first, so the way back out is as visible as the way in (§1.3).
     list.unshift("");
@@ -1480,7 +1674,13 @@
     var body = document.getElementById("lang-body");
     if (!wrap || !row || !body || repos.length === 0) return;
 
-    var counts = {};
+    /* Object.create(null), because the keys are remote strings. `language` is
+       clamped but not charset-checked, so "__proto__" can arrive: on a plain
+       object `counts["__proto__"] = 1` writes the prototype slot instead of a
+       count, the assignment is silently dropped, and that language disappears
+       from the statistics rather than throwing. A dictionary keyed by untrusted
+       text should never inherit from Object. */
+    var counts = Object.create(null);
     var withLang = 0;
     var newest = 0;
     repos.forEach(function (r) {
@@ -1582,7 +1782,7 @@
       // Cleared as well as hidden. A revalidation that drops the last featured
       // repository must not leave the previous one sitting in a hidden list,
       // where the next thing to unhide the band would show stale data.
-      list.innerHTML = "";
+      list.textContent = "";
       band.hidden = true;
       return;
     }
@@ -1635,7 +1835,14 @@
       var btn = event.target.closest(".detail-btn");
       if (!btn) return;
       var r = find(btn.getAttribute("data-repo"));
-      if (!r) return;
+      if (r) show(r);
+    });
+
+    /* One function, because the Details button and a Related button must not be
+       able to disagree about what a repository dialog contains. Called on an
+       already-open dialog too: showModal() on an open dialog throws, so the
+       swap re-fills in place and only opens when it is closed. */
+    function show(r) {
       open = r;
 
       titleEl.textContent = r.name;
@@ -1652,11 +1859,82 @@
       ].forEach(function (pair) {
         bodyEl.appendChild(detailRow(pair[0], pair[1]));
       });
+      bodyEl.appendChild(relatedRow(r, topics, show));
 
       descEl.textContent = text(r.description) || "No description on GitHub.";
       syncCompareBtn();
-      dialog.showModal();
-    });
+      if (!dialog.open) dialog.showModal();
+    }
+
+    /* One repository's neighbours, by shared topic.
+       Shared topic and not shared language: language is free and says nothing —
+       every Python repository would link to every other one and the answer
+       would be a single blob. A topic is something Affan tagged on purpose, so
+       the edge carries an intention. This is also why there is no allowlist
+       here: curation happens on GitHub, and the page reports it (standing
+       instruction 5).
+
+       Text, not a drawn graph. A node-link picture needs a layout algorithm,
+       geometry the CSP will not let JS set as inline style, and a separate
+       text version for paper and for screen readers — three costs to say what
+       one sorted line already says.
+
+       Each neighbour is a button rather than a link: it swaps this dialog to
+       that repository, so the edge can be walked without closing anything.
+       A link would leave for GitHub, which is the opposite of the point. */
+    function relatedRow(r, topics, showRepo) {
+      var tr = el("tr");
+      tr.appendChild(cell("th", "Related", "row"));
+      var td = el("td");
+
+      var mine = Object.create(null);   // keyed by remote topics
+      topics.forEach(function (t) { mine[t] = 1; });
+
+      var near = [];
+      repos.forEach(function (other) {
+        if (other.name === r.name) return;
+        var shared = safeTopics(other.topics).filter(function (t) {
+          return mine[t];
+        });
+        if (shared.length) near.push({ repo: other, shared: shared });
+      });
+
+      // Most-shared first, then by name, so the order does not shuffle between
+      // two openings of the same dialog.
+      // text() and not a bare .localeCompare: the cache is untrusted, and a
+      // repository whose name came back as a number would throw here and take
+      // the whole dialog with it.
+      near.sort(function (a, b) {
+        return b.shared.length - a.shared.length ||
+               text(a.repo.name).localeCompare(text(b.repo.name));
+      });
+
+      if (!near.length) {
+        /* Stated, not hidden. Nothing here is broken — the repositories simply
+           are not tagged yet — but a row that silently vanishes teaches the
+           reader nothing, and this one names the thing that would fill it. */
+        td.appendChild(el("span", "hint", topics.length
+          ? "No other repository shares these topics yet."
+          : "No topics on GitHub yet — tagging repositories is what links them."));
+        tr.appendChild(td);
+        return tr;
+      }
+
+      near.forEach(function (entry, i) {
+        if (i) td.appendChild(document.createTextNode(" · "));
+        var btn = el("button", "related-btn", text(entry.repo.name));
+        btn.type = "button";
+        // Named for a screen reader, which otherwise hears a bare repository
+        // name and no reason it is in this list.
+        btn.appendChild(el("span", "sr-only",
+          " — shares " + entry.shared.join(", ")));
+        btn.addEventListener("click", function () { showRepo(entry.repo); });
+        td.appendChild(btn);
+      });
+
+      tr.appendChild(td);
+      return tr;
+    }
 
     function syncCompareBtn() {
       if (!cmpBtn || !open) return;
@@ -1704,7 +1982,7 @@
       bar.className = "compare-bar";
       host.parentNode.insertBefore(bar, host.nextSibling);
     }
-    bar.innerHTML = "";
+    bar.textContent = "";
 
     var said = document.createElement("span");
     said.textContent =
@@ -1772,7 +2050,7 @@
 
     // The union of every topic across the selection, so a row exists for each
     // attribute and a blank cell means "not this one" rather than "unknown".
-    var topicSet = {};
+    var topicSet = Object.create(null);   // keyed by remote topics
     picked.forEach(function (r) {
       safeTopics(r.topics).forEach(function (t) { topicSet[t] = 1; });
     });
@@ -1858,6 +2136,8 @@
 
       var state = { index: -1, dir: "ascending" };
       var headers = [].slice.call(headRow.cells);
+      var caption = tbl.querySelector("caption");   // names the table when its
+                                                    // sort is announced
 
       headers.forEach(function (th, index) {
         var label = th.textContent.trim();
@@ -1911,8 +2191,44 @@
         headers.forEach(function (th, i) {
           th.setAttribute("aria-sort", i === state.index ? state.dir : "none");
         });
+
+        /* Said out loud, not only shown. aria-sort states what a header *is*,
+           but a reader who has just activated it hears nothing about the twelve
+           rows that reordered underneath. Every other control here announces its
+           result; sorting was the one that changed the page silently.
+
+           Polite, and one shared region: a live region per table would let two
+           announcements collide. */
+        /* First sentence of the caption only. A caption here also tells the
+           reader the headers sort, so the whole thing spliced into a sentence
+           read "Education history. Column headers sort the table. sorted by
+           Qualification, ascending." The name is the first clause; the rest is
+           instructions the reader has just finished acting on. */
+        announceSort(
+          (caption ? readableText(caption).split(". ")[0] : "Table") +
+          " sorted by " + headers[state.index].textContent.trim() +
+          ", " + state.dir + "."
+        );
       }
     });
+  }
+
+  /* One sr-only region for every sortable table. Not the visible `.jump-note`:
+     that line reports something the reader cannot see for themselves — a
+     cleared filter, an abandoned view mode. A reordered table is already on
+     screen, so repeating it in print would be noise for everyone who can see it
+     and silence for everyone who cannot. */
+  var sortSaid = null;
+
+  function announceSort(message) {
+    if (!sortSaid) {
+      sortSaid = document.createElement("p");
+      sortSaid.className = "sr-only";
+      sortSaid.id = "sort-status";
+      sortSaid.setAttribute("role", "status");
+      document.body.appendChild(sortSaid);
+    }
+    sortSaid.textContent = message;
   }
 
   /* ── Certificate filters ─────────────────────────────────
@@ -1953,7 +2269,7 @@
 
     function apply() {
       var y = yearSel.value, i = issuerSel.value, t = typeSel.value;
-      var shown = 0;
+      var passed = 0;
 
       rows.forEach(function (row) {
         var ok =
@@ -1961,14 +2277,36 @@
           (!i || row.cells[2].textContent.trim() === i) &&
           (!t || row.cells[3].textContent.trim() === t);
         row.classList.toggle("filtered-out", !ok);
-        if (ok) shown++;
+        if (ok) passed++;
       });
+
+      /* Counted after the class is set, and by what the reader can actually
+         see — not by what passed the filter. A view mode hides rows in CSS, so
+         a row can pass every filter and still not be on the page: year 2024 in
+         the Developer view left one match, all of it hidden, and the status
+         line said "Showing 1 of 7" over a visibly empty table. A status that
+         contradicts the page is worse than none. */
+      var shown = 0;
+      rows.forEach(function (row) {
+        if (window.getComputedStyle(row).display !== "none") shown++;
+      });
+
+      var mode = VIEW_LABEL[viewMode] || "";
 
       // An empty result is a sentence with a way out of it, never a blank
       // table (Rulebook §1.9, and the same contract the Projects filter keeps).
       if (!y && !i && !t) {
+        statusLine.textContent = shown === rows.length
+          ? rows.length + " certificates. Filter by year, issuer or type."
+          : shown + " of " + rows.length + " certificates — the " + mode +
+            " view is hiding the rest. Filter by year, issuer or type.";
+      } else if (shown === 0 && passed > 0) {
+        /* The filter is not the thing in the way, so Reset would not fix it.
+           Name the control that is actually hiding the row. */
         statusLine.textContent =
-          rows.length + " certificates. Filter by year, issuer or type.";
+          passed + (passed === 1 ? " certificate matches" : " certificates match") +
+          " those filters, but the " + mode +
+          " view is hiding them. Select Everything to see them.";
       } else if (shown === 0) {
         statusLine.textContent =
           "No certificates match those filters. Select Reset to see all " +
@@ -1977,20 +2315,123 @@
         statusLine.textContent =
           "Showing " + shown + " of " + rows.length + " certificates.";
       }
+
+      syncNavEmpty();
     }
+
+    /* A view mode changes what is visible without touching a filter, so the
+       count has to be recomputed when one is chosen. Registered here rather
+       than called from initViewModes() so the filter owns its own status
+       sentence — the alternative is the view mode knowing how to phrase it. */
+    document.addEventListener("viewmodechange", apply);
 
     [yearSel, issuerSel, typeSel].forEach(function (sel) {
       sel.addEventListener("change", apply);
     });
 
-    reset.addEventListener("click", function () {
+    function clear() {
       yearSel.value = "";
       issuerSel.value = "";
       typeSel.value = "";
       apply();
-    });
+    }
+
+    reset.addEventListener("click", clear);
+
+    // Reset already existed; the register just borrows it, so the control the
+    // reader would have clicked and the one a search jump clicks are the same
+    // code and cannot drift apart.
+    registerUndo(
+      "the certificate filters",
+      function (node) { return !!(node.closest && node.closest("#certificates")); },
+      function () { return !!(yearSel.value || issuerSel.value || typeSel.value); },
+      clear
+    );
 
     apply();
+  }
+
+  /* ── Blocks a filter emptied ─────────────────────────────
+     A filter can leave a table as a header row over nothing, standing under a
+     sub-heading that names an affiliation which had no role that year. The
+     print side already collapses that pair (collapseEmptyTables); this is the
+     same rule on screen, so the year bar and the view modes cannot disagree
+     about whether a block is still worth drawing.
+
+     Two deliberate choices:
+      - Only blocks introduced by a .subhead are collapsed. Projects and
+        Certificates state their own empty result in words, and hiding a table
+        that has already said "no matches" would remove the explanation.
+      - Emptiness is each row's OWN computed display, not offsetParent. A
+        closed fold hides rows without filtering any of them; reading that as
+        emptiness would set .block-empty and leave the block hidden after the
+        fold reopened. */
+  function syncEmptyBlocks() {
+    document.querySelectorAll(".table-wrap").forEach(function (wrap) {
+      var head = wrap.previousElementSibling;
+      if (!head || !head.classList.contains("subhead")) return;
+
+      var body = wrap.querySelector("tbody");
+      if (!body || body.rows.length === 0) return;
+
+      var live = [].some.call(body.rows, function (row) {
+        return window.getComputedStyle(row).display !== "none";
+      });
+
+      wrap.classList.toggle("block-empty", !live);
+      head.classList.toggle("block-empty", !live);
+    });
+  }
+
+  /* ── Sections nothing is currently showing in ────────────
+     A view mode or a filter can take every row out of a section, and the nav
+     then points at a heading over nothing. The item is MARKED rather than
+     removed: a nav entry that disappears takes the reader's map with it and
+     offers no reason, where a marked one says the section exists and nothing in
+     it matches right now — and stays clickable, so nothing is gated behind
+     undoing the control first (§3.8).
+
+     Run from the filters as well as from the view modes, deliberately. Scoping
+     it to view modes alone was the first build, and on this page's content no
+     view mode empties a whole section, so the mark could never appear at all —
+     a feature that is correct and unreachable is worse than one that is not
+     built. Whatever emptied the section, the nav is answering the same
+     question, and answering it from one place means the two causes cannot
+     disagree.
+
+     Only sections that have rows are judged. About and Links carry prose rather
+     than a table, and "no visible rows" would call them empty when they are
+     among the fullest things on the page. And emptiness is each row's own
+     computed display for the third time in this file, for the third time
+     because a closed fold must not be mistaken for a filter. */
+  function syncNavEmpty() {
+    [].forEach.call(document.querySelectorAll(".site-nav a"), function (link) {
+      var section = document.getElementById(link.getAttribute("href").slice(1));
+      if (!section) return;
+
+      var rows = section.querySelectorAll("tbody tr");
+      var empty = rows.length > 0 && ![].some.call(rows, function (row) {
+        return window.getComputedStyle(row).display !== "none";
+      });
+
+      var note = link.querySelector(".sr-only");
+      if (empty) {
+        link.setAttribute("data-empty", "true");
+        // A title attribute would be unreachable by keyboard and unread by a
+        // screen reader that is walking links; a note inside the link is both.
+        // readableText() strips .sr-only, so this cannot leak into the search
+        // index or the JSON view.
+        if (!note) {
+          note = document.createElement("span");
+          note.className = "sr-only";
+          note.textContent = " — nothing to show here right now";
+          link.appendChild(note);
+        }
+      } else {
+        link.removeAttribute("data-empty");
+        if (note) link.removeChild(note);
+      }
+    });
   }
 
   /* ── Experience by year ──────────────────────────────────
@@ -2034,11 +2475,18 @@
     var active = null;
 
     function apply() {
-      var shown = 0;
+      var passed = 0;
       rows.forEach(function (row) {
         var ok = active === null || yearsOf(row).indexOf(active) !== -1;
         row.classList.toggle("filtered-out", !ok);
-        if (ok) shown++;
+        if (ok) passed++;
+      });
+
+      // Counted from the page, not from the filter — same reason as the
+      // certificate filter: a view mode can hide a row that passed.
+      var shown = 0;
+      rows.forEach(function (row) {
+        if (window.getComputedStyle(row).display !== "none") shown++;
       });
 
       [].forEach.call(bar.querySelectorAll(".chip"), function (btn) {
@@ -2047,13 +2495,25 @@
         btn.setAttribute("aria-pressed", on ? "true" : "false");
       });
 
+      var mode = VIEW_LABEL[viewMode] || "";
+
       statusLine.hidden = active === null;
-      statusLine.textContent =
-        active === null
-          ? ""
+      if (active !== null) {
+        statusLine.textContent = (shown === 0 && passed > 0)
+          ? passed + (passed === 1 ? " role ran" : " roles ran") + " during " +
+            active + ", but the " + mode + " view is hiding them. Select " +
+            "Everything to see them."
           : "Showing " + shown + " of " + rows.length +
             " roles running during " + active + ". Select “All years” to see them all.";
+      } else {
+        statusLine.textContent = "";
+      }
+
+      syncEmptyBlocks();
+      syncNavEmpty();
     }
+
+    document.addEventListener("viewmodechange", apply);
 
     function chip(value, label) {
       var btn = document.createElement("button");
@@ -2071,6 +2531,17 @@
 
     chip(null, "All years");
     years.forEach(function (y) { chip(y, y + " (" + seen[y] + ")"); });
+
+    // Undoing this one also has to run apply(), not merely reset the variable:
+    // apply() is what clears .filtered-out, re-syncs the chips and calls
+    // syncEmptyBlocks() to bring back any affiliation the filter had collapsed.
+    registerUndo(
+      "the Experience year filter",
+      function (node) { return !!(node.closest && node.closest("#experience")); },
+      function () { return active !== null; },
+      function () { active = null; apply(); }
+    );
+
     apply();
   }
 
@@ -2082,6 +2553,14 @@
      It searches headings, prose, table rows and links, and every result names
      the section it came from — a match with no context is a match the reader
      has to go and find twice. */
+  /* Every entry carries the node it came from, not just the id of the section
+     containing it. Without that a result for one row out of sixty-six can only
+     scroll to the top of Experience and leave the reader to find it again by
+     eye — which is the same work the search was supposed to do.
+
+     Holding live nodes is safe here only because the index is rebuilt on every
+     open. A node cached across a re-render would be an orphan pointing at a row
+     that is no longer in the document. */
   function buildSearchIndex() {
     var entries = [];
     var sections = document.querySelectorAll("main .section[id]");
@@ -2089,34 +2568,415 @@
     [].forEach.call(sections, function (section) {
       var label = sectionLabel(section);
 
-      entries.push({
-        kind: "Section",
-        section: label,
-        id: section.id,
-        text: label
-      });
+      function add(kind, node, textValue, lang) {
+        var t = textValue === undefined ? readableText(node) : textValue;
+        if (!t) return;
+        entries.push({
+          kind: kind,
+          section: label,
+          sectionId: section.id,
+          node: node,
+          text: t,
+          hay: t.toLowerCase(),
+          lang: lang || ""
+        });
+      }
+
+      add("Section", section, label);
 
       [].forEach.call(section.querySelectorAll(".subhead"), function (node) {
-        entries.push({
-          kind: "Heading", section: label, id: section.id,
-          text: readableText(node)
-        });
+        add("Heading", node);
       });
 
       [].forEach.call(section.querySelectorAll(".section-body > p"), function (node) {
-        var t = readableText(node);
-        if (t) entries.push({ kind: "Text", section: label, id: section.id, text: t });
+        add("Text", node);
       });
 
       [].forEach.call(section.querySelectorAll("tbody tr"), function (row) {
         var t = [].map.call(row.cells, function (c) {
           return readableText(c);
         }).filter(Boolean).join(" · ");
-        if (t) entries.push({ kind: "Row", section: label, id: section.id, text: t });
+        // data-lang is written by renderRows() from the API's own field, so
+        // `lang:` filters on what GitHub reported rather than on whether the
+        // word happens to appear in a description.
+        add("Row", row, t, (row.getAttribute("data-lang") || "").toLowerCase());
       });
     });
 
     return entries;
+  }
+
+  /* ── Search syntax ───────────────────────────────────────
+     `section:skills sql`, `type:row python`, `year:2026`, `lang:python`. An
+     accelerator, documented in the ? reference rather than printed above the
+     input: putting a manual in front of everyone who only wanted to type a word
+     is the wrong trade.
+
+     An unrecognised prefix is searched for literally and the status line says
+     so. The strict alternative — reject the query and list the valid keys —
+     punishes a colon typed in ordinary prose ("note: python") with a failure,
+     and a search that fails on plain English is worse than one that ignores a
+     prefix it does not know. */
+  var QUERY_KEYS = { section: 1, type: 1, year: 1, lang: 1 };
+
+  function parseQuery(raw) {
+    var out = { terms: [], filters: {}, unknown: [] };
+
+    raw.split(" ").forEach(function (word) {
+      if (!word) return;
+      var at = word.indexOf(":");
+      // A colon at either end is punctuation, not a prefix.
+      if (at > 0 && at < word.length - 1) {
+        var key = word.slice(0, at);
+        if (Object.prototype.hasOwnProperty.call(QUERY_KEYS, key)) {
+          out.filters[key] = word.slice(at + 1);
+          return;
+        }
+        if (out.unknown.indexOf(key) === -1) out.unknown.push(key);
+      }
+      out.terms.push(word);
+    });
+
+    return out;
+  }
+
+  function entryMatches(entry, parsed) {
+    var f = parsed.filters;
+
+    if (f.section &&
+        entry.sectionId.indexOf(f.section) !== 0 &&
+        entry.section.toLowerCase().indexOf(f.section) === -1) return false;
+
+    if (f.type && entry.kind.toLowerCase().indexOf(f.type) !== 0) return false;
+    if (f.year && entry.hay.indexOf(f.year) === -1) return false;
+    if (f.lang && entry.lang.indexOf(f.lang) === -1) return false;
+
+    for (var i = 0; i < parsed.terms.length; i++) {
+      if (entry.hay.indexOf(parsed.terms[i]) === -1) return false;
+    }
+    return true;
+  }
+
+  /* ── Landing on the match ────────────────────────────────
+     A hit can be inside a closed fold, behind a filter, or hidden by a view
+     mode. Jumping to it regardless lands the reader on nothing and gives them
+     no reason, so the jump clears what is in the way and states what it
+     changed — the same contract the error paths keep, pointed the other way.
+
+     Order matters. The fold is opened first because it is the cheapest and
+     least surprising undo, and because opening it may be enough on its own; the
+     view mode next; a filter last, since it is the one the reader most likely
+     set on purpose. Each step re-tests whether the node is still hidden, so
+     nothing is cleared that was not actually in the way. */
+  var HIGHLIGHT_NAME = "search-hit-mark";
+  var hitTimer = null;
+  var flashedNode = null;
+
+  function reducedMotion() {
+    return !!(window.matchMedia &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  function stillHidden(node) {
+    return node.getClientRects().length === 0;
+  }
+
+  function clearHit() {
+    if (window.CSS && window.CSS.highlights) {
+      window.CSS.highlights.delete(HIGHLIGHT_NAME);
+    }
+    if (flashedNode) {
+      flashedNode.classList.remove("hit-flash");
+      flashedNode = null;
+    }
+    if (hitTimer) {
+      window.clearTimeout(hitTimer);
+      hitTimer = null;
+    }
+  }
+
+  /* The CSS Custom Highlight API paints a Range without inserting anything.
+     That is the whole reason it is used: a <mark> wrapper would be read back
+     out by readableText(), which feeds the search index, the JSON view and the
+     résumé line budget — the exact bug family that has already cost three
+     rounds here. Nothing inserted means nothing to unwrap and nothing to leak.
+
+     Where the API is missing the row is flashed instead. Less precise, still an
+     answer to "which one of these did I match". */
+  function markHit(node, needle) {
+    clearHit();
+    var painted = false;
+
+    if (needle && window.CSS && window.CSS.highlights &&
+        typeof window.Highlight === "function") {
+      var hl = new window.Highlight();
+      var walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+      var t;
+      while ((t = walk.nextNode())) {
+        var hay = t.data.toLowerCase();
+        var at = hay.indexOf(needle);
+        while (at !== -1) {
+          var range = document.createRange();
+          range.setStart(t, at);
+          range.setEnd(t, at + needle.length);
+          hl.add(range);
+          painted = true;
+          at = hay.indexOf(needle, at + needle.length);
+        }
+      }
+      if (painted) window.CSS.highlights.set(HIGHLIGHT_NAME, hl);
+    }
+
+    // Also the fallback when the term matched only the assembled row text: a
+    // row's index entry joins its cells with " · ", a separator that exists in
+    // no text node, so a query spanning two cells has nothing to paint.
+    if (!painted) {
+      node.classList.add("hit-flash");
+      flashedNode = node;
+    }
+
+    hitTimer = window.setTimeout(clearHit, 2600);
+  }
+
+  function revealEntry(entry, needle, say) {
+    var node = entry.node;
+    var changed = [];
+
+    if (focusId && entry.sectionId !== focusId && setFocusSection) {
+      setFocusSection("");
+      changed.push("left focus mode");
+    }
+
+    var fold = node.closest ? node.closest("details.section-fold") : null;
+    if (fold && !fold.open) {
+      fold.open = true;
+      changed.push("opened the fold");
+    }
+
+    if (stillHidden(node) && viewMode && leaveViewMode) {
+      changed.push("switched out of the " + (VIEW_LABEL[viewMode] || viewMode) + " view");
+      leaveViewMode();
+    }
+
+    undoRegister.forEach(function (undoer) {
+      if (!stillHidden(node)) return;
+      if (!undoer.owns(node) || !undoer.active()) return;
+      undoer.undo();
+      changed.push("cleared " + undoer.name);
+    });
+
+    /* The list is passed alongside the sentence, not instead of it. Search wants
+       the sentence and nothing else; the evidence links need to name the skill
+       first and append what moved, and re-deriving that from a formatted string
+       would be parsing our own prose. */
+    if (say) {
+      say(changed.length
+        ? "Showing " + entry.section + " — " + changed.join(", ") + "."
+        : "", changed);
+    }
+
+    /* Scrolled synchronously, deliberately. Every undo above is a synchronous
+       DOM change and scrollIntoView flushes layout itself before it measures,
+       so there is nothing a frame's delay would wait for. An earlier version
+       did wrap this in requestAnimationFrame as belt and braces; rAF does not
+       fire at all in a tab that is not compositing, which turned a needless
+       precaution into a way for the jump to silently never happen.
+
+       block:"center" rather than "start": a table row scrolled to the top of
+       the viewport lands underneath the sticky header unless every row carries
+       scroll-margin-top, and centring sidesteps the header instead of
+       negotiating with it. See layout.md §2. */
+    if (stillHidden(node)) return;   // something else owns it — do not scroll to nothing
+    node.scrollIntoView({
+      block: "center",
+      behavior: reducedMotion() ? "auto" : "smooth"
+    });
+    markHit(node, needle);
+  }
+
+  /* ── Evidence links ──────────────────────────────────────
+     The Skills table has always named where each skill was used. Those names
+     were prose, so the claim "every level points at a row that exists" was
+     true only for as long as someone kept checking it by eye — and nothing
+     could reverse it to ask which skills a given row supports.
+
+     They are real links now, and they go through revealEntry() rather than
+     letting the browser follow the hash. The difference is everything a jump
+     has to do here: a coursework row can be behind a closed fold, a year
+     filter or a view mode, and the native hash jump would scroll to a row that
+     is display:none and leave the reader looking at whatever happens to be
+     there. Same path as search, so a filter that registers its undo once is
+     reversible from both.
+
+     The reverse direction — which skill sent you — is said in the existing
+     `.jump-note`, deliberately not written into the row. Inserting a caption
+     into a table cell is the bug family that has already cost three rounds:
+     readableText() would read it straight back out into the search index, the
+     JSON view and the résumé line budget. A sentence in the status line costs
+     nothing and disappears on its own. */
+  function initEvidenceLinks() {
+    var skills = document.getElementById("skills");
+    if (!skills) return;
+
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest ? event.target.closest("a.ev-link") : null;
+      if (!link) return;
+      // Modified clicks belong to the browser: the href is a real href, so
+      // open-in-new-tab has to keep working rather than being swallowed here.
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+          event.button !== 0) return;
+
+      var id = (link.getAttribute("href") || "").slice(1);
+      var target = id ? document.getElementById(id) : null;
+      if (!target) return;           // a dead evidence link falls back to the
+                                     // browser, which is honest about it
+
+      // Some evidence names a cell rather than a row, because the name lives in
+      // the second column. Flash and centre the whole row anyway — a lone lit
+      // cell says "this word", and the answer is the row.
+      var node = target.closest ? (target.closest("tr") || target) : target;
+      var section = node.closest ? node.closest(".section") : null;
+      if (!section) return;
+
+      /* The skill is the row's first <td>, not its <th scope="row">: that header
+         is the category ("Software", "Professional", "Language"), repeated down
+         the group. Reading the header instead produced "Evidence for
+         Professional", which names four rows and answers nothing. */
+      var row = link.closest ? link.closest("tr") : null;
+      var skillCell = row ? row.querySelector("td") : null;
+      var skill = skillCell ? readableText(skillCell) : "";
+
+      event.preventDefault();
+      revealEntry(
+        { node: node, sectionId: section.id, section: sectionLabel(section) },
+        "",
+        function (_sentence, changed) {
+          var where = sectionLabel(section);
+          var lead = skill
+            ? "Evidence for " + skill + " — " + where
+            : "Showing " + where;
+          if (changed && changed.length) lead += ", " + changed.join(", ");
+          if (sayJump) sayJump(lead + ".");
+        }
+      );
+    });
+  }
+
+  initEvidenceLinks();
+
+  /* ── Commands ────────────────────────────────────────────
+     Built from the page, not from a list kept beside it. Section jumps come
+     from the nav, and every other command wraps a control that already exists
+     and clicks it — so the palette and the button do the same thing by
+     construction rather than by anyone remembering to keep them in step, and a
+     control added later joins the palette with no second edit.
+
+     Two commands have no button anywhere: focusing a section and leaving focus.
+     Those are the only ones written out by hand, and they are written here
+     rather than drawn on the page because the palette is the whole point of
+     focus mode having no chrome of its own.
+
+     A control that is hidden or disabled is skipped. The keyboard-reference
+     button is hidden on touch, so on a phone the palette correctly does not
+     offer to open a list of keys the device does not have. */
+  /* `.qr-btn` is named on its own because it is drawn as a `.copy-btn` — a small
+     chip beside the address rather than a filled button — so it is not caught by
+     `button.button`. The Copy buttons themselves are deliberately still absent:
+     eight commands all reading "Copy" would say nothing about which address. */
+  var COMMAND_SOURCES =
+    "main button.button, main button.fold-toggle, main button.qr-btn, " +
+    ".view-switch button, .site-footer button.button";
+
+  function buildCommands() {
+    var out = [];
+
+    function add(group, label, run) {
+      out.push({ group: group, label: label, hay: label.toLowerCase(), run: run });
+    }
+
+    [].forEach.call(document.querySelectorAll(".site-nav a"), function (link) {
+      var id = link.getAttribute("href").slice(1);
+      if (!document.getElementById(id)) return;
+      add("Go to", "Go to " + readableText(link), function () {
+        goToSection(id);
+      });
+    });
+
+    if (setFocusSection) {
+      if (focusId) {
+        add("Focus", "Leave focus mode", function () { setFocusSection(""); });
+      } else {
+        var here = sectionToFocus();
+        if (here) {
+          add("Focus", "Focus one section — " + sectionLabel(here), function () {
+            setFocusSection(here.id);
+          });
+        }
+      }
+    }
+
+    [].forEach.call(document.querySelectorAll(COMMAND_SOURCES), function (btn) {
+      if (btn.hidden || btn.disabled || (btn.closest && btn.closest("dialog"))) return;
+      var label = readableText(btn);
+      if (!label) return;
+      // "Everything" / "Recruiter" / "Developer" name a state, not an action.
+      // Beside a table of controls they read fine; in a list of commands they
+      // have to say what pressing them does.
+      if (btn.closest(".view-switch")) label = "Switch to the " + label + " view";
+      add("Do", label, function () { btn.click(); });
+    });
+
+    /* Offered only when something is actually on. A permanent "Reset" in a page
+       with nothing to reset is a control that does nothing the first time anyone
+       tries it, which teaches them not to try again. */
+    if (stateToReset().length) {
+      add("Do", "Reset the view — " + stateToReset().join(", "), resetView);
+    }
+
+    return out;
+  }
+
+  /* ── Reset the view ──────────────────────────────────────
+     Every state here is individually reversible; what was missing was one way
+     out of all of them at once. A reader who has stacked a view mode, a year, a
+     topic, a search and a sort has five separate controls to find, and the
+     browser's Back button was doing the job by accident.
+
+     Built from the undo register and the two hooks, not from its own list of
+     things to clear. A hard-coded list is a list that silently misses the sixth
+     filter — the same argument the register was created for. */
+  function stateToReset() {
+    var on = [];
+    if (focusId) on.push("focus mode");
+    if (viewMode) on.push("the " + (VIEW_LABEL[viewMode] || viewMode) + " view");
+    undoRegister.forEach(function (u) {
+      if (u.active()) on.push(u.name);
+    });
+    return on;
+  }
+
+  function resetView() {
+    var cleared = stateToReset();
+    if (!cleared.length) return;
+
+    // Focus mode first: it hides the most, and leaving it may be all that was
+    // wanted. Same order as a search jump, so the two cannot disagree about
+    // what "undo everything" means.
+    if (focusId && setFocusSection) setFocusSection("");
+    if (viewMode && leaveViewMode) leaveViewMode();
+    undoRegister.forEach(function (u) {
+      if (u.active()) u.undo();
+    });
+
+    if (sayJump) sayJump("Reset — cleared " + cleared.join(", ") + ".");
+  }
+
+  function goToSection(id) {
+    var target = document.getElementById(id);
+    if (!target) return;
+    var fold = target.querySelector("details.section-fold");
+    if (fold && !fold.open) fold.open = true;
+    window.location.hash = "#" + id;
   }
 
   function initSearch() {
@@ -2129,59 +2989,214 @@
     var index = null;
     var MAX = 25;
 
+    /* Where the page is told what a jump just changed under it. Created here
+       rather than written into index.html because it has nothing to say until
+       a search moves something, and an empty status line sitting under the
+       header for every visitor who never searches is furniture.
+
+       It is a real sentence on the page, not an sr-only one: the change it
+       reports is visual — a filter cleared, a view switched — so a reader who
+       can see the page is exactly who needs telling. */
+    var note = document.createElement("p");
+    note.className = "jump-note";
+    note.id = "jump-note";
+    note.setAttribute("role", "status");
+    note.hidden = true;
+    var noteTimer = null;
+    document.body.appendChild(note);
+
+    sayJump = say;
+
+    function say(text) {
+      if (noteTimer) window.clearTimeout(noteTimer);
+      note.textContent = text;
+      note.hidden = !text;
+      if (text) {
+        noteTimer = window.setTimeout(function () {
+          note.hidden = true;
+          note.textContent = "";
+        }, 7000);
+      }
+    }
+
+    function group(label) {
+      var li = document.createElement("li");
+      li.className = "search-group";
+      li.textContent = label;
+      results.appendChild(li);
+    }
+
+    function commandRow(cmd) {
+      var li = document.createElement("li");
+      li.className = "search-hit";
+
+      var btn = document.createElement("button");
+      btn.type = "button";           // inside <form method="dialog">, the
+                                     // default would submit and close it
+
+      var mark = document.createElement("span");
+      mark.className = "search-cmd-mark";
+      mark.textContent = "›";
+      mark.setAttribute("aria-hidden", "true");
+
+      var what = document.createElement("span");
+      what.className = "search-what";
+      what.textContent = cmd.label;
+
+      btn.appendChild(mark);
+      btn.appendChild(what);
+      btn.addEventListener("click", function () {
+        dialog.close();
+        cmd.run();
+      });
+
+      li.appendChild(btn);
+      results.appendChild(li);
+    }
+
+    /* A window around the match, not the first 160 characters.
+       An About paragraph is longer than the window, so truncating from the start
+       could report a hit whose matched word was not in the text shown — the
+       result said "this matched" and then showed no evidence of it. Worst in the
+       longest entries, which are exactly the ones needing a snippet.
+
+       Returns plain text for textContent. Marking the matched characters would
+       mean child nodes inside `.search-what`, and this string is also what a
+       screen reader reads as the link's description — the highlight on the page
+       itself already answers "which word", once you land. */
+    function snippet(text, needle, max) {
+      if (!text) return "";
+      if (text.length <= max) return text;
+
+      var at = needle ? text.toLowerCase().indexOf(needle.toLowerCase()) : -1;
+      if (at === -1) return text.slice(0, max) + "…";
+
+      // Roughly a quarter of the window ahead of the match, so the reader sees
+      // what it was part of rather than the match sitting at the left edge.
+      var lead = Math.floor(max / 4);
+      var start = Math.max(0, at - lead);
+      var end = Math.min(text.length, start + max);
+      // Near the end of the string, spend the leftover window backwards.
+      if (end === text.length) start = Math.max(0, end - max);
+
+      return (start > 0 ? "…" : "") + text.slice(start, end).trim() +
+             (end < text.length ? "…" : "");
+    }
+
+    function hitRow(entry, needle) {
+      var li = document.createElement("li");
+      li.className = "search-hit";
+
+      var a = document.createElement("a");
+      a.className = "text-link";
+      a.href = "#" + entry.sectionId;
+
+      var where = document.createElement("span");
+      where.className = "search-where";
+      where.textContent = entry.section + " · " + entry.kind;
+
+      var what = document.createElement("span");
+      what.className = "search-what";
+      what.textContent = snippet(entry.text, needle, 160);
+
+      a.appendChild(where);
+      a.appendChild(what);
+
+      /* preventDefault, then reveal. The href is kept so the result is a real
+         link — middle-click, copy-link and the status bar all still work, and
+         it degrades to the section anchor if this handler ever throws — but
+         letting the browser follow it would scroll to the section instead of
+         to the row, and would do it before the fold had opened. */
+      a.addEventListener("click", function (event) {
+        event.preventDefault();
+        dialog.close();
+        revealEntry(entry, needle, say);
+      });
+
+      li.appendChild(a);
+      results.appendChild(li);
+    }
+
     function run() {
-      var q = input.value.replace(/\s+/g, " ").trim().toLowerCase();
-      results.innerHTML = "";
+      var raw = input.value.replace(/\s+/g, " ").trim();
+      results.textContent = "";
 
-      if (q.length < 2) {
-        statusLine.textContent =
-          q.length === 0
-            ? "Type to search sections, rows and links."
-            : "Keep typing — at least two characters.";
-        return;
-      }
+      /* A leading ">" asks for the controls and nothing else. It is an
+         accelerator, never a requirement: the same list is what the dialog
+         shows before anything is typed, so nobody has to know the character
+         exists to find a command. */
+      var commandsOnly = raw.charAt(0) === ">";
+      if (commandsOnly) raw = raw.slice(1).trim();
 
-      var hits = index.filter(function (e) {
-        return e.text.toLowerCase().indexOf(q) !== -1;
-      });
+      var parsed = parseQuery(raw.toLowerCase());
+      var filtered = Object.keys(parsed.filters).length > 0;
 
-      if (hits.length === 0) {
-        statusLine.textContent =
-          "Nothing on this page matches “" + input.value.trim() +
-          "”. Try a language, an organisation or a role.";
-        return;
-      }
-
-      statusLine.textContent =
-        hits.length + (hits.length === 1 ? " match" : " matches") +
-        (hits.length > MAX ? " — showing the first " + MAX + "." : ".") +
-        " Enter opens the first.";
-
-      hits.slice(0, MAX).forEach(function (e) {
-        var li = document.createElement("li");
-        li.className = "search-hit";
-
-        var a = document.createElement("a");
-        a.className = "text-link";
-        a.href = "#" + e.id;
-
-        var where = document.createElement("span");
-        where.className = "search-where";
-        where.textContent = e.section + " · " + e.kind;
-
-        var what = document.createElement("span");
-        what.className = "search-what";
-        what.textContent = e.text.length > 160 ? e.text.slice(0, 160) + "…" : e.text;
-
-        a.appendChild(where);
-        a.appendChild(what);
-        a.addEventListener("click", function () {
-          dialog.close();
+      // A prefixed query is a question about the page, so the controls stand
+      // out of the way — "type:row export" is looking for a row, not a button.
+      var commands = filtered ? [] : buildCommands().filter(function (cmd) {
+        return parsed.terms.every(function (term) {
+          return cmd.hay.indexOf(term) !== -1;
         });
-
-        li.appendChild(a);
-        results.appendChild(li);
       });
+
+      /* Two characters before the page itself is searched: one letter matches
+         most of the document and the list would be noise. An empty box searches
+         it not at all — with no terms and no filters every entry matches, and
+         opening the dialog would dump all 112 of them under the commands.
+
+         Commands have no such floor. There are a couple of dozen, and the whole
+         point is that they are visible from the first keystroke and from none
+         at all. */
+      var hits = (commandsOnly || !raw || raw.length < 2)
+        ? []
+        : index.filter(function (entry) { return entryMatches(entry, parsed); });
+
+      var needle = parsed.terms.length ? parsed.terms[0] : "";
+
+      if (commands.length) {
+        group(hits.length ? "Commands" : "Commands — press Enter to run the first");
+        commands.slice(0, MAX).forEach(commandRow);
+      }
+
+      if (hits.length) {
+        if (commands.length) group("On this page");
+        hits.slice(0, MAX).forEach(function (entry) { hitRow(entry, needle); });
+      }
+
+      // Every branch below states what was searched and what to do next; none
+      // of them leaves the reader looking at an empty box (Rulebook §1.9).
+      var unknown = parsed.unknown.length
+        ? " There is no filter named “" + parsed.unknown[0] +
+          "” — that word was searched for literally."
+        : "";
+
+      if (!commands.length && !hits.length) {
+        statusLine.textContent = raw
+          ? "Nothing on this page matches “" + raw + "”." + unknown +
+            " Try a language, an organisation or a role."
+          : "Type to search, or pick a command below.";
+        return;
+      }
+
+      // The opening state says what the list is and what typing will do, rather
+      // than counting commands nobody asked to have counted.
+      if (!raw) {
+        statusLine.textContent =
+          "Type to search this page, or pick one of these " +
+          commands.length + " commands.";
+        return;
+      }
+
+      var parts = [];
+      if (commands.length) {
+        parts.push(commands.length + (commands.length === 1 ? " command" : " commands"));
+      }
+      if (hits.length) {
+        parts.push(hits.length + (hits.length === 1 ? " match" : " matches") +
+                   (hits.length > MAX ? ", showing the first " + MAX : ""));
+      }
+      statusLine.textContent =
+        parts.join(" and ") + "." + unknown + " Enter opens the first.";
     }
 
     input.addEventListener("input", run);
@@ -2191,23 +3206,24 @@
     input.addEventListener("keydown", function (event) {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      var first = results.querySelector("a");
+      var first = results.querySelector("a, button");
       if (first) first.click();
     });
 
-    // Arrow keys walk the list without reaching for the mouse.
+    // Arrow keys walk the list without reaching for the mouse. Commands are
+    // buttons and content hits are links, so both have to be collected.
     dialog.addEventListener("keydown", function (event) {
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-      var links = [].slice.call(results.querySelectorAll("a"));
-      if (links.length === 0) return;
+      var items = [].slice.call(results.querySelectorAll("a, button"));
+      if (items.length === 0) return;
       event.preventDefault();
-      var at = links.indexOf(document.activeElement);
+      var at = items.indexOf(document.activeElement);
       if (event.key === "ArrowDown") {
-        links[at + 1 >= links.length ? 0 : at + 1].focus();
+        items[at + 1 >= items.length ? 0 : at + 1].focus();
       } else if (at <= 0) {
         input.focus();
       } else {
-        links[at - 1].focus();
+        items[at - 1].focus();
       }
     });
 
@@ -2228,11 +3244,31 @@
       // and once per open is cheap where once per keystroke would not be.
       index = buildSearchIndex();
       input.value = "";
-      results.innerHTML = "";
-      statusLine.textContent = "Type to search sections, rows and links.";
       dialog.showModal();
+      /* run() with an empty box, so the dialog opens showing every command
+         rather than a blank prompt. This is the whole accommodation for readers
+         who are not going to learn a syntax: a recruiter presses Search and is
+         looking at "Switch to the Recruiter view" and "Build a PDF…" without
+         having typed, read or known anything. */
+      run();
       input.focus();
     };
+
+    /* The header control. Unhidden only now, at the point where the dialog is
+       known to exist and showModal() is known to work — a Search button that
+       opens nothing is worse than no button (Nielsen §1.5). */
+    var opener = document.getElementById("search-open");
+    if (opener) {
+      opener.hidden = false;
+      opener.addEventListener("click", window.__openSearch);
+
+      // The shortcut hint follows the same rule the ? reference does: a device
+      // with no pointer is never told about a key it does not have.
+      var hint = document.getElementById("search-key");
+      if (hint && window.matchMedia && window.matchMedia("(hover: hover)").matches) {
+        hint.hidden = false;
+      }
+    }
   }
 
   /* ── Keyboard shortcuts ──────────────────────────────────
@@ -2299,6 +3335,15 @@
         return;
       }
 
+      // Escape leaves focus mode. It reaches here only with no dialog open —
+      // the guards above see to that — so it can never steal the Escape that
+      // was meant to close one.
+      if (event.key === "Escape" && focusId && setFocusSection) {
+        event.preventDefault();
+        setFocusSection("");
+        return;
+      }
+
       if (pendingG) {
         pendingG = false;
         window.clearTimeout(gTimer);
@@ -2310,6 +3355,21 @@
         var fold = target.querySelector("details.section-fold");
         if (fold && !fold.open) fold.open = true;
         window.location.hash = "#" + id;
+        return;
+      }
+
+      /* Focus the section being read. Checked after the chord, so `g` then `f`
+         stays a chord that matches nothing rather than quietly becoming focus
+         mode — a chord that sometimes does something else is worse than one
+         that does nothing. */
+      if (event.key.toLowerCase() === "f" && setFocusSection) {
+        event.preventDefault();
+        if (focusId) {
+          setFocusSection("");
+        } else {
+          var here = sectionToFocus();
+          if (here) setFocusSection(here.id);
+        }
         return;
       }
 
@@ -2385,9 +3445,115 @@
           btn.getAttribute("data-mode") === viewMode ? "true" : "false"
         );
       });
+
+      // A view mode hides rows in CSS alone, so it can empty a block the year
+      // filter left standing. Same rule, same helper.
+      syncEmptyBlocks();
+      syncNavEmpty();
+
+      /* Anything that counts visible rows has to recount now. An event rather
+         than a call list: a filter added later subscribes itself, where a list
+         here would go quietly out of date the day it is forgotten — the same
+         reasoning as the undo register. */
+      document.dispatchEvent(new CustomEvent("viewmodechange"));
     }
 
+    /* The way out of a mode, for a search jump that has landed on a row the
+       mode is hiding. It is the same code path the Everything chip runs — the
+       announcement and the URL write included — so the two cannot come to mean
+       different things. */
+    leaveViewMode = function () {
+      viewMode = "";
+      apply();
+      said.textContent = "Showing everything.";
+      syncURL();
+    };
+
     apply();
+  }
+
+  /* ── Focus mode ──────────────────────────────────────────
+     The third and last mechanism on this page that hides content, next to
+     .filtered-out (filters) and data-hide-in (view modes). It gets a body class
+     of its own rather than borrowing either, so no two of them ever contend
+     over one attribute — the rule §2 of state-and-data.md exists to keep.
+
+     It has no control anywhere on the page while it is off. The way in is the
+     command palette, or `f`; the only thing focus mode ever draws is its own
+     way out, and only while it is on. Reversed in the print block, because the
+     Exit control lives in the header and the header does not print: a PDF taken
+     while focused would otherwise be one section with nothing on the page to
+     say the other seven were set aside. */
+  function initFocusMode() {
+    var tools = document.querySelector(".header-tools");
+    if (!tools) return;
+
+    var said = document.createElement("span");
+    said.className = "sr-only";
+    said.setAttribute("role", "status");
+
+    var exit = document.createElement("button");
+    exit.type = "button";
+    exit.className = "focus-exit";
+    exit.hidden = true;
+    exit.addEventListener("click", function () { setFocusSection(""); });
+
+    tools.appendChild(exit);
+    tools.appendChild(said);
+
+    setFocusSection = function (id) {
+      var target = id ? document.getElementById(id) : null;
+      // Same check the URL reader makes, because this is also reached from the
+      // palette and from a nav click, and one validated path is not three.
+      if (id && (!target || !target.classList.contains("section"))) return;
+
+      [].forEach.call(document.querySelectorAll(".focus-target"), function (node) {
+        node.classList.remove("focus-target");
+      });
+
+      focusId = target ? id : "";
+      document.body.classList.toggle("focus-mode", !!focusId);
+
+      if (target) {
+        target.classList.add("focus-target");
+        var label = sectionLabel(target);
+        exit.textContent = "Leave focus · " + label;
+        said.textContent = label + " is the only section on screen. Nothing is " +
+          "deleted — leave focus to see the rest.";
+        // A collapsed fold inside the only section being shown would leave the
+        // page as a heading over an empty screen.
+        var fold = target.querySelector("details.section-fold");
+        if (fold && !fold.open) fold.open = true;
+        window.scrollTo(0, 0);
+      } else {
+        said.textContent = "Left focus mode. Showing the whole page.";
+      }
+
+      exit.hidden = !focusId;
+      syncURL();
+    };
+
+    /* While focused, the nav switches what is focused rather than scrolling to
+       a section that is not being rendered. Without this every nav item is a
+       link to a blank screen the moment focus mode is on — the nav is the one
+       piece of chrome focus mode deliberately keeps, so it has to keep working. */
+    document.addEventListener("click", function (event) {
+      if (!focusId) return;
+      var link = event.target.closest && event.target.closest('.site-nav a[href^="#"]');
+      if (!link) return;
+      var id = link.getAttribute("href").slice(1);
+      if (!document.getElementById(id)) return;
+      event.preventDefault();
+      setFocusSection(id);
+    });
+
+    // A ?focus= that survived a reload. Applied through the same setter, so a
+    // restored focus and a fresh one cannot end up in different states.
+    if (focusId) {
+      var restore = focusId;
+      focusId = "";
+      setFocusSection(restore);
+    }
   }
 
   /* ── Density ─────────────────────────────────────────────
@@ -2589,6 +3755,27 @@
     });
   }
 
+  /* ── QR code ─────────────────────────────────────────────
+     The button is markup but starts `hidden`, and is revealed only once the
+     dialog is known to open — the same rule the header Search control follows.
+     A visible control whose dialog cannot open is worse than no control: the
+     address it would have shown is already printed as text in the same row, so
+     nothing is lost by the button staying away.
+
+     Nothing here builds or validates the image. It is a committed file on this
+     origin, allowed by `img-src 'self'`, and `download` on a same-origin href
+     needs no scripting at all. */
+  function initQR() {
+    var btn = document.getElementById("qr-open");
+    var dialog = document.getElementById("qr-dialog");
+    if (!btn || !dialog || typeof dialog.showModal !== "function") return;
+
+    btn.hidden = false;
+    btn.addEventListener("click", function () {
+      if (!dialog.open) dialog.showModal();
+    });
+  }
+
   /* ── Console note ────────────────────────────────────────
      For the one reader in a hundred who opens the console. Free, and it says
      something true about the page rather than being a joke at their expense. */
@@ -2611,8 +3798,24 @@
   initKeyboard();
   initDensity();
   initViewModes();
+  // After initViewModes, which is what marks the nav, and after initSearch,
+  // which builds the header row this puts its Exit control into.
+  initFocusMode();
   initJSON();
   initSystemInfo();
   initSectionLinks();
+  // Order-independent: buildCommands() runs on every palette render, not once at
+  // init, so the button only has to be revealed before anyone opens the palette.
+  initQR();
+
+  /* Last, and after every control that can change a table's width has been
+     built. A closed fold reports a clientWidth of 0, so this also runs whenever
+     one opens or closes — otherwise a table would be judged overflowing while
+     its section was shut. */
+  syncScrollableTables();
+  [].forEach.call(document.querySelectorAll("details.section-fold"), function (d) {
+    d.addEventListener("toggle", syncScrollableTables);
+  });
+
   greet();
 })();

@@ -1,15 +1,13 @@
 # Feature suggestions — what shipped
 
-Suggestions gathered from ChatGPT and Gemini on 2026-08-14, checked against the
-codebase and `CLAUDE.md`, then built. This file is now the record of what was
-done and what was deliberately not.
+Suggestions from ChatGPT and Gemini, 2026-08-14, checked against the codebase and
+`CLAUDE.md`, then built. Record of what was done and what was not.
 
-Decisions taken by Affan before the build: no dark mode; no supervisor or
-third-party contact details; the existing GitHub cache left as-is; static
-tables may be revamped; the Stars column dropped entirely; new content folded
-into existing sections rather than given new nav destinations; both view modes
-built; the repository dialog built without a README fetch; sorting added only
-to tables with three or more rows.
+**Affan's calls before the build:** no dark mode · no supervisor or third-party
+contacts · GitHub cache left as-is · static tables may be revamped · Stars column
+dropped · new content folded into existing sections, no new nav destinations ·
+both view modes built · repository dialog without a README fetch · sorting only
+on tables with 3+ rows.
 
 ---
 

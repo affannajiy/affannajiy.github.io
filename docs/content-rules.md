@@ -1,8 +1,7 @@
 # Content rules
 
-What may and may not be written into the page, and how remote content is
-curated. The hardening helpers themselves are in
-[security-posture.md](security-posture.md).
+What may be written into the page, and how remote content is curated. Hardening
+helpers: [security-posture.md](security-posture.md).
 
 ---
 
@@ -17,9 +16,9 @@ curated. The hardening helpers themselves are in
 
 ## 2. Unfinished content
 
-**Placeholder content is labelled as such with a visible `.hint` line**, so it
-is obvious what is unfinished. Remove the hint when the real content lands.
-Never invent a URL or a credential to fill a gap — leave it marked.
+**Placeholder content carries a visible `.hint` line**, so what is unfinished is
+obvious. Remove the hint when the real content lands. **Never invent a URL or a
+credential to fill a gap — leave it marked.**
 
 ## 3. Privacy of other people, and of Affan
 

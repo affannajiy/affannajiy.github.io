@@ -1,10 +1,10 @@
 # Things deliberately not built
 
-Recorded so they are not re-proposed as improvements. If a suggestion appears
-here, the answer is not "we forgot" — it is "we decided, and here is why".
+Recorded so they are not re-proposed as improvements. A suggestion here is not
+"we forgot" — it is "we decided, and here is why".
 
-Related: [FEATURES-suggestion.md](FEATURES-suggestion.md) for the full record of
-the 2026-08-14 feature round, including everything that *was* built.
+Related: [FEATURES-suggestion.md](FEATURES-suggestion.md) — the 2026-08-14 round,
+including what *was* built.
 
 ---
 
@@ -34,6 +34,55 @@ the 2026-08-14 feature round, including everything that *was* built.
 | **A JavaScript frame-buster** | `frame-ancestors` is ignored in a `<meta>` CSP and GitHub Pages sends no custom headers, so the site genuinely cannot forbid being framed. But there is no login, no session, no form and no state-changing control here — a clickjack has nothing to capture or trigger. A frame-buster would look like protection while protecting nothing, and would be quoted later as though the risk were handled. Accepted and documented in [security-posture.md](security-posture.md) §1 instead. Revisit the day the page grows an action worth hijacking. |
 | **A fixed `escapeHTML()`** | It *was* fixed, briefly, then deleted. Repairing the escaper would have left the same trap set for the next person to concatenate a string, and an escaper sitting in the file reads as permission to build HTML from remote data. Nodes are built instead — see [security-posture.md](security-posture.md) §3. |
 | **`lang="ms"` on institution names** | WCAG 3.1.2 exempts proper names, and "Universiti Teknologi PETRONAS" is a proper name in an English sentence. Tagging it would change how a screen reader pronounces a name its owner spells in Latin script anyway. Revisit if a genuine Malay *phrase* is ever added to the page. |
+
+## Rejected from the 2026-08-17 sixty-feature proposal
+
+Recorded in full in [feature-inventory.md](feature-inventory.md). The ones worth
+naming here because they will be proposed again:
+
+| Thing | Why not |
+| --- | --- |
+| **An "Archive" view mode** | Everything already shows everything. Building a fourth mode meant deciding which of Affan's rows count as "older extracurricular material" and marking them — a decision about his CV, not a feature, and he declined to tag it. |
+| **Project maturity / Active-Dormant, job-target résumé profiles, skill first-use dates, technology chronology, what-changed "ENDED"** | Each needs a fact the page does not hold. Inferring them breaks the never-invent-content rule, and a wrong "first used 2023" is a wrong claim with Affan's name on it. Asked whether he would hand-tag `data-` attributes to make them honest, he declined. Revisit only if the tagging happens. |
+| **A drawn node-link project graph** | Shared-topic adjacency shipped as text in the detail dialog instead. A picture needs a layout algorithm, geometry the CSP will not let JS set inline, and a text fallback for paper and screen readers — three costs to say what one sorted line says. |
+| **A permanent "claimed by" column on Education, Experience and Certificates** | The reverse of the evidence links, always visible. A fourth column costs width at 375px and lines in the one-page résumé; the transient caption in `.jump-note` answers the same question at the moment it is asked, and disappears. |
+| **A section minimap and a breadcrumb** | The sticky nav already marks the current section, so these are the third and fourth indicator of one fact. A single `04 / 08` readout shipped instead. |
+| **Search filter chips and recent-search history** | Two rows of chrome in front of a dialog that currently opens clean, for what the `type:` prefix and the URL already do. History would also be the only reader-facing thing this site ever stored beyond density. |
+| **Remembered scroll position, session restore** | Same argument as persisted fold state below. Filters are already remembered *better* — they are in the URL, so the state is shareable and the address bar says why the page looks the way it does. |
+
+## Rejected from the 2026-08-17 AI security/UX review
+
+Two models proposed ~80 items. Most were already built; these were **wrong**, and
+will be proposed again because they sound right.
+
+| Thing | Why not |
+| --- | --- |
+| **`frame-ancestors 'none'` in the CSP** | Ignored in a `<meta>` CSP — only a real response header carries it, and GitHub Pages sends none. Adding it looks like a control and is a comment. Same ruling as the frame-buster above. |
+| **`Permissions-Policy` in a `<meta http-equiv>`** | Not a thing. Permissions-Policy is response-header-only; no browser reads it from markup. Would sit in `<head>` looking like hardening forever. |
+| **`conic-gradient` pie chart built by writing `element.style`** | Breaks rule 1.8. The proposal argued it "does not violate the CSP" — true, and exactly the trap: the CSP does not block CSSOM writes, so this fails as a **silent** broken invariant instead of a loud one ([layout.md](layout.md) §4). Bars stay block characters. |
+| **Commit-history activity heatmap** | One API call per repository against a 60/hour budget. |
+| **Fuzzy search, `aria-activedescendant` combobox rewrite** | Not wrong, just not worth it yet. The parser and arrow-key walking already work; a rewrite risks the keyboard path for a small gain. Revisit if results ever outgrow one screen. |
+
+Reopened instead: **claimed vs demonstrated skills**. It was rejected for needing
+facts the page lacked — evidence became machine-readable on 2026-08-17, so
+evidence *counts* are now derivable. Usage *dates* still are not, so the
+technology chronology stays rejected.
+
+## Rejected from the OWASP Secure Coding Practices audit (2026-08-17)
+
+All 213 items of [SECURITY_Rulebook.md](SECURITY_Rulebook.md) §2a walked. Four
+changes shipped ([security-posture.md](security-posture.md) §1, §2, §4, §7). These
+three are real controls that are wrong *here*.
+
+| Thing | Why not |
+| --- | --- |
+| **SRI (`integrity=`) on `style.css` and `script.js`** (SCP-204) | A build step wearing a hash. Every edit to either file would need the digest recomputed by hand, and a stale digest does not warn — the browser refuses the stylesheet or the script outright. Rule 1.2, and the failure mode is total. A same-origin file is already covered by whatever trust the HTML naming it has. |
+| **`redirect: "error"` on the GitHub fetch** (SCP-10) | GitHub answers `301` for a renamed account, so this breaks the table the day Affan renames himself — a self-inflicted outage guarding a path `connect-src https://api.github.com` already closes, since CSP is checked on every redirect hop. |
+| **`robots.txt` disallowing `docs/` and `.claude/`** (SCP-158) | Nothing to hide — the repo is public, so the crawler's copy discloses nothing new. Costs a fifth top-level file, which is how rule 1.4 erodes. |
+
+Not rejected, just **not ours**: response headers (SCP-162), HSTS (SCP-143),
+`nosniff`. Pages sends `nosniff` and `github.io` is HSTS-preloaded; neither is
+configurable from the repo.
 
 ## Rejected because they would go stale or gate content
 
