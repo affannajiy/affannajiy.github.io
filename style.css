@@ -907,10 +907,13 @@ th[aria-sort="descending"] .sort-btn::after {
 /* A scrollbar shows on desktop, but a touch device shows nothing until the user
    already guessed. Say it in words, only where it applies.
 
-   **Only the ASCII diagram applies now.** Tables stopped scrolling sideways
-   below 640px (layout.md §1b), so the two hints on the Skills and Certificates
-   tables were removed rather than kept describing a gesture the page no longer
-   asks for. Never put this back on a table without checking one still scrolls. */
+   **Two uses.** The ASCII diagram, which cannot reflow, and #compare-table, the
+   one table that still scrolls sideways below 640px because a comparison matrix
+   cannot stack into cards (tables.md §1a). The Skills and Certificates hints were
+   removed when those tables stopped scrolling — a hint describing a gesture the
+   page no longer asks for is worse than none. Never put this back on a table
+   without checking that one still scrolls; never remove it from one that does.
+   Hidden overflow is hidden data (UI-UX_Rulebook §2.4, §4). */
 .scroll-hint {
   display: none;
 }
@@ -1819,6 +1822,13 @@ body.focus-mode .section:not(.focus-target) {
 
   .scroll-hint {
     display: block;
+  }
+
+  /* syncScrollableTables() hides a hint whose wrap does not actually overflow.
+     A display rule beats the hidden attribute, so without this the hint renders
+     while claiming to be hidden (layout.md §3a). */
+  .scroll-hint[hidden] {
+    display: none;
   }
 
   /* 16px floor: iOS zooms the page on focus below this and does not undo it. */

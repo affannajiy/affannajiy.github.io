@@ -3,7 +3,16 @@
 Personal portfolio. Plain HTML, CSS and JavaScript — no framework, no build step,
 no dependencies. What is in the repo is exactly what the browser runs.
 
+[![Deploy to Pages](https://github.com/affannajiy/affannajiy.github.io/actions/workflows/pages.yml/badge.svg)](https://github.com/affannajiy/affannajiy.github.io/actions/workflows/pages.yml)
+
 **Live:** https://affannajiy.github.io
+
+Badge is the workflow, not the site. A green run has shipped nothing before —
+on 2026-08-17 `build` passed while `deploy` returned 503. Confirm the edge:
+
+```
+curl -s "https://affannajiy.github.io/index.html?b=$(date +%s)" | grep -c cert-verify
+```
 
 Light mode only, by design. Sortable + filterable Projects table fed live from the
 GitHub API. Content-Security-Policy locked to same-origin, keyboard skip link,
@@ -18,12 +27,13 @@ GitHub API. Content-Security-Policy locked to same-origin, keyboard skip link,
 | `index.html` | Every section. All copy lives here. |
 | `style.css` | All styling. Colour tokens at the top of the file. |
 | `script.js` | Fetches repos from the GitHub API and fills the Projects table. |
-| `assets/` | Static files. **Currently empty — see the résumé note below.** |
+| `assets/` | Résumé PDF, certificate PDFs, favicon, QR code. |
 | `CLAUDE.md` | Hard constraints, and the index to everything below. Read before changing anything. |
 | `docs/` | The reasons behind the rules — one file per area. Start at `docs/README.md`. |
 | `docs/UI-UX_Rulebook.md` | General UI/UX reference. Not project-specific. |
 | `docs/SECURITY_Rulebook.md` | General security reference. Not project-specific. |
 | `.claude/launch.json` | Local dev-server config for Claude Code. |
+| `.github/workflows/pages.yml` | Deploys the repo verbatim to Pages. No build step. |
 | `.claude/skills/` | Skills Claude uses to work on this site — see below. |
 
 ---
@@ -63,30 +73,16 @@ Add, remove or reorder rows freely. Nothing else needs to change. Keep the
 
 ### Résumé
 
-**There is deliberately no PDF in this repo right now.** The original résumé
-contained your phone number and, more importantly, two referees' full names,
-personal mobile numbers and email addresses. Publishing that to GitHub Pages makes
-it permanently crawlable — and it is their data, not yours to publish.
+`assets/resume.pdf` is published, and the Résumé section links to it.
 
-The file was moved out of the repo to:
+**Only the public version may ever be committed.** The original carried a phone
+number and two referees' full names, mobile numbers and email addresses — their
+data, not yours to publish, and Pages makes it permanently crawlable. The private
+original stays outside the repo, at the path recorded in `docs/content-rules.md`.
 
-```text
-C:\Users\AFFAN\Documents\resume-PRIVATE-do-not-publish.pdf
-```
-
-The Résumé section currently offers a "Request the PDF by email" button instead,
-and everything the résumé says is already on the page as HTML.
-
-To publish a PDF later:
-
-1. Make a **public version**: replace the References block with "References
-   available on request", and remove your phone number.
-2. Save it as `assets/resume.pdf` — check the real filename. Windows hides
-   extensions, and the last one arrived as `resume.pdf.pdf`.
-3. In `index.html`, swap the mailto button for:
-   `<a class="button" href="assets/resume.pdf" download>Download résumé (PDF)</a>`
-
-Never commit the private version.
+Before replacing the PDF: References reduced to "available on request", phone
+number removed. Check the real filename — Windows hides extensions and one
+arrived as `resume.pdf.pdf`.
 
 ### Projects
 **Nothing to edit.** `script.js` calls
@@ -107,6 +103,14 @@ Column headers sort the table (name, language, stars, updated). Click once to so
 again to reverse. The filter box above the table matches name, description and
 language as you type, and reports how many of the total matched. If the API fails,
 the page says why, says what to do about it, and shows a **Retry** button.
+
+### Certificates
+Rows in `<section id="certificates">`. Each links the local PDF in
+`assets/certificates/`, and where the issuer publishes one, a **Verify** link in a
+`.cert-verify` span. Strip tracking parameters from issuer URLs before pasting —
+`?trk=`, `lipi=` and friends are trackers, and rule 1.6 does not care whose they
+are. Verify links deliberately do not print; the print rule can only spell out
+local asset paths, so a printed "Verify" would be a word with no destination.
 
 ### Colours
 All colour tokens are CSS variables in the `:root` block at the top of `style.css`.
@@ -133,74 +137,71 @@ LinkedIn. External links need `rel="noopener noreferrer"`.
 
 ## Skills for Claude
 
-`.claude/skills/` holds three skills so the procedures do not have to be
+`.claude/skills/` holds eight skills so the procedures do not have to be
 re-explained each session. Claude picks them up automatically; you can also
 invoke one by name.
 
 | Skill | What it does |
 | --- | --- |
-| `verify-site` | The full check after any edit — serves over HTTP, measures contrast, checks 375px/1280px, tap targets, page overflow, CSP console noise, and exercises sort/filter/Retry for real. |
+| `verify-site` | The full check after any edit — serves over HTTP, measures contrast, checks 320/375/1280px, tap targets, page overflow, CSP console noise, and exercises sort/filter/Retry for real. |
 | `edit-site-content` | How to add a section or table without breaking section numbering, the nav, the sticky-header offset or the CSP. Also lists what must never be published. |
-| `deploy-site` | Push and Pages setup, the repo-name and visibility preconditions, and what each failure symptom actually means. |
+| `check-accessibility` | Contrast ratios, tap targets, focus rings, ARIA state and reduced-motion. Run when a colour or control changes. |
+| `verify-print` | Print output and the one-page résumé line budget. |
+| `audit-untrusted-input` | Poisons the repo cache and URL state to prove nothing executes and bad rows are dropped. |
+| `preview-pane-quirks` | The preview pane's seven failure modes, so a bad measurement is not chased as a bug. |
+| `record-decision` | Puts a decision, rejection or measurement in the right `docs/` file instead of growing `CLAUDE.md`. |
+| `deploy-site` | Pages setup, the recovery ladder, and what each failure symptom actually means. |
 
-They encode the traps that already caught us once: the CSP blocking inline
-styles, the mobile header growing past `scroll-margin-top`, iOS zooming inputs
-under 16px, and the preview pane's inability to scroll or paint.
+They encode the traps that already caught us: the CSP blocking inline styles, the
+mobile header growing past `scroll-margin-top`, iOS zooming inputs under 16px, the
+preview pane serving a stale `style.css`, and a deploy that reports green while the
+edge still serves the old file.
 
 ---
 
 ## Deploying to GitHub Pages
 
-Two preconditions, both already satisfied — but both are silent failures if they
-ever change.
+Deploys run from `.github/workflows/pages.yml` — **Source: GitHub Actions**, not
+"Deploy from a branch". The workflow uploads the checkout as-is; there is still no
+build step.
 
-**1. The repo must be named exactly `affannajiy.github.io`.** ✅ done
+**Every deploy: just push to `master`.** Live in about 30 seconds.
 
-This is a *user site*; the name is what makes it serve at the root domain. Any
-other name serves at `affannajiy.github.io/<repo-name>/` instead.
+Repo-wide **Workflow permissions must stay "Read repository contents and packages
+permissions"**. `pages.yml` declares its own `permissions:` block, which overrides
+the default, so the deploy works under the restricted setting. Widening the repo
+default buys nothing and widens the blast radius of every future workflow.
 
-> **The name that matters is the repo name on GitHub, not the folder on your
-> laptop.** Renaming a local folder does nothing — GitHub never sees it.
+### Two preconditions, both silent failures
+
+**1. The repo must be named exactly `affannajiy.github.io`.** ✅
+
+This is a *user site*; the name is what serves it at the root domain. Any other
+name serves at `affannajiy.github.io/<repo-name>/`.
+
+> The name that matters is the one **on GitHub**, not the folder on your laptop.
 > Check with `git remote -v`.
 
-**2. The repo must be public.** ✅ done
+**2. The repo must be public.** ✅ Pages from a private repo needs a paid plan.
 
-Pages from a private repo requires a paid plan. A private repo is the usual
-reason the Pages screen offers no branch, or the site 404s forever.
+### When a deploy will not land
 
-### One-time setup
+Full ladder in `docs/deployment.md`. The short version:
 
-**1. Push the site to the default branch**
+1. Check `githubstatus.com`. Not operational → stop, a re-run re-rolls the same dice.
+2. Measure the edge, not the browser — a green run has shipped nothing before.
+3. Re-run failed jobs.
+4. **Queued > 10 min with status green → the run is orphaned.** Stop re-running it;
+   use **Run workflow** (`workflow_dispatch`) instead.
 
-```bash
-git add -A && git commit -m "Add portfolio site" && git push origin master
-```
+Three things never to do:
 
-**2. Turn Pages on**
-
-Push **first**, then enable Pages — enabling it with nothing pushed gives a 404
-you then have to wait out, because there is no commit to build from.
-
-GitHub → repo → **Settings** → **Pages**:
-
-- **Source:** `Deploy from a branch`
-- **Branch:** `master`, folder `/ (root)`
-- **Save**
-
-The branch dropdown must match the real default branch — this repo uses
-`master`, not `main`. Confirm with `git branch --show-current`.
-
-Wait 1–2 minutes. The Pages settings screen shows the live URL when it is ready.
-
-### Every deploy after that
-
-Just push. Pages rebuilds automatically.
-
-```bash
-git add -A && git commit -m "Update skills" && git push
-```
-
-Changes are usually live in under a minute.
+- **Never click Unpublish site** to force a redeploy. A user page has no `None`
+  branch, so Unpublish is the only equivalent — and it takes the live site down.
+  Stale-but-serving beats dark.
+- **Never revert or force-push** to trigger a deploy. The commit is not what failed.
+- **Never flip Source to GitHub Actions before the workflow is on `master`** —
+  the new source finds no workflow and nothing deploys.
 
 ---
 
@@ -215,6 +216,8 @@ Changes are usually live in under a minute.
 | Projects table is empty locally but fine on GitHub | You opened `index.html` as a `file://` URL. Serve it over HTTP instead. |
 | A style or script silently does nothing | CSP blocked it. Check DevTools → Console; move inline styles into `style.css`. |
 | Pushed but the site did not change | Hard-refresh (`Ctrl+Shift+R`). Pages and the browser both cache. Check **Actions** for a failed deploy. |
+| Run stuck on `Queued`, status green | Orphaned run from an incident. Re-running revives the same wedged record — use **Run workflow** instead. |
+| `deploy` fails 503, `build` succeeded | GitHub's Pages API, not your commit. Wait for the incident to clear, then re-run. |
 | 404 on the whole site right after enabling Pages | Give it a few minutes on first deploy. Confirm the branch and `/ (root)` folder in Settings → Pages. |
 
 ---

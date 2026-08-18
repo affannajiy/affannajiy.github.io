@@ -1,6 +1,6 @@
 ---
 name: preview-pane-quirks
-description: Work around the Claude Code preview pane's seven failure modes when testing the portfolio site — injected inline styles that look like CSP violations, no scrolling, no painting so requestAnimationFrame never fires, a restored scroll position at load, a stale layout viewport after a resize preset, deleted images still served from cache, and a stale style.css across a reload. Use whenever a measurement in the preview pane looks wrong, a screenshot times out, a CSS edit appears to have no effect, or scroll- or animation-dependent behaviour appears broken.
+description: Work around the Claude Code preview pane's seven failure modes when testing the portfolio site — injected inline styles that look like CSP violations, no scrolling, no painting so requestAnimationFrame never fires, a restored scroll position at load, a stale layout viewport after a resize preset, deleted images still served from cache, and a stale style.css or script.js across a reload. Use whenever a measurement in the preview pane looks wrong, a screenshot times out, a CSS edit appears to have no effect, or scroll- or animation-dependent behaviour appears broken.
 ---
 
 # Preview-pane quirks
@@ -125,3 +125,30 @@ document.head.appendChild(n);
 Open a **fresh tab** before concluding a console error is real — errors from an
 earlier test run (a stubbed `fetch`, a poisoned cache, a 404 API URL) persist in
 the pane's console and will be read back as current failures.
+
+### 7a. `script.js` goes stale the same way — and hides it better
+
+The `<link>` cache-bust above only fixes CSS. A stale `script.js` survives
+`location.reload()` **and** a forced navigation, and it is harder to spot: the old
+and new files usually share most of their behaviour, so a probe that both versions
+satisfy proves nothing. On 2026-08-18 the old `syncScrollableTables()` still set
+`tabindex`, which looked like the new code running.
+
+You cannot fetch the file to compare — `connect-src` allows only `api.github.com`,
+so `fetch("/script.js")` throws in the page.
+
+**Check from outside the page:**
+
+```
+curl -s "http://localhost:8123/script.js?b=$(date +%s)" | grep -c "<a string only the new version has>"
+```
+
+If the server has the new code and the page does not, the pane is caching.
+
+**Fix: serve from a different port.** A different origin is a different cache key,
+and nothing else reliably clears it. `.claude/launch.json` carries `portfolio-alt`
+for this; bump its port again if that one goes stale too.
+
+**Always probe on something only the new version does.** A value both versions
+produce cannot tell you which one is running.
+

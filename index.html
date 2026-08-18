@@ -1170,6 +1170,9 @@
   <dialog id="compare-dialog" class="export-dialog export-dialog-wide" aria-labelledby="compare-title">
     <form method="dialog" class="export-form">
       <h2 class="export-title" id="compare-title">Compare projects</h2>
+      <!-- The one table that still scrolls sideways below 640px: a comparison matrix
+           cannot stack into cards without destroying the comparison (tables.md 1a). -->
+      <p class="hint scroll-hint">Table scrolls sideways &rarr; on a narrow screen.</p>
       <div class="table-wrap">
         <table class="grid-table" id="compare-table">
           <caption class="sr-only">Selected repositories compared by language and topic</caption>

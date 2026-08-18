@@ -668,3 +668,32 @@ Kept because each is a class of mistake that can recur.
 | Stale-cache failure stated the problem, offered no Retry | Reader left holding stale data, full reload the only way out |
 | Featured list kept a stale entry after being hidden | Latent |
 | `.anchor-btn` shipped at 16.8px | Under the 40px floor |
+
+## 2026-08-18 — rulebook sweep before v1.3.2
+
+Measured at 375px and 1280px, served over HTTP from a **fresh port** (see the
+stale-subresource note below).
+
+| Check | 375px | 1280px |
+| --- | --- | --- |
+| `#compare-dialog` hint, table empty | `hidden`, `display: none` | `display: none` |
+| `#compare-dialog` hint, table overflowing | visible, `display: block` | `display: none` |
+| `.table-wrap` when overflowing | `tabindex="0"`, `role="region"` | — |
+| ASCII diagram hint (its wrap overflows) | visible, unaffected by the table gate | `display: none` |
+| Page horizontal overflow | false | false |
+| Console errors | none | none |
+
+**Regression found and fixed in the same round.** The first implementation looked
+the hint up with `wrap.parentNode.querySelector(":scope > .scroll-hint")`. The
+ASCII diagram's hint shares a parent with the Skills table, so once that table
+stopped overflowing the diagram's hint was hidden while the diagram still
+scrolled — the exact failure the fix existed to prevent, moved one element to the
+left. Now `wrap.previousElementSibling`.
+
+**Stale `script.js` across a reload, not just `style.css`.** `location.reload()`
+and a forced navigation both kept serving the old `script.js` from the pane's
+cache; `curl` against the same server returned the new file. The tell was that
+`tabindex` was still being set (old code does that too) while the new `hidden`
+logic never ran — behaviour that exists in both versions cannot distinguish them.
+Fixed by serving from a **different port**, which is a different cache key.
+`.claude/launch.json` now carries a `portfolio-alt` config for this.

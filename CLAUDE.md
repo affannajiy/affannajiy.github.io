@@ -118,7 +118,9 @@ Three habits, because each has cost real time here:
   edit his public site. Leave the work uncommitted and say so. Broken 2026-08-17;
   the remote had to be force-rolled back.
 - If he does ask for a commit, **no `Co-Authored-By` trailer.**
-- **One release per commit, subject `vX.Y.Z - Title Case Summary`.** Read
+- **One release per commit, one tag per release, subject `vX.Y.Z - Title Case Summary`.**
+  Tagging and release convention: `docs/deployment.md`. The tag is the canonical
+  version — `v.1.1.0`'s tag is `v1.1.0`. Read
   `git log` first and continue the series — `v1.0.0 - First Release`,
   `v1.0.1 - Layout Fixes`, `v1.1.0 - Added Features`. Patch = fixes only, minor =
   anything new, major = something a reader relied on is gone. (`v.1.1.0` carries a
@@ -130,5 +132,10 @@ Three habits, because each has cost real time here:
 - The site is about showcasing him. **No supervisor, referee or colleague is
   named as a contact** — see `docs/content-rules.md` §3.
 - **No dark mode.** Light-only is deliberate.
+- **Repo-wide Workflow permissions stay read-only.** `.github/workflows/pages.yml`
+  declares its own `permissions:` block, which overrides the repo default, so the
+  deploy needs nothing wider. Widening it buys nothing and arms every future
+  workflow. Set to "Read and write" on 2026-08-18 during a deploy outage; the
+  workflow file was the actual fix.
 - The GitHub cache stays as it is.
 - Curate by tagging on GitHub, never by adding an allowlist to the code.

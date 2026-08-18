@@ -1315,6 +1315,19 @@
         wrap.removeAttribute("role");
         wrap.removeAttribute("aria-label");
       }
+
+      /* The visible half of the same fact. A .scroll-hint immediately before this
+         wrap is shown only while the wrap actually overflows — an empty
+         #compare-table fits, and a hint asking for a gesture the page is not
+         asking for is worse than none. CSS still gates it on width; this gates
+         it on truth.
+
+         Immediate sibling, not "anywhere in the parent": the ASCII diagram's own
+         hint shares a parent with the Skills table, and a parent-wide lookup hid
+         the diagram's hint whenever that table stopped overflowing. The hint
+         belongs to the box it sits against. */
+      var hint = wrap.previousElementSibling;
+      if (hint && hint.classList.contains("scroll-hint")) hint.hidden = !overflows;
     });
   }
 

@@ -22,6 +22,7 @@ published in `assets/`**.
 | Visitor privacy | Third-party tracking, fingerprinting, cookies | None exist. No analytics, no fonts, no CDN, no cookies, nothing to consent to |
 | Third parties named in published files | Their contact details becoming crawlable forever | Rule 2.8/2.10 in `CLAUDE.md`: PDFs are read with `pdftotext` before they are committed |
 | The repository | A leaked credential | No credential exists. The API is called unauthenticated (rule 2.2) |
+| The repository | A workflow with more rights than it needs | `pages.yml` declares `contents: read`, `pages: write`, `id-token: write`. A job-level block overrides the repo default, so the repo-wide Workflow permissions setting stays **read-only**. CodeQL scans the workflow itself |
 
 **Not in the model:** authentication, authorization, session handling, payment data,
 multi-tenancy. None are present, so none are defended. If any is ever added, this
@@ -39,10 +40,11 @@ file is wrong and must be rewritten before that change ships.
 | §2.9 | Economy of mechanism | No framework and no build step means the entire attack surface is three files a person can read in one sitting |
 | §2.11 | Open design | The repository is public. Nothing here relies on any of it being secret |
 | §2.16 | Leveraging existing components | Native `<details>`, native `<dialog>`, native `window.print()`, the browser's own URL parser for validation — rather than hand-rolled equivalents |
-| §3.3 | Secrets management | No secrets in the repo, and no place a secret would be needed |
+| §3.3 | Secrets management | No secrets in the repo, and no place a secret would be needed. **Secret scanning and push protection are enabled**, so a token in a diff is rejected at push rather than caught in review — rule 1.5 enforced instead of remembered |
 | §3.5 | Rate limiting | The unauthenticated API allows 60 requests/hour/IP. The 6-hour `localStorage` cache reduces calls; the Retry button rate-limits itself to one request per 3 seconds and says so; the fetch carries a 10-second deadline; exhaustion degrades to a stated error, not a broken page |
 | §3.6 | Input validation at the boundary | One function, `narrow()`, is the only path either source takes to become a rendered row: shape, count, length, topic slug and URL scheme are all checked there. The API is the more trusted source, but "more trusted" is not a shape check, so it goes through the same gate |
 | §3.7 | PII-safe logging | Nothing is logged anywhere. There is no server to log to |
+| §3.1 | CI scanning | CodeQL default setup, JavaScript/TypeScript **and** GitHub Actions, default query suite, **remote and local** threat model. Local is the non-default that matters: this site's untrusted inputs — the URL query string and the `localStorage` repo cache — are local sources by CodeQL's classification, so the default model would find almost no taint here. Runs on push and weekly, so old code is re-checked against new queries |
 
 ## 2a. The one vulnerability this site has had
 
@@ -84,9 +86,10 @@ These are real, and listed rather than quietly ignored (§2.3: no security guara
    over with a JavaScript frame-buster: that would look like a control while protecting
    nothing, and would be cited later as though the risk were handled. It would not be
    acceptable the moment any state-changing control is added.
-2. **No CI scanning (§3.1) and no dependency scanning (§3.2).** There are no
-   dependencies to scan, and no pipeline — push is the deploy. The mitigation is that
-   there is nothing in the supply chain to compromise.
+2. **Dependency scanning (§3.2) is absent because there is nothing to scan.** No
+   dependencies, so no supply chain. The only pinned third-party code is the
+   actions in `.github/workflows/pages.yml`, bumped by hand when GitHub deprecates
+   a runtime.
 3. **No phased rollout or tested rollback (§3.9, §3.10).** The rollback is
    `git revert` plus a push. It is not exercised on a schedule.
 4. **The API is called unauthenticated**, so a shared IP can exhaust the 60/hour limit
@@ -95,6 +98,27 @@ These are real, and listed rather than quietly ignored (§2.3: no security guara
 5. **Published PDFs are permanent.** Once crawled, a file cannot be recalled by
    deleting it. The control is procedural, not technical: read a PDF's extracted text
    before committing it.
+6. **Comments are not stripped from shipped code (SCP-136).** `index.html`,
+   `style.css` and `script.js` ship with the reasoning inline, deliberately. SCP-136
+   exists because comments leak backend detail; there is no backend, and the whole
+   repository is public by design (§2.11), so there is nothing for a comment to
+   reveal that reading the source would not. The trade is the reverse of the usual
+   one: the comments are the thing that keeps the site editable without a toolchain.
+7. **Documentation and tooling are served, not stripped (SCP-137).** Pages serves
+   the repository verbatim, so `CLAUDE.md`, `docs/`, `.claude/` and `.github/` are
+   reachable at their paths. Accepted rather than fixed: stripping them would require
+   a build step, which is the constraint the whole project is built around
+   (`CLAUDE.md` 1.2). Nothing links to them, no page loads them, and none of them
+   contain a credential. A `robots.txt` was considered and rejected — SCP-158 notes
+   it advertises the very structure it hides.
+8. **Actions are pinned by tag, not commit SHA (§3.2).** `pages.yml` pins
+   `actions/checkout@v5`, `actions/upload-pages-artifact@v4` and
+   `actions/deploy-pages@v5`. A tag is mutable, so this trusts GitHub not to
+   re-point its own tags. Accepted for now: all three are first-party, the workflow
+   holds no secret beyond the deploy token it is given, its permissions are
+   `contents: read` / `pages: write` / `id-token: write`, and CodeQL scans the
+   workflow itself. SHA pinning is the harder form and the option if a third-party
+   action is ever added — at that point it stops being optional.
 
 ## 4. If you find something
 
@@ -104,7 +128,7 @@ a slow fix.
 
 Report it privately, either way round:
 
-- **GitHub's private vulnerability reporting** — the *Report a vulnerability*
+- **GitHub's private vulnerability reporting** (enabled) — the *Report a vulnerability*
   button under the repository's Security tab. This is the preferred route: it
   is a private thread, and it does not need my email.
 - **Email** — najiyaffan@gmail.com.
@@ -120,8 +144,9 @@ date — a public issue is exactly right. Use the templates.
 
 ## 5. Scope
 
-In scope: this repository's `index.html`, `style.css`, `script.js`, and the
-files in `assets/`, as served from `affannajiy.github.io`.
+In scope: this repository's `index.html`, `style.css`, `script.js`, the files in
+`assets/`, and `.github/workflows/pages.yml`, as served from
+`affannajiy.github.io`.
 
 Out of scope, and please do not report them:
 

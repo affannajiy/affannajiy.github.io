@@ -87,3 +87,51 @@ which is rule 1.6.
 Keep any mirror **unlinked and off DNS** until an outage. A second live copy of
 the same content on a second domain is a duplicate-content problem the rest of
 the year, for redundancy that is needed a day a decade.
+
+## Releases and tags
+
+One release per commit, one tag per release. The commit subject and the tag carry
+the same version, and the release body is the full notes.
+
+- **Tag format is `vX.Y.Z`, always.** Lightweight tag on the release commit.
+- **The tag is the canonical version, not the commit subject.** Commit `e7ef3de`
+  reads `v.1.1.0` with a stray dot; its tag is `v1.1.0`. Tags normalise, history is
+  not rewritten to match.
+- **Patch = fixes only. Minor = anything new. Major = something a reader relied on
+  is gone.** Judged against *the site*, not the repo — a change touching only
+  workflows and docs is a patch however new it is.
+- **Release title is the full commit subject**, `vX.Y.Z - Title Case Summary` —
+  not the bare tag. A releases page listing `v1.0.0, v1.0.1, v1.1.0` tells a
+  reader nothing, and the summary already exists in the commit. Standardised
+  across all six releases on 2026-08-18.
+- Body is the notes, the same text bundled for the commit.
+- Never tag before Affan asks for the release number. An uncommitted tree is one
+  bundle in progress, not a queue of releases.
+
+```
+gh release create vX.Y.Z --title "vX.Y.Z - Title Case Summary" --notes-file notes.md
+```
+
+`gh release create` creates and pushes the tag as well, so it is a push. It is
+Affan's to run.
+
+### Repairing a wrong tag
+
+A tag pointing at the wrong commit is worse than a missing one — it makes a false
+claim about what shipped. Delete it in both places; a local delete alone leaves the
+remote lying.
+
+```
+git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z
+```
+
+Backfilling a missed release is safe at any time. The commit goes in `--target`,
+as a **full SHA** — the positional argument after the tag is an asset file, not a
+commit, and passing one there fails with `no matches found`.
+
+```
+gh release create vX.Y.Z --target <full-sha> --title "..." --notes-file notes.md --latest=false
+```
+
+`--latest=false` on a backfill: without it, a release created today takes the
+"Latest" badge from the newer version it is being filed behind.

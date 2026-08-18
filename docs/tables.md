@@ -58,3 +58,29 @@ Four columns: **Name, Description, Language, Updated.**
 pretending to be data and cost sideways scroll at 375px to say nothing. Do not
 add it back without checking the counts are non-zero. Removing it took
 `safeCount()` with it.
+
+## 1b. The one table that still scrolls keeps its affordance
+
+`#compare-table` is the exception to §1a — a comparison matrix cannot stack into
+cards without destroying the comparison — so below 640px it keeps
+`overflow-x: auto` inside its dialog. That makes it the only table on the site
+that still asks for a sideways gesture, and it must say so.
+
+Two gates, deliberately different:
+
+- **CSS gates on width.** `.scroll-hint` is `display: none` until 640px.
+- **`syncScrollableTables()` gates on truth.** It sets `hidden` unless the wrap
+  actually overflows. An empty `#compare-table` fits, and a hint asking for a
+  gesture the page is not asking for is worse than no hint.
+
+The hint must be the wrap's **immediate previous sibling**. A parent-wide lookup
+was tried first and hid the ASCII diagram's hint, because that hint shares a
+parent with the Skills table — when the Skills table stopped overflowing, the
+diagram lost its affordance while still scrolling. A hint belongs to the box it
+sits against, not to its parent.
+
+`.scroll-hint[hidden] { display: none }` is required. The 640px rule sets
+`display: block`, and a display rule beats the `hidden` attribute (layout.md §3a).
+
+Hidden overflow is hidden data — `UI-UX_Rulebook.md` §2.4, and §4 rules closure
+over tidiness.
