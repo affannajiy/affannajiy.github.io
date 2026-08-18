@@ -1,0 +1,41 @@
+# Deploys the repo verbatim to GitHub Pages.
+#
+# This exists because the classic "Deploy from a branch" source has no manual
+# trigger. On 2026-08-17 a GitHub-wide incident left a deploy queued and
+# unpickable for ~20 hours, and the only levers were re-run (which revived the
+# same wedged run) and Unpublish (which would have taken the live site down).
+# workflow_dispatch is the lever that was missing.
+#
+# No build step: upload-pages-artifact uploads the checkout as-is. Rule 1.2
+# still holds — nothing is compiled, bundled or generated here.
+name: Deploy to Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deploy in flight; queue behind it instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

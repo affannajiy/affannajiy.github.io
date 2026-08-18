@@ -115,3 +115,13 @@ top-level file is a worse repo with a rounder number.
 
 - **Technical log / war stories.** A writing project. It needs Affan's material,
   not code.
+
+## Rejected from the 2026-08-18 deploy-outage round
+
+| Idea | Why not |
+| --- | --- |
+| Revert or force-push `v1.3.0` to trigger a fresh deploy | The commit never failed — it built twice and produced the artifact both times. A new hash meets the same wedged queue, and rewriting published history to work around a scheduler already cost a day on 2026-08-17. |
+| Unpublish the site, then republish | The only "reset the source" control a user page has. It takes the live site down first, so a failed republish leaves it dark instead of stale. |
+| Empty commit to force a rebuild | Puts a second, contentless commit on top of a release for no gain. One release per commit. |
+| Mirror on Cloudflare Pages / Netlify now | Real redundancy, but a standing second host, second account and a DNS decision — furniture, for an event that is rare. Documented as the option if it is ever wanted; Cloudflare because it can serve static files with no build and no injected analytics. |
+| Keep re-running the queued run | Revives the same orphaned record. `workflow_dispatch` is the actual lever, which is why the workflow file now exists. |

@@ -96,6 +96,9 @@ history does not un-publish it.
 | Pushed, site unchanged | Browser or CDN cache. Hard-refresh (`Ctrl+Shift+R`). Check the Actions tab for a failed run. |
 | Projects table empty on the live site | GitHub API rate limit (60/hr per IP), not a deploy fault. The page states this itself and offers Retry. |
 | Styles missing on the live site only | A CSP violation, or a path that works locally but is case-wrong. Pages is case-sensitive; local Windows is not. |
+| Run stuck on `Queued`, status green | Orphaned run — enqueued during an incident and never picked up. Re-running revives the same wedged record. Use `workflow_dispatch` instead. Escalate at **10 min**; normal pickup is seconds. |
+| `deploy` fails 503, `build` succeeded | GitHub's Pages deployment API, not the commit. Check `githubstatus.com` and wait; the artifact was built fine. |
+| Run page green, site still old | Measure the edge, not the browser: `curl -s "https://affannajiy.github.io/index.html?b=$(date +%s)" | grep -c cert-verify` |
 
 ## Verify the live site after deploy
 
@@ -105,3 +108,16 @@ Do not assume it worked. Load `https://affannajiy.github.io`, then confirm:
 - No console errors owned by the site.
 - The page renders styled (proves `style.css` resolved — a case-mismatched path
   fails on Pages while working locally).
+
+
+## When a deploy will not land
+
+Full ladder in `docs/deployment.md`. Three rules that matter most:
+
+- **Never click Unpublish site** to force a redeploy. This is a user page, so
+  there is no `None` branch — Unpublish is the only equivalent, and it takes the
+  live site down. Stale-but-serving beats dark.
+- **Never revert or force-push** to trigger a deploy. The commit is not what
+  failed; a new hash meets the same queue.
+- **Order matters when switching to Actions**: the workflow must be on `master`
+  before Source is set to `GitHub Actions`, or nothing deploys.
