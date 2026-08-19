@@ -3,8 +3,8 @@
 Non-negotiable minimums, **measured, never eyeballed**. Snippets in the
 `check-accessibility` skill.
 
-Related: [design-system.md](design-system.md) tokens ·
-[verification-log.md](verification-log.md) last round.
+Related: [design-system.md](../../site-design-and-layout/reference/design-system.md) tokens ·
+[verification-log.md](../../verify-site/reference/verification-log.md) last round.
 
 ---
 
@@ -104,7 +104,7 @@ never open. Each needs its own `[hidden] { display: none }`.
 
 ## Stacked tables keep their controls and their labels
 
-Below 640px a row is a card ([layout.md](layout.md) §1b). Two things that would
+Below 640px a row is a card ([layout.md](../../site-design-and-layout/reference/layout.md) §1b). Two things that would
 have quietly gone missing:
 
 - **Sorting.** The sort buttons live in `<thead>`; hiding it stacked would take

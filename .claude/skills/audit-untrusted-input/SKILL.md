@@ -7,7 +7,7 @@ description: Re-run the untrusted-input audit on the portfolio site — poison t
 
 Three inputs are attacker-controllable and must all be narrowed on read: the
 GitHub API reply, the `localStorage` cache, and the URL query string. The rules
-they enforce are in `docs/security-posture.md`; this is how to prove they still
+they enforce are in `.claude/skills/audit-untrusted-input/reference/security-posture.md`; this is how to prove they still
 hold.
 
 **Re-run this whenever a new field is added to the cache or the render path.**
@@ -161,7 +161,7 @@ grep -n "innerHTML" script.js
 Every hit must be either a comment or a bare `= ""` clear. **An `innerHTML`
 assignment built by concatenation is a regression**, even if the values look
 safe, and an `escapeHTML()` reappearing in the file is the same regression
-wearing a hat. See `docs/security-posture.md` §3.
+wearing a hat. See `.claude/skills/audit-untrusted-input/reference/security-posture.md` §3.
 
 ## Done means
 
@@ -173,4 +173,4 @@ wearing a hat. See `docs/security-posture.md` §3.
 - Every bad URL falls back to the profile URL
 - The status line names the cache age *and* the failure, and offers Retry
 - `grep -c TESTFAIL script.js` prints `0`
-- The result is written into `docs/verification-log.md`
+- The result is written into `.claude/skills/verify-site/reference/verification-log.md`

@@ -8,8 +8,8 @@ description: Add or edit a section, table, or piece of copy on the portfolio sit
 All copy lives in `index.html`. There is no CMS, no data file and no templating —
 what is in the file is what ships.
 
-Read first: `docs/content-rules.md` for what may be written into the page and
-whose details may not, and `docs/layout.md` for the sticky-header offset trap.
+Read first: `.claude/skills/edit-site-content/reference/content-rules.md` for what may be written into the page and
+whose details may not, and `.claude/skills/site-design-and-layout/reference/layout.md` for the sticky-header offset trap.
 
 ## The three rules that bite
 
@@ -86,7 +86,7 @@ keeps wide tables from pushing the page sideways at 375px:
   label, and it is styled as one (muted, no wrap).
 - `scope` on every header cell, both directions.
 - Columns cost nothing on a phone: below 640px every row stacks into a card and
-  each cell draws its column name from `<thead>` (`docs/layout.md` §1b). **Check
+  each cell draws its column name from `<thead>` (`.claude/skills/site-design-and-layout/reference/layout.md` §1b). **Check
   375px anyway** — `scrollWidth === innerWidth`, and no `.scroll-hint` on a
   table, since no table scrolls sideways there any more.
 - **Building rows from JS? Call `labelCells(table)` after the render**, or the

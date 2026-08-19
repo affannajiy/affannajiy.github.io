@@ -2136,7 +2136,7 @@
         // carries a word for assistive tech behind it.
         var has = safeTopics(r.topics).indexOf(t) !== -1;
         var td = el("td");
-        var mark = el("span", null, has ? "✓" : "·");
+        var mark = el("span", null, has ? "✓︎" : "·");
         mark.setAttribute("aria-hidden", "true");
         td.appendChild(mark);
         td.appendChild(el("span", "sr-only", has ? "yes" : "no"));

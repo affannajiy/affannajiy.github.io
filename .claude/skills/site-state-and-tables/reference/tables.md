@@ -1,7 +1,7 @@
 # Tables, folds, sorting
 
-Related: [state-and-data.md](state-and-data.md) filtering ·
-[printing.md](printing.md) tables on paper.
+Related: [state-and-data.md](../../site-state-and-tables/reference/state-and-data.md) filtering ·
+[printing.md](../../verify-print/reference/printing.md) tables on paper.
 
 ---
 
@@ -19,11 +19,11 @@ Related: [state-and-data.md](state-and-data.md) filtering ·
 - **The footer colophon is the one exception, and it is not a section.** Below
   the footer rule, holds notes *about* the site rather than the record, closed by
   default. The invariant is about the record.
-- **No persisted fold state** — see §6 of [state-and-data.md](state-and-data.md).
+- **No persisted fold state** — see §6 of [state-and-data.md](../../site-state-and-tables/reference/state-and-data.md).
 
 ## 1a. Below 640px a row is a card
 
-Full rules in [layout.md](layout.md) §1b. What matters when touching a table:
+Full rules in [layout.md](../../site-design-and-layout/reference/layout.md) §1b. What matters when touching a table:
 
 - **Add a column and nothing needs doing.** The label comes from `<thead>` via
   `labelCells()`. **Build rows from JS and you must call it** — `renderRows()`
@@ -84,3 +84,13 @@ sits against, not to its parent.
 
 Hidden overflow is hidden data — `UI-UX_Rulebook.md` §2.4, and §4 rules closure
 over tidiness.
+
+## The Record column stacks
+
+"View PDF" and "Verify" are two destinations, not one phrase. Side by side in a
+95px column they wrapped mid-phrase, so `.cert-verify` is `display: block` and
+Verify sits on its own line. The old " · " separator went with the change — it
+existed only to join them on one line. `.cert-verify` still does not print
+(a 100-character hash is not a URL anybody types), and the `display` rule carries
+its own `[hidden]` guard. Measured 2026-08-19: 375px and 1280px, two lines, no
+page overflow.

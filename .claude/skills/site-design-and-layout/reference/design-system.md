@@ -3,8 +3,8 @@
 **Influences:** berkshirehathaway.com (text-first, undecorated) as the base;
 mcmaster.com (dense scannable grids) for tables. Palette from `tyunnie-pa`.
 
-Related: [accessibility.md](accessibility.md) contrast floor ·
-[layout.md](layout.md) the grid.
+Related: [accessibility.md](../../check-accessibility/reference/accessibility.md) contrast floor ·
+[layout.md](../../site-design-and-layout/reference/layout.md) the grid.
 
 ---
 
@@ -60,5 +60,25 @@ rings, where the ratio does not bind.
 - Tables set `font-variant-numeric: tabular-nums`. Monospace used to align date
   columns for free; a proportional face must be asked.
 
-**One monospace exception**, in [layout.md](layout.md) §4 — text bars, ASCII
+**One monospace exception**, in [layout.md](../../site-design-and-layout/reference/layout.md) §4 — text bars, ASCII
 diagram, JSON view need equal character widths to be correct at all.
+
+## 4. Symbols are text, not emoji
+
+**No icon library, ever** — a webfont or SVG icon set breaks constraints 1.2,
+1.3 and 1.4 at once. Symbols are Unicode characters drawn as generated content.
+
+**Every symbol carries `\FE0E` (VARIATION SELECTOR-15).** Arial and Helvetica on
+iOS carry no glyph for the arrows or the check mark, so iOS falls back to Apple
+Color Emoji and a blue emoji arrow lands mid-sentence. `\FE0E` says *render as
+text*. Reported from an iPad, 2026-08-19. The five that carry it:
+
+| Glyph | Where |
+| --- | --- |
+| `\2197` new-tab arrow | `a[target="_blank"]::after` |
+| `\2195 \2191 \2193` sort arrows | `.sort-btn::after` and the `aria-sort` states |
+| `\2713` topic check | `script.js`, the topic matrix cell |
+
+Box-drawing characters (`\2500` and friends) in the ASCII diagram and the text
+bars need no selector — they have no emoji presentation and they sit in the one
+monospace exception in [layout.md](layout.md) §4.

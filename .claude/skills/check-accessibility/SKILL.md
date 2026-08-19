@@ -5,7 +5,7 @@ description: Measure the portfolio's accessibility floor — contrast ratios for
 
 # Check the accessibility floor
 
-The floor is in `docs/accessibility.md`. **Measure, do not eyeball** — contrast
+The floor is in `.claude/skills/check-accessibility/reference/accessibility.md`. **Measure, do not eyeball** — contrast
 and tap-target regressions are invisible to the naked eye and have shipped here
 before.
 
@@ -32,7 +32,7 @@ return JSON.stringify(out,null,1);})()
 ```
 
 **Every value must be ≥ 4.5.** Baseline in
-`docs/verification-log.md`. Add a line to the list above for any new text class.
+`.claude/skills/verify-site/reference/verification-log.md`. Add a line to the list above for any new text class.
 
 For text on a non-page background (table surfaces, hover fills, the dark table
 header), pass that element's own `backgroundColor` rather than `bg`.
@@ -104,4 +104,4 @@ Emulate it in devtools and confirm the new animation is gone, not just faster.
 - `.filter-input` at 16px
 - ARIA state drives the visual indicator
 - Any new animation stands down under reduced motion
-- New numbers written into `docs/verification-log.md`
+- New numbers written into `.claude/skills/verify-site/reference/verification-log.md`

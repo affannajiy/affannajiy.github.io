@@ -81,8 +81,8 @@ on tables with 3+ rows.
 
 | Suggestion | Why not |
 | --- | --- |
-| Dark mode / `color-scheme: light dark` | Affan: no. Light-only is deliberate — see [design-system.md](design-system.md). |
-| Named references, supervisor contact | Affan: not bothering him. Content rule P1 in [content-rules.md](content-rules.md) also blocks it. |
+| Dark mode / `color-scheme: light dark` | Affan: no. Light-only is deliberate — see [design-system.md](../../site-design-and-layout/reference/design-system.md). |
+| Named references, supervisor contact | Affan: not bothering him. Content rule P1 in [content-rules.md](../../edit-site-content/reference/content-rules.md) also blocks it. |
 | Live sandbox / mock terminal | Needs a backend; widening `connect-src` breaks rule 1.7 and takes a runtime dependency (1.3). |
 | `curl /raw` plaintext endpoint | Needs a fifth source file (rule 1.4). The console-note half shipped. |
 | Hand-maintained activity log | Goes stale; a stale freshness indicator is worse than none. `document.lastModified` does the honest version. |

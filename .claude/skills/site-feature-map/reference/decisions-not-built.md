@@ -3,7 +3,7 @@
 Recorded so they are not re-proposed as improvements. A suggestion here is not
 "we forgot" — it is "we decided, and here is why".
 
-Related: [FEATURES-suggestion.md](FEATURES-suggestion.md) — the 2026-08-14 round,
+Related: [FEATURES-suggestion.md](../../site-feature-map/reference/FEATURES-suggestion.md) — the 2026-08-14 round,
 including what *was* built.
 
 ---
@@ -12,7 +12,7 @@ including what *was* built.
 
 | Thing | Why not |
 | --- | --- |
-| **Dark mode** / `color-scheme: light dark` / theme toggle | Affan's call: no. Light-only is deliberate — see [design-system.md](design-system.md). |
+| **Dark mode** / `color-scheme: light dark` / theme toggle | Affan's call: no. Light-only is deliberate — see [design-system.md](../../site-design-and-layout/reference/design-system.md). |
 | **Named references, supervisor contact details** | Affan's call: the site is about showcasing him, not about contacting anyone else. Content rule P1 also blocks it. |
 | **A GitHub token or a proxy backend** to raise the API rate limit | A token in a public repo is a leaked token; a backend is a build step and a dependency. |
 | **Analytics of any kind** | Nothing here needs consent, and adding it would require a banner. |
@@ -31,13 +31,13 @@ including what *was* built.
 
 | Thing | Why not |
 | --- | --- |
-| **A JavaScript frame-buster** | `frame-ancestors` is ignored in a `<meta>` CSP and GitHub Pages sends no custom headers, so the site genuinely cannot forbid being framed. But there is no login, no session, no form and no state-changing control here — a clickjack has nothing to capture or trigger. A frame-buster would look like protection while protecting nothing, and would be quoted later as though the risk were handled. Accepted and documented in [security-posture.md](security-posture.md) §1 instead. Revisit the day the page grows an action worth hijacking. |
-| **A fixed `escapeHTML()`** | It *was* fixed, briefly, then deleted. Repairing the escaper would have left the same trap set for the next person to concatenate a string, and an escaper sitting in the file reads as permission to build HTML from remote data. Nodes are built instead — see [security-posture.md](security-posture.md) §3. |
+| **A JavaScript frame-buster** | `frame-ancestors` is ignored in a `<meta>` CSP and GitHub Pages sends no custom headers, so the site genuinely cannot forbid being framed. But there is no login, no session, no form and no state-changing control here — a clickjack has nothing to capture or trigger. A frame-buster would look like protection while protecting nothing, and would be quoted later as though the risk were handled. Accepted and documented in [security-posture.md](../../audit-untrusted-input/reference/security-posture.md) §1 instead. Revisit the day the page grows an action worth hijacking. |
+| **A fixed `escapeHTML()`** | It *was* fixed, briefly, then deleted. Repairing the escaper would have left the same trap set for the next person to concatenate a string, and an escaper sitting in the file reads as permission to build HTML from remote data. Nodes are built instead — see [security-posture.md](../../audit-untrusted-input/reference/security-posture.md) §3. |
 | **`lang="ms"` on institution names** | WCAG 3.1.2 exempts proper names, and "Universiti Teknologi PETRONAS" is a proper name in an English sentence. Tagging it would change how a screen reader pronounces a name its owner spells in Latin script anyway. Revisit if a genuine Malay *phrase* is ever added to the page. |
 
 ## Rejected from the 2026-08-17 sixty-feature proposal
 
-Recorded in full in [feature-inventory.md](feature-inventory.md). The ones worth
+Recorded in full in [feature-inventory.md](../../site-feature-map/reference/feature-inventory.md). The ones worth
 naming here because they will be proposed again:
 
 | Thing | Why not |
@@ -59,7 +59,7 @@ will be proposed again because they sound right.
 | --- | --- |
 | **`frame-ancestors 'none'` in the CSP** | Ignored in a `<meta>` CSP — only a real response header carries it, and GitHub Pages sends none. Adding it looks like a control and is a comment. Same ruling as the frame-buster above. |
 | **`Permissions-Policy` in a `<meta http-equiv>`** | Not a thing. Permissions-Policy is response-header-only; no browser reads it from markup. Would sit in `<head>` looking like hardening forever. |
-| **`conic-gradient` pie chart built by writing `element.style`** | Breaks rule 1.8. The proposal argued it "does not violate the CSP" — true, and exactly the trap: the CSP does not block CSSOM writes, so this fails as a **silent** broken invariant instead of a loud one ([layout.md](layout.md) §4). Bars stay block characters. |
+| **`conic-gradient` pie chart built by writing `element.style`** | Breaks rule 1.8. The proposal argued it "does not violate the CSP" — true, and exactly the trap: the CSP does not block CSSOM writes, so this fails as a **silent** broken invariant instead of a loud one ([layout.md](../../site-design-and-layout/reference/layout.md) §4). Bars stay block characters. |
 | **Commit-history activity heatmap** | One API call per repository against a 60/hour budget. |
 | **Fuzzy search, `aria-activedescendant` combobox rewrite** | Not wrong, just not worth it yet. The parser and arrow-key walking already work; a rewrite risks the keyboard path for a small gain. Revisit if results ever outgrow one screen. |
 
@@ -70,8 +70,8 @@ technology chronology stays rejected.
 
 ## Rejected from the OWASP Secure Coding Practices audit (2026-08-17)
 
-All 213 items of [SECURITY_Rulebook.md](SECURITY_Rulebook.md) §2a walked. Four
-changes shipped ([security-posture.md](security-posture.md) §1, §2, §4, §7). These
+All 213 items of [SECURITY_Rulebook.md](../../../../docs/SECURITY_Rulebook.md) §2a walked. Four
+changes shipped ([security-posture.md](../../audit-untrusted-input/reference/security-posture.md) §1, §2, §4, §7). These
 three are real controls that are wrong *here*.
 
 | Thing | Why not |
@@ -97,7 +97,7 @@ top-level file is a worse repo with a rounder number.
 | **Dropping columns on narrow screens** instead of stacking | Hidden data, the same reason the Stars column went. A table showing three of five columns with no control saying so reads as three being all there are. |
 | **Stacking `#compare-table` too** | It is repositories against attributes. Stacked, each card holds one attribute across every repository and the comparison — the whole feature — is gone. It keeps its dialog's scroll. |
 | **Reflowing the ASCII diagram** | Fixed-width art. Reflowed it is not a diagram. |
-| **Un-scrolling the condensed nav strip** | It scrolls sideways deliberately, with a `mask-image` fade saying so ([layout.md](layout.md) §3). It is a control strip, not content, and the alternative is dropping destinations. |
+| **Un-scrolling the condensed nav strip** | It scrolls sideways deliberately, with a `mask-image` fade saying so ([layout.md](../../site-design-and-layout/reference/layout.md) §3). It is a control strip, not content, and the alternative is dropping destinations. |
 | **Hiding `<thead>` unconditionally when stacked** | Takes sorting off every phone. Kept wherever it holds a `.sort-btn`. |
 | **Hiding the "Keyboard shortcuts" button by width** | It is already gated on `(hover: hover)`, which is the honest test: a phone never sees it, and a laptop in a narrow window — a keyboard behind a small screen — still does. A `max-width` rule would break exactly that case. |
 

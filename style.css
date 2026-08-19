@@ -116,7 +116,11 @@ body {
    half of the same message, for readers who get nothing from the sr-only text.
    aria-hidden by nature: it is a duplicate of words already in the link. */
 a[target="_blank"]::after {
-  content: "\2197";
+  /* \FE0E is VARIATION SELECTOR-15: "render as text, not emoji". Arial and
+     Helvetica on iOS carry no glyph for this arrow, so iOS falls back to Apple
+     Color Emoji and a blue emoji arrow lands mid-sentence. Every symbol drawn
+     as generated content carries it. */
+  content: "\2197\FE0E";
   /* ↗ */
   display: inline-block;
   margin-left: .15em;
@@ -172,6 +176,18 @@ a.text-link:hover,
 a.text-link:focus-visible {
   color: var(--accent-text);
   text-decoration-color: var(--accent);
+}
+
+/* "View PDF" and "Verify" are two destinations, not one phrase. Side by side
+   they wrapped mid-phrase in the narrow Record column, so Verify sits on its
+   own line under the PDF link. A rule that sets `display` overrides the
+   `hidden` attribute, hence the guard. */
+.cert-verify {
+  display: block;
+}
+
+.cert-verify[hidden] {
+  display: none;
 }
 
 /* A table scroller that JS has made focusable, because it overflows. Inset so
@@ -745,19 +761,19 @@ main {
 /* The arrow is drawn from the header's aria-sort, so the visual state and the
    announced state cannot drift apart. */
 .sort-btn::after {
-  content: "↕";
+  content: "\2195\FE0E";
   opacity: .35;
   font-size: .9em;
 }
 
 th[aria-sort="ascending"] .sort-btn::after {
-  content: "↑";
+  content: "\2191\FE0E";
   opacity: 1;
   color: var(--accent-mid);
 }
 
 th[aria-sort="descending"] .sort-btn::after {
-  content: "↓";
+  content: "\2193\FE0E";
   opacity: 1;
   color: var(--accent-mid);
 }

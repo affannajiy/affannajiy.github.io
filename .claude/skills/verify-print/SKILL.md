@@ -6,7 +6,7 @@ description: Verify the portfolio's print output and one-page résumé budget �
 # Verify the print output
 
 Print is the second rendering of this site and it has no visual regression
-safety net. The rules are in `docs/printing.md`; this is how to check them.
+safety net. The rules are in `.claude/skills/verify-print/reference/printing.md`; this is how to check them.
 
 **The résumé must fit one page, and it fits by dropping rows, not by shrinking
 type.** 10pt is the floor.
@@ -39,7 +39,7 @@ r.media.mediaText = 'all';
 r.media.mediaText = 'print';
 ```
 
-Sizes to confirm against the table in `docs/printing.md`: body 11pt, tables
+Sizes to confirm against the table in `.claude/skills/verify-print/reference/printing.md`: body 11pt, tables
 10pt, section headings 14pt, name 20pt, printed URLs 8.5pt.
 
 ## 2. Check the grid survives
@@ -111,9 +111,9 @@ getComputedStyle(document.querySelector('.copy-btn')).display   // none
 
 ## Done means
 
-- Print sizes match `docs/printing.md`, and `@media print` is back
+- Print sizes match `.claude/skills/verify-print/reference/printing.md`, and `@media print` is back
 - Every table's right and bottom edges are drawn on paper
 - The résumé budget is at or under ~59 lines, or says so in words
 - `estimateLines()` counts exactly what the stylesheet prints
 - Print applies and fully reverts on cancel
-- The result is written into `docs/verification-log.md`
+- The result is written into `.claude/skills/verify-site/reference/verification-log.md`

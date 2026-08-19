@@ -1,7 +1,7 @@
 # Layout, sticky header, things that want a width
 
-Related: [accessibility.md](accessibility.md) tap targets ·
-[design-system.md](design-system.md) typography, incl. the monospace ban this
+Related: [accessibility.md](../../check-accessibility/reference/accessibility.md) tap targets ·
+[design-system.md](../../site-design-and-layout/reference/design-system.md) typography, incl. the monospace ban this
 page carves an exception out of.
 
 ---
@@ -105,7 +105,7 @@ Four load-bearing details:
 
 Third header child: `.header-tools` — position readout plus the Search control
 that is the only way into the palette on touch
-([state-and-data.md](state-and-data.md) §4).
+([state-and-data.md](../../site-state-and-tables/reference/state-and-data.md) §4).
 
 **It must not cost a row.** The mobile header was `flex-direction: column`, so a
 third child took it to **164px** — and header height comes off every section's

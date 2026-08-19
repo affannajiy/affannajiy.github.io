@@ -1,7 +1,7 @@
 # Content rules
 
 What may be written into the page, and how remote content is curated. Hardening
-helpers: [security-posture.md](security-posture.md).
+helpers: [security-posture.md](../../audit-untrusted-input/reference/security-posture.md).
 
 ---
 

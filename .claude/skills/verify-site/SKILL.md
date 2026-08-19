@@ -10,7 +10,7 @@ done the same way every time. **Measure, do not eyeball** — several regression
 here (contrast, tap targets, header height) are invisible to the naked eye.
 
 **This is the general round.** Four sibling skills go deeper where a change
-warrants it, and each writes its result into `docs/verification-log.md`:
+warrants it, and each writes its result into `.claude/skills/verify-site/reference/verification-log.md`:
 
 | Skill | When |
 | --- | --- |
@@ -166,5 +166,5 @@ and confirm the href falls back to the profile URL and no `<img>` element exists
 - All measured contrast ≥ 4.5:1
 - All tap targets ≥ 40px
 - Sort, filter and Retry each exercised, not just read
-- Anything newly measured written into `docs/verification-log.md` (the
+- Anything newly measured written into `.claude/skills/verify-site/reference/verification-log.md` (the
   `record-decision` skill says where)

@@ -36,69 +36,59 @@ loads them. Pages will still serve them at their paths; that is harmless and is
 - **Never assemble HTML from remote data.** Build DOM nodes and set
   `textContent`. There is deliberately no `escapeHTML()` in `script.js` — the
   one it had left quotes unescaped and produced a live attribute injection, and
-  repairing it would only have reset the trap (`docs/security-posture.md` §3).
+  repairing it would only have reset the trap (`.claude/skills/audit-untrusted-input/reference/security-posture.md` §3).
   Since 2026-08-17 the CSP enforces this in Chrome/Edge, so a string assigned to
   `innerHTML` throws instead of shipping.
 - The CSP does **not** stop CSSOM writes, so a width set from JS is not blocked —
   it is an invariant broken quietly. Data bars are drawn with block characters
-  instead (`docs/layout.md` §4).
+  instead (`.claude/skills/site-design-and-layout/reference/layout.md` §4).
 - **A rule that sets `display` overrides the `hidden` attribute.** Any component
   styled `display: flex/grid/block` needs its own `[hidden] { display: none }`,
-  or it renders while claiming to be hidden (`docs/layout.md` §3a).
+  or it renders while claiming to be hidden (`.claude/skills/site-design-and-layout/reference/layout.md` §3a).
 - Never invent content to fill a gap. Unfinished content is marked with a visible
-  `.hint` (`docs/content-rules.md` §2).
+  `.hint` (`.claude/skills/edit-site-content/reference/content-rules.md` §2).
 
-## 2. Where everything is
+## 2. Where everything is — invoke the skill
 
-**Read the relevant doc before changing the thing it describes.** These are not
-background reading; they hold the reasons that make a change safe.
+**Every reason, rule and measured number now lives inside a skill.** Nothing is
+loose in `docs/` any more except the two general rulebooks. **Invoke the skill
+before changing the thing it governs** — its `reference/` files hold the reasons
+that make a change safe, and the SKILL.md holds the traps.
 
-| I am about to… | Read |
+| I am about to… | Skill |
 | --- | --- |
-| Find out what the site already does | [`docs/feature-inventory.md`](docs/feature-inventory.md) |
-| Change a colour, token, or typeface | [`docs/design-system.md`](docs/design-system.md) |
-| Add or restyle any interactive control | [`docs/accessibility.md`](docs/accessibility.md) |
-| Touch the grid, the sticky header, or anything wanting a width | [`docs/layout.md`](docs/layout.md) |
-| Touch the GitHub fetch, filters, URL state, search, keyboard, or view modes | [`docs/state-and-data.md`](docs/state-and-data.md) |
-| Touch a table, a fold, or sorting | [`docs/tables.md`](docs/tables.md) |
-| Touch anything that reaches paper | [`docs/printing.md`](docs/printing.md) |
-| Write or remove page copy, or add a PDF | [`docs/content-rules.md`](docs/content-rules.md) |
-| Touch a sanitising helper or the CSP | [`docs/security-posture.md`](docs/security-posture.md) |
-| Propose a feature | [`docs/decisions-not-built.md`](docs/decisions-not-built.md) **first** |
-| Quote a measurement | [`docs/verification-log.md`](docs/verification-log.md) |
-| Push, or diagnose the live site | [`docs/deployment.md`](docs/deployment.md) |
+| Anything at all — after **any** edit to `index.html`, `style.css`, `script.js` | `verify-site` (holds the verification log) |
+| Change a colour, token, typeface, the grid, the sticky header, spacing, anything wanting a width | `site-design-and-layout` |
+| Touch the GitHub fetch, cache, filters, URL state, search, keyboard, view modes, a table, a fold, sorting | `site-state-and-tables` |
+| Find out what the site does, or **propose a feature** | `site-feature-map` (read its rejected list **first**) |
+| Add or edit a section, table, link, copy, or a PDF | `edit-site-content` |
+| Add or restyle an interactive control, change a colour, add an animation | `check-accessibility` |
+| Touch anything that reaches paper | `verify-print` |
+| Touch a sanitising helper, the CSP, the render path, the cache shape | `audit-untrusted-input` |
+| Push, enable Pages, diagnose the live site | `deploy-site` |
+| A measurement looks wrong, a screenshot times out, a CSS edit seems ignored | `preview-pane-quirks` |
+| Record a decision, a rejection, or a fresh number | `record-decision` |
 
-**General theory, not project-specific:**
+**General theory, not project-specific — the only two files left in `docs/`:**
 [`docs/UI-UX_Rulebook.md`](docs/UI-UX_Rulebook.md) ·
 [`docs/SECURITY_Rulebook.md`](docs/SECURITY_Rulebook.md)
 
-**History:** [`docs/FEATURES-suggestion.md`](docs/FEATURES-suggestion.md) — the
-2026-08-14 feature round, what shipped and what did not.
+## 3. Skills are the manual — do not re-derive them
 
-## 3. Skills — use them, do not re-derive them
-
-Each skill in `.claude/skills/` carries the measurement snippets and the
-environment quirks that are easy to get wrong.
-
-| Skill | Use it when |
-| --- | --- |
-| `verify-site` | After **any** edit to `index.html`, `style.css` or `script.js`. The full measured round. |
-| `edit-site-content` | Adding or editing a section, table, link or copy. Covers numbering, nav, and the header-offset trap. |
-| `check-accessibility` | A colour changed, a control was added, or an animation was added. |
-| `verify-print` | The print block, a printed section, or the export dialog changed. |
-| `audit-untrusted-input` | The render path, the cache shape, or a sanitising helper changed. |
-| `preview-pane-quirks` | A measurement looks wrong, a screenshot times out, or scroll/animation behaviour looks broken. |
-| `record-decision` | A non-obvious call was made, something was rejected, or new numbers were measured. |
-| `deploy-site` | Pushing, enabling Pages, or diagnosing a wrong/missing live site. |
+Each skill in `.claude/skills/` carries the rules, the measurement snippets and
+the environment quirks that are easy to get wrong, plus a `reference/` directory
+holding the long-form why. **Do not answer from memory or from reading the source
+when a skill covers the area — invoke it.** Do not write new rules into
+`CLAUDE.md`; `record-decision` routes them into the right skill.
 
 ## 4. The short version of doing work here
 
-1. **Read the doc** for the area you are touching, from the table in §2.
+1. **Invoke the skill** for the area you are touching, from the table in §2.
 2. **Make the change** in one of the four source files.
 3. **Run `verify-site`**, plus `check-accessibility` / `verify-print` /
    `audit-untrusted-input` if the change reaches those areas.
 4. **Record it** with `record-decision` — new numbers into
-   `docs/verification-log.md`, new rules into the matching doc.
+   `.claude/skills/verify-site/reference/verification-log.md`, new rules into the matching doc.
 5. **Do not push** unless asked. Push is the deploy.
 
 Three habits, because each has cost real time here:
@@ -119,7 +109,7 @@ Three habits, because each has cost real time here:
   the remote had to be force-rolled back.
 - If he does ask for a commit, **no `Co-Authored-By` trailer.**
 - **One release per commit, one tag per release, subject `vX.Y.Z - Title Case Summary`.**
-  Tagging and release convention: `docs/deployment.md`. The tag is the canonical
+  Tagging and release convention: `.claude/skills/deploy-site/reference/deployment.md`. The tag is the canonical
   version — `v.1.1.0`'s tag is `v1.1.0`. Read
   `git log` first and continue the series — `v1.0.0 - First Release`,
   `v1.0.1 - Layout Fixes`, `v1.1.0 - Added Features`. Patch = fixes only, minor =
@@ -130,7 +120,7 @@ Three habits, because each has cost real time here:
   number when he decides it is done. Never suggest splitting it into per-change
   commits, and never number a release before he asks for one.
 - The site is about showcasing him. **No supervisor, referee or colleague is
-  named as a contact** — see `docs/content-rules.md` §3.
+  named as a contact** — see `.claude/skills/edit-site-content/reference/content-rules.md` §3.
 - **No dark mode.** Light-only is deliberate.
 - **Repo-wide Workflow permissions stay read-only.** `.github/workflows/pages.yml`
   declares its own `permissions:` block, which overrides the repo default, so the

@@ -3,8 +3,8 @@
 What page shows now, and how it says so. GitHub fetch, untrusted inputs,
 filtering, URL state, search, keyboard, view modes.
 
-Related: [security-posture.md](security-posture.md) hardening ·
-[tables.md](tables.md) sorting · [printing.md](printing.md) paper behaviour.
+Related: [security-posture.md](../../audit-untrusted-input/reference/security-posture.md) hardening ·
+[tables.md](../../site-state-and-tables/reference/tables.md) sorting · [printing.md](../../verify-print/reference/printing.md) paper behaviour.
 
 ---
 
@@ -56,7 +56,7 @@ Related: [security-posture.md](security-posture.md) hardening ·
     means one print silently undoes the on-screen filter.
 - **Three hiding mechanisms, never shared:** `.filtered-out` filters ·
   `data-hide-in` view modes · `body.focus-mode` focus. On paper the first and
-  third are reversed, the second is not — [printing.md](printing.md) §4.
+  third are reversed, the second is not — [printing.md](../../verify-print/reference/printing.md) §4.
 - **Filters register their own undo** via `registerUndo(name, owns, active,
   undo)`. A search result can land on a row a filter hides, and a hidden row is
   nothing. Registered, not hard-coded: a filter that forgets shows up the first
@@ -110,7 +110,7 @@ Related: [security-posture.md](security-posture.md) hardening ·
   The old `try/catch` existed only because a raw hash could throw; an id cannot.
 - **Nothing new goes in `localStorage`.** Remembered scroll, fold state and
   session restore were all proposed and declined — fold state by name in
-  [decisions-not-built.md](decisions-not-built.md). Filters already survive a
+  [decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md). Filters already survive a
   reload better: the URL is shareable and says why the page looks as it does.
 
 ## 4. Search, palette, keyboard

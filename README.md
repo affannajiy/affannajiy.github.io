@@ -29,7 +29,7 @@ GitHub API. Content-Security-Policy locked to same-origin, keyboard skip link,
 | `script.js` | Fetches repos from the GitHub API and fills the Projects table. |
 | `assets/` | Résumé PDF, certificate PDFs, favicon, QR code. |
 | `CLAUDE.md` | Hard constraints, and the index to everything below. Read before changing anything. |
-| `docs/` | The reasons behind the rules — one file per area. Start at `docs/README.md`. |
+| `docs/` | Two general rulebooks only (UI/UX, security). Everything project-specific moved into the skills. |
 | `docs/UI-UX_Rulebook.md` | General UI/UX reference. Not project-specific. |
 | `docs/SECURITY_Rulebook.md` | General security reference. Not project-specific. |
 | `.claude/launch.json` | Local dev-server config for Claude Code. |
@@ -78,7 +78,7 @@ Add, remove or reorder rows freely. Nothing else needs to change. Keep the
 **Only the public version may ever be committed.** The original carried a phone
 number and two referees' full names, mobile numbers and email addresses — their
 data, not yours to publish, and Pages makes it permanently crawlable. The private
-original stays outside the repo, at the path recorded in `docs/content-rules.md`.
+original stays outside the repo, at the path recorded in `.claude/skills/edit-site-content/reference/content-rules.md`.
 
 Before replacing the PDF: References reduced to "available on request", phone
 number removed. Check the real filename — Windows hides extensions and one
@@ -149,7 +149,10 @@ invoke one by name.
 | `verify-print` | Print output and the one-page résumé line budget. |
 | `audit-untrusted-input` | Poisons the repo cache and URL state to prove nothing executes and bad rows are dropped. |
 | `preview-pane-quirks` | The preview pane's seven failure modes, so a bad measurement is not chased as a bug. |
-| `record-decision` | Puts a decision, rejection or measurement in the right `docs/` file instead of growing `CLAUDE.md`. |
+| `record-decision` | Puts a decision, rejection or measurement in the right skill `reference/` file instead of growing `CLAUDE.md`. |
+| `site-design-and-layout` | Colour tokens, the orange rule, typography, the grid, the sticky header, anything wanting a width. |
+| `site-state-and-tables` | The GitHub fetch, cache, status and errors, filters, URL state, search, keyboard, view modes, folds and sorting. |
+| `site-feature-map` | What the site already does, and every feature suggestion that was rejected with the reason. |
 | `deploy-site` | Pages setup, the recovery ladder, and what each failure symptom actually means. |
 
 They encode the traps that already caught us: the CSP blocking inline styles, the
@@ -186,7 +189,7 @@ name serves at `affannajiy.github.io/<repo-name>/`.
 
 ### When a deploy will not land
 
-Full ladder in `docs/deployment.md`. The short version:
+Full ladder in `.claude/skills/deploy-site/reference/deployment.md`. The short version:
 
 1. Check `githubstatus.com`. Not operational → stop, a re-run re-rolls the same dice.
 2. Measure the edge, not the browser — a green run has shipped nothing before.

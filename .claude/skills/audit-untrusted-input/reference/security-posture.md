@@ -1,8 +1,8 @@
 # Security posture — this project
 
-General theory: [SECURITY_Rulebook.md](SECURITY_Rulebook.md). This file is what
+General theory: [SECURITY_Rulebook.md](../../../../docs/SECURITY_Rulebook.md). This file is what
 *this* site does. Re-testing procedure: `audit-untrusted-input` skill. Last
-result: [verification-log.md](verification-log.md).
+result: [verification-log.md](../../verify-site/reference/verification-log.md).
 
 Public site, no accounts, no server, no database, stores nothing about a
 visitor. That removes most classic categories and leaves one question: **what
@@ -51,9 +51,9 @@ Easy to trip over:
 - No inline `style`, no inline `<script>`. A blocked inline style fails
   **silently** in layout — worse than a loud error.
 - **The CSP does not stop CSSOM writes.** A width set from JS is not blocked,
-  just an invariant broken quietly. [layout.md](layout.md) §4.
+  just an invariant broken quietly. [layout.md](../../site-design-and-layout/reference/layout.md) §4.
 - `<link rel="prefetch">` for this origin's own files is blocked too —
-  [decisions-not-built.md](decisions-not-built.md).
+  [decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md).
 
 **What it cannot do.** `frame-ancestors` is ignored in a `<meta>` CSP and Pages
 sends no custom headers, so this site cannot forbid being framed. Accepted, not
@@ -153,7 +153,7 @@ nothing to escape correctly (§2.9). `escapeHTML()` was **deleted, not repaired*
 
 ## 7. Against the OWASP Secure Coding Practices checklist
 
-Audited 2026-08-17 against [SECURITY_Rulebook.md](SECURITY_Rulebook.md) §2a, all
+Audited 2026-08-17 against [SECURITY_Rulebook.md](../../../../docs/SECURITY_Rulebook.md) §2a, all
 213 items. The rulebook's rule applies: **not applicable is not the same claim as
 satisfied.** Stated here so a future reader does not read 150 blank rows as 150
 passes.
@@ -163,9 +163,9 @@ passes.
 | Input Validation, Output Encoding | **In force** — §2 above is the whole answer. Validation is client-side only, which SCP-1 forbids — but there is no server to move it to, and nothing behind it to protect. The site is the trust boundary's far side. |
 | Data Protection, Communication Security | **In force** — §4. TLS and `nosniff` come from Pages; `github.io` is HSTS-preloaded. |
 | General Coding (204, 210–213) | **In force** — no dynamic execution, no third-party code, nothing for a reader to alter. |
-| System Configuration | **Mostly not ours.** Pages serves the repo; no directory listing, no configurable headers, no dev environment. 157 (remove test code) *is* ours and is enforced by hand — see the harness note in [verification-log.md](verification-log.md). |
+| System Configuration | **Mostly not ours.** Pages serves the repo; no directory listing, no configurable headers, no dev environment. 157 (remove test code) *is* ours and is enforced by hand — see the harness note in [verification-log.md](../../verify-site/reference/verification-log.md). |
 | Authn, Session, Access Control, Crypto, Error Logging, Database, File Management, Memory | **Not applicable.** No accounts, no sessions, no roles, no keys, no server log, no database, no upload, no manual allocation. Nothing was assessed and passed; there is nothing there. |
 
 Three checklist items were considered and **rejected** — reasons in
-[decisions-not-built.md](decisions-not-built.md): SRI on the site's own two files,
+[decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md): SRI on the site's own two files,
 `redirect: "error"` on the fetch, and a `robots.txt`.

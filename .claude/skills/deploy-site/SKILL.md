@@ -9,7 +9,7 @@ Push **is** the deploy. There is no build step and no pipeline to break — GitH
 Pages serves the repo verbatim.
 
 Run the `verify-site` round before pushing; there is no CI to catch anything.
-Background in `docs/deployment.md`.
+Background in `.claude/skills/deploy-site/reference/deployment.md`.
 
 ## Preconditions — check these before touching Pages
 
@@ -112,7 +112,7 @@ Do not assume it worked. Load `https://affannajiy.github.io`, then confirm:
 
 ## When a deploy will not land
 
-Full ladder in `docs/deployment.md`. Three rules that matter most:
+Full ladder in `.claude/skills/deploy-site/reference/deployment.md`. Three rules that matter most:
 
 - **Never click Unpublish site** to force a redeploy. This is a user page, so
   there is no `None` branch — Unpublish is the only equivalent, and it takes the

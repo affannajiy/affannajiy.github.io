@@ -1,6 +1,6 @@
 # Print, PDF export, one-page résumé
 
-Related: [tables.md](tables.md), [state-and-data.md](state-and-data.md).
+Related: [tables.md](../../site-state-and-tables/reference/tables.md), [state-and-data.md](../../site-state-and-tables/reference/state-and-data.md).
 Measurement procedure lives in the `verify-print` skill.
 
 ---

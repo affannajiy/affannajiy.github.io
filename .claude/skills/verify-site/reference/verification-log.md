@@ -111,11 +111,11 @@ masthead to **21.6mm**. Measured, in order:
 
 ## Round: 2026-08-17, OWASP Secure Coding Practices audit
 
-All 213 items of [SECURITY_Rulebook.md](SECURITY_Rulebook.md) §2a walked against
+All 213 items of [SECURITY_Rulebook.md](../../../../docs/SECURITY_Rulebook.md) §2a walked against
 the source. Four changes, three rejections
-([decisions-not-built.md](decisions-not-built.md)), and a written statement of
+([decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md)), and a written statement of
 which categories are *not applicable* rather than passed
-([security-posture.md](security-posture.md) §7).
+([security-posture.md](../../audit-untrusted-input/reference/security-posture.md) §7).
 
 | Change | Measured after |
 | --- | --- |
@@ -149,7 +149,7 @@ email addresses, 0 ID numbers** across 120,693 extracted characters.
 ## Round: 2026-08-17, hardening — a11y, print, untrusted input, Reset
 
 Seven gaps from an AI feature review, kept only where reading the code confirmed
-them. Three suggestions refused — see [decisions-not-built.md](decisions-not-built.md).
+them. Three suggestions refused — see [decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md).
 
 | Gap | Before | After |
 | --- | --- | --- |
@@ -291,7 +291,7 @@ covered only by the identical Certificates case.
 ## Round: 2026-08-17, Batch B — evidence links, related repos
 
 Served over HTTP, exercised on live API data. Chronology not built — see
-[decisions-not-built.md](decisions-not-built.md).
+[decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md).
 
 ### Palette row layout (fix)
 
@@ -343,7 +343,7 @@ dialog throws, so `show()` only opens when closed.
 | Page overflow | 0 at 375, −15 at desktop |
 | Console | no errors, no CSP violations |
 | Skills row text | `Software Python Intermediate Keysight internship · …` — unchanged |
-| Tap targets | `.related-btn` **40px**; `.ev-link` 15px, inline exemption ([accessibility.md](accessibility.md)) |
+| Tap targets | `.related-btn` **40px**; `.ev-link` 15px, inline exemption ([accessibility.md](../../check-accessibility/reference/accessibility.md)) |
 
 ### Two traps worth naming
 
@@ -488,7 +488,7 @@ Budget unmoved: 58 with no filter, 58 on 2023, 58 on 2026. Zero inline styles
 after exercising every chip. Console clean.
 
 **Conflict found.** First build hid `.block-empty` on paper and taught the
-budget to skip it — contradicting §4 of [printing.md](printing.md), and it would
+budget to skip it — contradicting §4 of [printing.md](../../verify-print/reference/printing.md), and it would
 have shipped a résumé quietly missing two affiliations. Caught by reading the
 doc for the area being touched, which is what the `CLAUDE.md` routing table is
 for.
