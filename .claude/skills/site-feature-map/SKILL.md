@@ -5,16 +5,16 @@ description: What the portfolio already does, which skill governs each feature, 
 
 # Feature map and rejected ideas
 
-**Before proposing any feature, read `reference/decisions-not-built.md` first.**
-Most good-sounding ideas here have already been considered and priced.
+**Read `reference/decisions-not-built.md` before you propose any feature.** Most
+good-sounding ideas here are already considered and priced.
 
 | Question | Read |
 | --- | --- |
-| What does the site already do, and who governs it? | [reference/feature-inventory.md](reference/feature-inventory.md) |
-| Was this already rejected, and why? | [reference/decisions-not-built.md](reference/decisions-not-built.md) |
+| What does the site do, and who governs it? | [reference/feature-inventory.md](reference/feature-inventory.md) |
+| Was this rejected, and why? | [reference/decisions-not-built.md](reference/decisions-not-built.md) |
 | History of the 2026-08-14 feature round | [reference/FEATURES-suggestion.md](reference/FEATURES-suggestion.md) |
 
-A rejection is a decision, not a backlog item. If a rejected idea is proposed
-again, say it was rejected and what it would cost, then let Affan decide.
+A rejection is a decision, not a backlog item. If someone proposes a rejected
+idea again, say that it was rejected and what it costs. Then let Affan decide.
 
-New rejections and new features get recorded with the `record-decision` skill.
+Record new rejections and new features with `record-decision`.

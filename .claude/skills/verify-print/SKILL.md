@@ -5,30 +5,29 @@ description: Verify the portfolio's print output and one-page résumé budget �
 
 # Verify the print output
 
-Print is the second rendering of this site and it has no visual regression
-safety net. The rules are in `.claude/skills/verify-print/reference/printing.md`; this is how to check them.
+Print is the second rendering of this site, and it has no visual regression
+safety net. The rules are in [reference/printing.md](reference/printing.md). This
+is how to check them.
 
 **The résumé must fit one page, and it fits by dropping rows, not by shrinking
 type.** 10pt is the floor.
 
----
-
 ## 1. Measure the print block
 
-`@media print` styles cannot be measured while the screen media query is active.
+You cannot measure `@media print` styles while the screen media query is active.
 Flip it, measure, flip it back:
 
 1. In `style.css`, change `@media print` to `@media all`.
 2. Reload and read computed values.
 3. **Change it back.** Never commit with it flipped.
 
-**Measure at a viewport wider than 640px.** Flipping print to `all` adds the
-print rules; it does not switch the *screen* ones off. Below 640px
+**Measure at a viewport wider than 640px.** Flipping print to `all` adds the print
+rules. It does not switch the *screen* ones off. Below 640px
 `@media screen and (max-width: 640px)` stacks every table into cards, so the
 reading comes back `display: block` with cell labels and looks like the stacked
-layout leaking into print. It is not — `screen` never matches when printing.
+layout leaking into print. It is not. `screen` never matches when printing.
 
-**Non-invasive alternative**, no file edit and nothing to forget to revert:
+**Non-invasive alternative.** No file edit, and nothing to forget to revert:
 
 ```js
 var s = document.styleSheets[0], r = null, i;
@@ -39,14 +38,15 @@ r.media.mediaText = 'all';
 r.media.mediaText = 'print';
 ```
 
-Sizes to confirm against the table in `.claude/skills/verify-print/reference/printing.md`: body 11pt, tables
-10pt, section headings 14pt, name 20pt, printed URLs 8.5pt.
+Sizes to confirm against the table in
+[reference/printing.md](reference/printing.md): body 11pt, tables 10pt, section
+headings 14pt, name 20pt, printed URLs 8.5pt.
 
 ## 2. Check the grid survives
 
-The screen removes the outer cell edges so `.table-wrap`'s border can supply
-them; the wrapper has no border on paper. So confirm the right and bottom edges
-of every table are actually drawn:
+The screen removes the outer cell edges so `.table-wrap`'s border can supply them.
+The wrapper has no border on paper, so confirm the right and bottom edges of every
+table are drawn:
 
 ```js
 var t = document.querySelector('.grid-table');
@@ -58,7 +58,7 @@ JSON.stringify({
 ```
 
 Any `0px` means the print block's plain `th, td { border }` lost to a more
-specific screen selector, and that edge must be **overridden by name**.
+specific screen selector. **Override that edge by name.**
 
 ## 3. Check the résumé budget
 
@@ -68,19 +68,19 @@ Open the export dialog, pick the one-page résumé, and read `#export-budget`.
 document.getElementById('export-budget').textContent
 ```
 
-Target: **at or under ~59 lines.** Past that the estimate must say so in words.
+Target: **at or under ~59 lines.** Past that, the estimate must say so in words.
 
-If the number looks wrong, instrument `estimateLines()` per section and compare
-against what the stylesheet actually prints. The three known divergences —
-`.hint`, `.evidence` and `.resume-omit` — are all "counted a line that
-`display:none` removes". Each was found by the estimate and the CSS disagreeing,
-and each will recur if a new `display:none` rule is added to the print block
-without a matching skip in the estimate.
+If the number looks wrong, instrument `estimateLines()` per section and compare it
+against what the stylesheet prints. The three known divergences — `.hint`,
+`.evidence` and `.resume-omit` — all counted a line that `display:none` removes.
+The estimate and the CSS disagreeing found each one, and each returns if a new
+`display:none` rule goes in the print block without a matching skip in the
+estimate.
 
 ## 4. Confirm print reverts
 
-The single worst print bug is a page left mangled after a cancelled print.
-Capture state, print, cancel, compare:
+The worst print bug is a page left mangled after a cancelled print. Capture the
+state, print, cancel, compare:
 
 ```js
 var before = {
@@ -93,15 +93,15 @@ var before = {
 // run the export, cancel the print dialog, then re-evaluate the same object
 ```
 
-Every field must match. `afterprint` does the work, with a timed fallback
-because not every browser fires it.
+Every field must match. `afterprint` does the work, with a timed fallback because
+not every browser fires it.
 
 ## 5. Confirm what does and does not print
 
-- `.filtered-out` rows **do** print — a filtered PDF would misrepresent the
-  record, and the filter control is not on the page to explain the gap.
-- `data-hide-in` view modes **do not** print — the toggle is visible and named,
-  so printing the chosen view is printing what the reader chose.
+- `.filtered-out` rows **do** print. A filtered PDF misrepresents the record, and
+  the filter control is not on the page to explain the gap.
+- `data-hide-in` view modes **do not** print. The toggle is visible and named, so
+  printing the chosen view prints what the reader chose.
 - All buttons, the header, nav, footer, filter and status line are dropped.
   Confirm through the CSSOM, not by eye:
 
@@ -116,4 +116,4 @@ getComputedStyle(document.querySelector('.copy-btn')).display   // none
 - The résumé budget is at or under ~59 lines, or says so in words
 - `estimateLines()` counts exactly what the stylesheet prints
 - Print applies and fully reverts on cancel
-- The result is written into `.claude/skills/verify-site/reference/verification-log.md`
+- The result is written into `verify-site/reference/verification-log.md`

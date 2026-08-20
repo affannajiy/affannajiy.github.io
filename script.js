@@ -17,10 +17,17 @@
   document.documentElement.classList.remove("no-js");
 
   var GITHUB_USER = "affannajiy";
+
+  /* 100 is the largest page the GitHub REST API will return, not a number
+     chosen here, and there is no second request — so a 101st repository would
+     simply not arrive. Named rather than left inline in the URL, because the
+     status line has to be able to say when the list it is counting is the whole
+     list and when it is the first page of a longer one. */
+  var PER_PAGE = 100;
   var API_URL =
     "https://api.github.com/users/" +
     GITHUB_USER +
-    "/repos?sort=updated&per_page=100";
+    "/repos?sort=updated&per_page=" + PER_PAGE;
 
   var tbody    = document.getElementById("projects-body");
   var statusEl = document.getElementById("projects-status");
@@ -28,6 +35,13 @@
   var filterEl = document.getElementById("projects-filter");
 
   var repos = [];      // everything the API returned, minus forks
+
+  /* True when the API returned a full page, which means there is probably more
+     than the table is showing. The status line counts what it has; without this
+     it would state that count as the total and be quietly wrong (UI-UX §1.1 —
+     nothing consequential happens in silence, and §7b.7 — an overloaded view
+     says so rather than truncating). */
+  var truncated = false;
   var view  = [];      // what is currently rendered: filtered, then sorted
   var sortKey = "updated";
   var sortDir = "descending";
@@ -57,13 +71,13 @@
      a new one — confirmed against a poisoned cache, which produced a live
      `onmouseover` attribute on a real button. `script-src 'self'` stopped the
      handler from running, which is defence in depth doing its job (Security
-     §2.4), but a first layer that only holds because the second one caught it
+     §1b.4), but a first layer that only holds because the second one caught it
      is not holding.
 
      Fixing the escaper would have left the same trap set for the next person to
      concatenate a string. Every remote value is now written through
      `textContent` and `setAttribute` on nodes built by hand, so there is no
-     parser in the path and nothing to escape correctly (Security §2.9).
+     parser in the path and nothing to escape correctly (SECURITY_Rulebook §2b.3).
 
      THE RULE: never assemble HTML from remote data in this file. Build nodes.
      If you find yourself reaching for an escaper, you are on the wrong path. */
@@ -71,7 +85,7 @@
   /* Remote strings are also unbounded. A 5MB description in a poisoned cache is
      not an injection but it is still a denial of service against the layout and
      the render loop, so every field is cut to a length the column can hold
-     (Security §3.6 — validate at the boundary, on size as well as on shape). */
+     (SECURITY_Rulebook §2a.3 — check length as well as type and format). */
   function clamp(value, max) {
     var s = text(value);
     return s.length > max ? s.slice(0, max) : s;
@@ -79,7 +93,8 @@
 
   // Escaping stops a value breaking out of an attribute, but it does not stop
   // "javascript:..." being a valid href. Everything here is remote data, so the
-  // scheme and host are checked rather than assumed (Security §3.6, §2.4).
+  // scheme and host are checked rather than assumed (SECURITY_Rulebook §2a.2,
+  // §2m.1 — allowlist the scheme and the host, never fetch or link what is not on it).
   function safeRepoURL(value) {
     try {
       var url = new URL(String(value));
@@ -95,7 +110,7 @@
   // Topics are remote data and arrive as an array of unknown contents. Anything
   // that is not a short, plain slug is dropped rather than escaped and shown:
   // a topic is a GitHub slug by definition, so a value that is not one is not a
-  // topic (Security §2.4, §3.6).
+  // topic (SECURITY_Rulebook §2a.2, §2a.5 — allowlist, and reject rather than repair).
   var TOPIC_RE = /^[a-z0-9][a-z0-9-]{0,34}$/;
 
   function safeTopics(value) {
@@ -113,7 +128,8 @@
      the values go in through `textContent`. There is no parser involved, so
      there is no escaping to get right and no attribute to break out of — the
      whole class of bug the escaper above guards against cannot reach these
-     paths at all (Security §2.9: the simplest correct implementation).
+     paths at all (SECURITY_Rulebook §1a.1: economy of mechanism — complexity is
+     where a flaw hides, and an escaper is the complexity).
 
      The string builders remain where every value is written by this file, such
      as the skeleton rows. Escaping is still the rule for those. */
@@ -145,6 +161,90 @@
     a.rel = "noopener noreferrer";
     a.appendChild(el("span", "sr-only", " (opens in a new tab)"));
     return a;
+  }
+
+  /* ── Copying to the clipboard ────────────────────────
+     Three controls copy something: the address buttons, the JSON dialog, and
+     the section anchors. They were three separate implementations of the same
+     four steps — feature-detect, write, confirm, revert after a pause — and
+     they had already drifted apart in exactly the way ENGINEERING_Rulebook
+     §1.13 predicts, each copy losing a different half of the confirmation:
+
+       - the JSON button said "Copied" on screen and announced nothing, so a
+         screen-reader user pressed it and got silence;
+       - the section anchor announced the failure and showed nothing, so a
+         sighted reader whose clipboard permission was denied saw the button do
+         nothing at all and had no way to tell it had failed.
+
+     Neither hole was visible while reading one call site. One path now, so a
+     confirmation cannot be half-built: every copy says the result in words on
+     screen AND announces it, and both halves revert together (§2.7 — one
+     authoritative copy of the rule, derive the rest).
+
+     `role="status"` on a node that starts empty is what makes the announcement
+     work: text put into an already-live region is announced, text present
+     before the region exists is not. */
+  var COPY_RESET_MS = 2500;
+
+  function canCopy() {
+    return !!(window.navigator && navigator.clipboard && navigator.clipboard.writeText);
+  }
+
+  /* The polite announcer that pairs with a copy button. Built here so no call
+     site can forget it — forgetting it is the JSON bug above. */
+  function copyStatusNode() {
+    var said = document.createElement("span");
+    said.className = "sr-only";
+    said.setAttribute("role", "status");
+    return said;
+  }
+
+  /* `getValue` is a function rather than a string: the section anchor's URL
+     depends on the location at click time, not at wiring time.
+
+     `labels.doneClass` picks how the visible half is shown. A button whose
+     label is its own text swaps that text; one whose label is a glyph (`#`)
+     cannot, so it carries a class and the word arrives from CSS instead. It is
+     a word either way — a colour change alone is not a confirmation. */
+  function attachCopy(btn, said, getValue, labels) {
+    var idle = btn.textContent;
+    var timer;
+
+    function show(ok) {
+      if (labels.doneClass) {
+        btn.classList.toggle(labels.doneClass, ok);
+        btn.classList.toggle(labels.failClass, !ok);
+      } else {
+        btn.textContent = ok ? (labels.done || "Copied") : (labels.fail || "Press Ctrl+C");
+      }
+      if (said) said.textContent = ok ? labels.saidDone : labels.saidFail;
+
+      window.clearTimeout(timer);
+      timer = window.setTimeout(function () {
+        if (labels.doneClass) {
+          btn.classList.remove(labels.doneClass);
+          btn.classList.remove(labels.failClass);
+        } else {
+          btn.textContent = idle;
+        }
+        if (said) said.textContent = "";
+      }, COPY_RESET_MS);
+    }
+
+    btn.addEventListener("click", function () {
+      /* Re-checked per click rather than once at wiring time: a clipboard
+         permission can be revoked while the page is open, and a button that
+         then does nothing in silence is the failure this helper exists to
+         stop (§3.2 — fail explicitly). */
+      if (!canCopy()) {
+        show(false);
+        return;
+      }
+      navigator.clipboard.writeText(getValue()).then(
+        function () { show(true); },
+        function () { show(false); }
+      );
+    });
   }
 
   function formatDate(iso) {
@@ -273,7 +373,8 @@
   // Every field is coerced before it is compared or lowercased. The data now
   // arrives from two places — the live API and the localStorage cache — and a
   // cache entry can be edited by anything with access to this origin. Neither
-  // source is assumed to have typed its own fields (Security §2.4, §3.6).
+  // source is assumed to have typed its own fields (SECURITY_Rulebook §2a.8,
+  // §2a.3 — another system's reply is input, and input is checked for type).
   function text(value) {
     return value == null ? "" : String(value);
   }
@@ -417,10 +518,17 @@
     if (topic) narrowed.push("tagged “" + topic + "”");
 
     if (narrowed.length === 0) {
+      /* "the 100 most recently updated" rather than a bare count, because the
+         bare count reads as a total. The sort is already `updated`, so naming
+         which 100 these are is the whole of the missing information. */
+      var counted = truncated
+        ? "The " + repos.length + " most recently updated of a longer list"
+        : repos.length +
+          " public " +
+          (repos.length === 1 ? "repository" : "repositories");
+
       return (
-        repos.length +
-        " public " +
-        (repos.length === 1 ? "repository" : "repositories") +
+        counted +
         ", live from the GitHub API" + sorted +
         " Select a column header to sort."
       );
@@ -483,7 +591,7 @@
      Retry button next to a rate-limit message is exactly the control a
      frustrated reader clicks repeatedly. A held-down retry can spend the rest
      of the hour's budget in seconds, which turns a wait into a lockout — so the
-     button rate-limits itself (Security §3.5) and says why it is unavailable
+     button rate-limits itself (SECURITY_Rulebook §6.3) and says why it is unavailable
      rather than going quietly grey (Nielsen §1.1). */
   var RETRY_COOLDOWN = 3000;
   var lastRetry = 0;
@@ -534,7 +642,7 @@
   /* Both sources are bounded, not just checked for shape. A poisoned cache
      holding fifty thousand rows, or one row with a five-megabyte description,
      injects nothing — and still hangs the render and destroys the layout.
-     Size is part of validating input (Security §3.6). */
+     Size is part of validating input (SECURITY_Rulebook §2a.3). */
   var MAX_REPOS = 200;
   var MAX_NAME = 100;
   var MAX_DESC = 300;
@@ -546,7 +654,8 @@
 
   /* The one place either source is turned into a row this file will render.
      Keeping it single means the cache cannot be validated more loosely than the
-     API, which is exactly the drift Security §2.12 warns about. */
+     API, which is exactly the drift SECURITY_Rulebook §1a.1 warns about — two
+     mechanisms where one would do is where the flaw hides. */
   function narrow(list) {
     var out = [];
     for (var i = 0; i < list.length && out.length < MAX_REPOS; i++) {
@@ -595,6 +704,10 @@
       parsed.repos = narrow(parsed.repos);
       if (parsed.repos.length === 0) { dropCache(); return null; }
 
+      // Coerced rather than trusted: this comes back out of localStorage like
+      // everything else here, and only `true` means true.
+      parsed.truncated = parsed.truncated === true;
+
       return parsed;
     } catch (err) {
       // Corrupt JSON is not something that fixes itself on the next visit, so
@@ -607,16 +720,19 @@
   /* The API returns roughly 80 fields per repo and the table renders six of
      them. Storing the raw payload costs ~116KB and a JSON.parse of the same
      size on every load — which is the wait we are trying to remove. Keeping
-     only the rendered fields cuts it to a few KB. */
-  function slim(list) {
-    return narrow(list);          // already the rendered fields, already bounded
-  }
+     only the rendered fields cuts it to a few KB.
 
+     There used to be a `slim()` here whose whole body was `return narrow(list)`.
+     Once `narrow()` grew to return exactly the rendered fields, the wrapper
+     stopped adding anything and started re-narrowing an already-narrowed list
+     on every write — a half-finished migration left in place because the name
+     still read as though it did something (ENGINEERING_Rulebook §1.14). The
+     only caller passes what `narrow()` returned, so this stores it as it is. */
   function writeCache(list) {
     try {
       window.localStorage.setItem(
         CACHE_KEY,
-        JSON.stringify({ time: Date.now(), repos: slim(list) })
+        JSON.stringify({ time: Date.now(), repos: list, truncated: truncated })
       );
     } catch (err) {
       /* Caching is an optimisation. Failing to cache is not a page error. */
@@ -636,6 +752,7 @@
 
     if (cached) {
       repos = cached.repos;
+      truncated = cached.truncated;
       if (filterEl) filterEl.disabled = false;
       buildTopicChips();
       buildStats();
@@ -673,7 +790,7 @@
        somebody could change without noticing. `referrerPolicy` is the one that
        does new work: the meta policy sends this page's origin to every
        cross-origin request, and an API that needs no referrer should be told
-       nothing (Rulebook §1.3 — least privilege applies to what you disclose,
+       nothing (SECURITY_Rulebook §1a.6 — least privilege applies to what you disclose,
        not only to what you can reach). */
     var options = {
       headers: { Accept: "application/vnd.github+json" },
@@ -693,7 +810,7 @@
       .then(function (data) {
         // The API is trusted to be GitHub, not trusted to be well-formed. An
         // object where an array was expected must fail as a stated error, not
-        // as a TypeError three frames deeper (Security §1.7, §3.6).
+        // as a TypeError three frames deeper (SECURITY_Rulebook §2h.1, §2a.3).
         if (!Array.isArray(data)) {
           throw new Error("GitHub returned an unexpected response shape");
         }
@@ -701,6 +818,11 @@
         // Same boundary as the cache, deliberately. The API is the more trusted
         // of the two sources, but "more trusted" is not a shape check.
         repos = narrow(data);
+
+        // A full page back means the next one probably exists. Measured before
+        // narrow() drops the forks, because the page limit applies to what
+        // GitHub sent, not to what survived the filter.
+        truncated = data.length >= PER_PAGE;
 
         if (repos.length === 0) {
           settled();
@@ -746,7 +868,7 @@
             "error"
           );
           // A stated failure with no way to act on it is half a message
-          // (§3.4, Rulebook §1.3). The table below is readable, so this is a
+          // (SECURITY_Rulebook §2h.1, UI-UX §1.3). The table below is readable, so this is a
           // caveat rather than a dead end — but the reader still has to be
           // able to ask for fresh data without reloading the whole page.
           addRetry();
@@ -1539,7 +1661,7 @@
      copy button is the escape hatch — and it is built in JS so that a browser
      without the Clipboard API gets no button rather than a broken one. */
   function initCopyEmail() {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+    if (!canCopy()) return;
 
     // The same argument applies past mailto:. A GitHub or LinkedIn address is
     // something a reader wants in the clipboard at least as often as they want
@@ -1566,30 +1688,15 @@
 
       // The result is said in words and announced, not shown as a colour
       // change — the confirmation must survive with the sound off and the
-      // screen unread (Rulebook §4).
-      var said = document.createElement("span");
-      said.className = "sr-only";
-      said.setAttribute("role", "status");
+      // screen unread (UI-UX §4).
+      var said = copyStatusNode();
 
-      var timer;
-      btn.addEventListener("click", function () {
-        navigator.clipboard.writeText(address).then(
-          function () {
-            btn.textContent = "Copied";
-            said.textContent = isMail ? "Email address copied." : "Link copied.";
-          },
-          function () {
-            // A denied clipboard permission must not look like success.
-            btn.textContent = "Press Ctrl+C";
-            said.textContent =
-              "Could not copy. Select the address and copy it manually.";
-          }
-        );
-        window.clearTimeout(timer);
-        timer = window.setTimeout(function () {
-          btn.textContent = "Copy";
-          said.textContent = "";
-        }, 2500);
+      attachCopy(btn, said, function () { return address; }, {
+        done: "Copied",
+        // A denied clipboard permission must not look like success.
+        fail: "Press Ctrl+C",
+        saidDone: isMail ? "Email address copied." : "Link copied.",
+        saidFail: "Could not copy. Select the address and copy it manually."
       });
 
       link.parentNode.insertBefore(btn, link.nextSibling);
@@ -3671,7 +3778,9 @@
 
     function build() {
       var data = {
-        name: "'Affan Najiy bin Rusdi",
+        /* The ayn is U+2018, the same character the masthead uses. One name, one
+           spelling — this string is what the JSON export hands a reader. */
+        name: "‘Affan Najiy bin Rusdi",
         role: "Computer Science Undergraduate",
         source: window.location.origin + window.location.pathname,
         generated: new Date().toISOString(),
@@ -3717,20 +3826,17 @@
     });
 
     if (copyBtn) {
-      var timer;
-      copyBtn.addEventListener("click", function () {
-        if (!navigator.clipboard || !navigator.clipboard.writeText) {
-          copyBtn.textContent = "Select the text and press Ctrl+C";
-          return;
-        }
-        navigator.clipboard.writeText(out.textContent).then(
-          function () { copyBtn.textContent = "Copied"; },
-          function () { copyBtn.textContent = "Press Ctrl+C"; }
-        );
-        window.clearTimeout(timer);
-        timer = window.setTimeout(function () {
-          copyBtn.textContent = "Copy JSON";
-        }, 2500);
+      // This button had no announcer at all, so a successful copy happened in
+      // silence for anyone not watching the label. It gets the same one every
+      // other copy control has now.
+      var said = copyStatusNode();
+      copyBtn.parentNode.insertBefore(said, copyBtn.nextSibling);
+
+      attachCopy(copyBtn, said, function () { return out.textContent; }, {
+        done: "Copied",
+        fail: "Press Ctrl+C",
+        saidDone: "The JSON is on the clipboard.",
+        saidFail: "Could not copy. Select the text and copy it manually."
       });
     }
   }
@@ -3771,7 +3877,7 @@
      So a reader can send somebody to the Projects table rather than to the top
      of the page and an instruction to scroll. */
   function initSectionLinks() {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+    if (!canCopy()) return;
 
     [].forEach.call(document.querySelectorAll("main .section[id]"), function (section) {
       var title = section.querySelector(".section-title");
@@ -3783,29 +3889,26 @@
       btn.textContent = "#";
       btn.setAttribute("aria-label", "Copy a link to this section");
 
-      var said = document.createElement("span");
-      said.className = "sr-only";
-      said.setAttribute("role", "status");
+      var said = copyStatusNode();
 
-      var timer;
-      btn.addEventListener("click", function () {
-        var url =
-          window.location.origin + window.location.pathname + "#" + section.id;
-        navigator.clipboard.writeText(url).then(
-          function () {
-            btn.classList.add("is-done");
-            said.textContent = "Link to this section copied.";
-          },
-          function () {
-            said.textContent = "Could not copy the link.";
-          }
-        );
-        window.clearTimeout(timer);
-        timer = window.setTimeout(function () {
-          btn.classList.remove("is-done");
-          said.textContent = "";
-        }, 2500);
-      });
+      attachCopy(
+        btn,
+        said,
+        // Read at click time, not at wiring time: the button is built once and
+        // the page's location can change under it.
+        function () {
+          return window.location.origin + window.location.pathname + "#" + section.id;
+        },
+        {
+          /* The label is "#", so the word arrives from CSS rather than by
+             swapping the text. The failure case had no visible half at all
+             before this: a denied clipboard looked exactly like a working one. */
+          doneClass: "is-done",
+          failClass: "is-failed",
+          saidDone: "Link to this section copied.",
+          saidFail: "Could not copy the link."
+        }
+      );
 
       /* Not into the title. The title is the <summary>'s only child, and
          interactive content inside a <summary> is disallowed — the browser owns

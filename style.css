@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   Affan Najiy — portfolio
+   ‘Affan Najiy — portfolio
    Berkshire base (text-first, no decoration) + McMaster grid (dense tables).
    Palette carried over from tyunnie-pa: orange / black / warm white.
 
@@ -271,7 +271,11 @@ code {
   align-items: center;
   flex-wrap: wrap;
   gap: .25rem 1.5rem;
-  padding: 0 1.25rem;
+  /* The inset keeps the wordmark and the nav clear of a notch or a rounded
+     corner in landscape. `max()` rather than an addition, so the gutter never
+     grows on a device with no cutout: `env()` resolves to 0px there and the
+     1.25rem stands (UI-UX §5.12). */
+  padding: 0 max(1.25rem, env(safe-area-inset-right)) 0 max(1.25rem, env(safe-area-inset-left));
   max-width: var(--maxw);
   margin: 0 auto;
 }
@@ -414,7 +418,13 @@ code {
 main {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 1.25rem;
+  /* Same safe-area treatment as the header. A phone held in landscape puts the
+     notch beside the text column, and without this the first character of every
+     line sits under it (UI-UX §5.12). Costs nothing anywhere else — `env()` is
+     0px on a device with no inset, so `max()` returns the normal gutter. The
+     `viewport-fit=cover` in the meta viewport is the half that makes `env()`
+     report a real number; without it iOS letterboxes the page and reports 0. */
+  padding: 0 max(1.25rem, env(safe-area-inset-right)) 0 max(1.25rem, env(safe-area-inset-left));
 }
 
 /* ── Masthead ─────────────────────────────────────────────
@@ -501,13 +511,55 @@ main {
   color: var(--accent-text);
 }
 
-/* Prose runs the full content column and reflows with the viewport rather than
-   stopping at a fixed measure. The 1000px cap on the column is what bounds the
-   line length — roughly 105ch at 1280px — so there is no runaway on a wide
-   monitor without a second cap here. */
+/* Prose runs the full content column and reflows with the viewport. Deliberate:
+   a 65ch cap was tried on 2026-08-20 and reverted the same day — on this page
+   the paragraphs are short, and a cap left them crunched into a narrow strip
+   against a wide empty gutter, which reads worse than a long line does. The
+   1000px column is the only bound, and that is the intended one. */
 .section-body p {
   max-width: 100%;
   margin: 0 0 1rem 0;
+}
+
+/* Justified prose, Affan's call 2026-08-20. `.colophon-note` was already
+   justified before this, so the choice existed on the page in one place. It is
+   folded in here so there is one block that answers "what justifies".
+
+   Two conditions, both measured, and the rule is wrong without either.
+
+   `hyphens: auto` is not optional. Justify stretches the word spaces on every
+   line but the last, so the wider the line the more each space gives. At the
+   measures here — 108ch for bare prose, 120ch for `.note`, 144ch for
+   `.colophon-note` — unhyphenated justify opens white "rivers" down the
+   paragraph, which is the whole of UI-UX §6.12's objection. Hyphenation lets the
+   break fall inside a word instead. Measured at 1280px with it on: widest space
+   5.98px against a 4.17px natural space, so 1.43x. Mild.
+
+   **`min-width: 641px` is the other half, and it is the one that nearly shipped
+   broken.** Justify hurts a *narrow* column far more than a wide one, because
+   there are fewer spaces per line to absorb the slack. Measured at 320px before
+   this gate went in: widest space **27.75px** against the same 4.17px natural —
+   **6.6x**, holes wide enough to read as a layout bug. 641px is the complement of
+   the site's single 640px breakpoint; below it, prose is ragged-right.
+
+   Excluded from justify, deliberately:
+   - `.hint` — annotations, not prose. Ragged-right keeps them reading as
+     marginalia rather than body copy.
+   - `:not([class])` spares `.resume-actions` and `.fold-controls`, which are
+     `<p>` rows of buttons (layout.md §1).
+
+   Screen only. Print is a narrower column and the one-page résumé budget has no
+   headroom; hyphenation moves where lines break, and lines are what that budget
+   counts. To revert, delete this block — nothing else depends on it. */
+@media screen and (min-width: 641px) {
+
+  .section-body > p:not([class]),
+  .section-body p.note,
+  .colophon-note {
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
 }
 
 .hint {
@@ -1281,6 +1333,19 @@ body.density-compact .sort-btn {
   color: var(--accent-text);
 }
 
+/* The other half of that contract, which was missing: a denied clipboard used
+   to announce the failure to a screen reader and show a sighted reader nothing
+   at all, so a broken copy and a working one looked identical. Same word-not-
+   colour rule, and --muted rather than a red, because the reader has lost
+   nothing — the address is still on screen to select by hand. */
+.anchor-btn.is-failed::after {
+  content: " press Ctrl+C";
+  font-size: .7rem;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--muted);
+}
+
 /* ── Detail list ──────────────────────────────────────────
    For what a one-sentence "Highlights" cell cannot hold. */
 .detail-list {
@@ -1713,7 +1778,6 @@ body.focus-mode .section:not(.focus-target) {
   font-size: .75rem;
   line-height: 1.6;
   color: var(--muted);
-  text-align: justify;
 }
 
 .colophon-note code {

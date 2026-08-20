@@ -26,7 +26,7 @@ Never break these. Every one of them is enforced or load-bearing.
 | 1.8 | **No inline `style` attributes and no inline `<script>`.** Widths, colours and behaviour live in `style.css` / `script.js`. | The CSP blocks them, and a blocked inline style fails *silently* in layout. |
 
 **What is not source.** `CLAUDE.md`, `README.md`, `SECURITY.md`,
-`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `LICENSE`, `docs/`, `.github/` and
+`CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `LICENSE`, `rulebooks/`, `.github/` and
 `.claude/` are tooling and documentation — nothing links to them and no page
 loads them. Pages will still serve them at their paths; that is harmless and is
 **not** a reason to add a build step to strip them.
@@ -50,10 +50,10 @@ loads them. Pages will still serve them at their paths; that is harmless and is
 
 ## 2. Where everything is — invoke the skill
 
-**Every reason, rule and measured number now lives inside a skill.** Nothing is
-loose in `docs/` any more except the two general rulebooks. **Invoke the skill
-before changing the thing it governs** — its `reference/` files hold the reasons
-that make a change safe, and the SKILL.md holds the traps.
+**Every reason, rule and measured number lives inside a skill.** General theory
+lives in `rulebooks/`. **Invoke the skill before you change the thing it
+governs** — its `reference/` files hold the reasons that make a change safe, and
+the SKILL.md holds the traps.
 
 | I am about to… | Skill |
 | --- | --- |
@@ -69,9 +69,25 @@ that make a change safe, and the SKILL.md holds the traps.
 | A measurement looks wrong, a screenshot times out, a CSS edit seems ignored | `preview-pane-quirks` |
 | Record a decision, a rejection, or a fresh number | `record-decision` |
 
-**General theory, not project-specific — the only two files left in `docs/`:**
-[`docs/UI-UX_Rulebook.md`](docs/UI-UX_Rulebook.md) ·
-[`docs/SECURITY_Rulebook.md`](docs/SECURITY_Rulebook.md)
+**General theory, not project-specific — three portable rulebooks in
+[`rulebooks/`](rulebooks/README.md).** A skill says what *this* site does. A
+rulebook says what good software does. Read the rulebook when the skill has no
+ruling, or when the change is a new one nobody wrote a rule for yet.
+
+| Lens | Rulebook | Ask |
+| --- | --- | --- |
+| Human | [`rulebooks/UI-UX_Rulebook.md`](rulebooks/UI-UX_Rulebook.md) | Can a person understand and use this? |
+| Trust | [`rulebooks/SECURITY_Rulebook.md`](rulebooks/SECURITY_Rulebook.md) | Can a person misuse, break or exploit this? |
+| Code | [`rulebooks/ENGINEERING_Rulebook.md`](rulebooks/ENGINEERING_Rulebook.md) | Can we change this without a fire? |
+
+Read one, not all three — [`rulebooks/README.md`](rulebooks/README.md) routes
+twelve kinds of change to the right file and states what each costs to load.
+**Never paste a rulebook into this file.** Reference it by path, so it is read
+only when the task needs it.
+
+Section numbers moved on 2026-08-20. A citation written before that date can
+name a real section and still point at the wrong rule — check it against the
+file before you trust it.
 
 ## 3. Skills are the manual — do not re-derive them
 

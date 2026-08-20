@@ -1,8 +1,13 @@
 # Security posture
 
-What this site actually does about the principles in `docs/SECURITY_Rulebook.md`.
-The rulebook says what the principles *are*; this file says how this project stands
-against them, including where it deliberately falls short.
+What this site actually does about the principles in
+[`rulebooks/SECURITY_Rulebook.md`](rulebooks/SECURITY_Rulebook.md). The rulebook
+says what the principles *are*. This file says how this project stands against
+them, and where it falls short on purpose.
+
+The rulebook was renumbered on 2026-08-20. The section numbers below were
+re-mapped to match it on that date. A citation to this file written earlier may
+name the old numbers.
 
 This is a static personal site with no accounts, no server, no database and no user
 input that is ever stored. That shapes everything below: most of the classic
@@ -21,7 +26,7 @@ published in `assets/`**.
 | The reader's browser | A poisoned cache with unbounded rows or fields hanging the render | Hard caps: 200 repositories, 100/300/40-character name, description and language |
 | Visitor privacy | Third-party tracking, fingerprinting, cookies | None exist. No analytics, no fonts, no CDN, no cookies, nothing to consent to |
 | Third parties named in published files | Their contact details becoming crawlable forever | Rule 2.8/2.10 in `CLAUDE.md`: PDFs are read with `pdftotext` before they are committed |
-| The repository | A leaked credential | No credential exists. The API is called unauthenticated (rule 2.2) |
+| The repository | A leaked credential | No credential exists. The API is called unauthenticated (rule 1.5) |
 | The repository | A workflow with more rights than it needs | `pages.yml` declares `contents: read`, `pages: write`, `id-token: write`. A job-level block overrides the repo default, so the repo-wide Workflow permissions setting stays **read-only**. CodeQL scans the workflow itself |
 
 **Not in the model:** authentication, authorization, session handling, payment data,
@@ -32,19 +37,19 @@ file is wrong and must be rewritten before that change ships.
 
 | Rulebook | Principle | How this project satisfies it |
 | --- | --- | --- |
-| §1.2 | Secure defaults | The CSP is `default-src 'none'` — everything is denied unless named. Adding a CDN script or a web font fails loudly rather than silently working |
-| §1.3 | Least privilege | The API call is unauthenticated and read-only. There is no token that could be stolen because there is no token |
-| §1.5 | Minimize attack surface | Four source files, zero dependencies, zero build step, no server-side code, no form that submits anywhere (`form-action 'none'`) |
-| §1.7 | Fail securely | An API failure renders a stated error, never a stale hardcoded list. A malformed response shape throws a named error instead of a `TypeError`. A rejected repo URL falls back to the profile URL rather than being rendered as given |
-| §2.4 | Defense in depth | The CSP is the outer layer; the node-building render path, `safeRepoURL`, `safeTopics` and `narrow` are the inner one. This is not theoretical here — see §2a |
-| §2.9 | Economy of mechanism | No framework and no build step means the entire attack surface is three files a person can read in one sitting |
-| §2.11 | Open design | The repository is public. Nothing here relies on any of it being secret |
-| §2.16 | Leveraging existing components | Native `<details>`, native `<dialog>`, native `window.print()`, the browser's own URL parser for validation — rather than hand-rolled equivalents |
-| §3.3 | Secrets management | No secrets in the repo, and no place a secret would be needed. **Secret scanning and push protection are enabled**, so a token in a diff is rejected at push rather than caught in review — rule 1.5 enforced instead of remembered |
-| §3.5 | Rate limiting | The unauthenticated API allows 60 requests/hour/IP. The 6-hour `localStorage` cache reduces calls; the Retry button rate-limits itself to one request per 3 seconds and says so; the fetch carries a 10-second deadline; exhaustion degrades to a stated error, not a broken page |
-| §3.6 | Input validation at the boundary | One function, `narrow()`, is the only path either source takes to become a rendered row: shape, count, length, topic slug and URL scheme are all checked there. The API is the more trusted source, but "more trusted" is not a shape check, so it goes through the same gate |
-| §3.7 | PII-safe logging | Nothing is logged anywhere. There is no server to log to |
-| §3.1 | CI scanning | CodeQL default setup, JavaScript/TypeScript **and** GitHub Actions, default query suite, **remote and local** threat model. Local is the non-default that matters: this site's untrusted inputs — the URL query string and the `localStorage` repo cache — are local sources by CodeQL's classification, so the default model would find almost no taint here. Runs on push and weekly, so old code is re-checked against new queries |
+| §1a.1 | Economy of mechanism | No framework and no build step means the entire attack surface is three files a person can read in one sitting |
+| §1a.2 | Fail-safe defaults | An API failure renders a stated error, never a stale hardcoded list. A malformed response shape throws a named error instead of a `TypeError`. A rejected repo URL falls back to the profile URL rather than being rendered as given |
+| §1a.4 | Open design | The repository is public. Nothing here relies on any of it being secret |
+| §1a.6 | Least privilege | The API call is unauthenticated and read-only. There is no token that could be stolen because there is no token |
+| §1b.2 | Secure by default | The CSP is `default-src 'none'` — everything is denied unless named. Adding a CDN script or a web font fails loudly rather than silently working |
+| §1b.4 | Defense in depth | The CSP is the outer layer; the node-building render path, `safeRepoURL`, `safeTopics` and `narrow` are the inner one. This is not theoretical here — see §2a |
+| §1b.5 | Minimize the attack surface | Four source files, zero dependencies, zero build step, no server-side code, no form that submits anywhere (`form-action 'none'`) |
+| §1b.10 | Reuse vetted components | Native `<details>`, native `<dialog>`, native `window.print()`, the browser's own URL parser for validation — rather than hand-rolled equivalents |
+| §2a | Input validation and injection | One function, `narrow()`, is the only path either source takes to become a rendered row: shape, count, length, topic slug and URL scheme are all checked there. The API is the more trusted source, but "more trusted" is not a shape check, so it goes through the same gate |
+| §2g | Secrets | No secrets in the repo, and no place a secret would be needed. **Secret scanning and push protection are enabled**, so a token in a diff is rejected at push rather than caught in review — rule 1.5 enforced instead of remembered |
+| §2h.5 | PII-safe logging | Nothing is logged anywhere. There is no server to log to |
+| §5c.2 | Static analysis in the pipeline | CodeQL default setup, JavaScript/TypeScript **and** GitHub Actions, default query suite, **remote and local** threat model. Local is the non-default that matters: this site's untrusted inputs — the URL query string and the `localStorage` repo cache — are local sources by CodeQL's classification, so the default model would find almost no taint here. Runs on push and weekly, so old code is re-checked against new queries |
+| §6.3 | Rate limiting and quotas | The unauthenticated API allows 60 requests/hour/IP. The 6-hour `localStorage` cache reduces calls; the Retry button rate-limits itself to one request per 3 seconds and says so; the fetch carries a 10-second deadline; exhaustion degrades to a stated error, not a broken page |
 
 ## 2a. The one vulnerability this site has had
 
@@ -75,7 +80,7 @@ rotated, because there are no credentials.
 
 ## 3. Known gaps, accepted deliberately
 
-These are real, and listed rather than quietly ignored (§2.3: no security guarantee).
+These are real, and listed rather than quietly ignored (§1b.11: no security guarantee).
 
 1. **No HTTP security headers.** GitHub Pages does not allow custom response headers,
    so `X-Content-Type-Options`, `Referrer-Policy` as a header, and above all
@@ -86,14 +91,14 @@ These are real, and listed rather than quietly ignored (§2.3: no security guara
    over with a JavaScript frame-buster: that would look like a control while protecting
    nothing, and would be cited later as though the risk were handled. It would not be
    acceptable the moment any state-changing control is added.
-2. **Dependency scanning (§3.2) is absent because there is nothing to scan.** No
+2. **Dependency scanning (§5b.6) is absent because there is nothing to scan.** No
    dependencies, so no supply chain. The only pinned third-party code is the
    actions in `.github/workflows/pages.yml`, bumped by hand when GitHub deprecates
    a runtime.
-3. **No phased rollout or tested rollback (§3.9, §3.10).** The rollback is
+3. **No phased rollout or tested rollback (§6.7, §6.8).** The rollback is
    `git revert` plus a push. It is not exercised on a schedule.
 4. **The API is called unauthenticated**, so a shared IP can exhaust the 60/hour limit
-   and see the error state. This is a deliberate trade (rule 2.2) — a token in a public
+   and see the error state. This is a deliberate trade (rule 1.5) — a token in a public
    repo would be a far worse failure than a rate-limit message.
 5. **Published PDFs are permanent.** Once crawled, a file cannot be recalled by
    deleting it. The control is procedural, not technical: read a PDF's extracted text
@@ -101,17 +106,17 @@ These are real, and listed rather than quietly ignored (§2.3: no security guara
 6. **Comments are not stripped from shipped code (SCP-136).** `index.html`,
    `style.css` and `script.js` ship with the reasoning inline, deliberately. SCP-136
    exists because comments leak backend detail; there is no backend, and the whole
-   repository is public by design (§2.11), so there is nothing for a comment to
+   repository is public by design (§1a.4, open design), so there is nothing for a comment to
    reveal that reading the source would not. The trade is the reverse of the usual
    one: the comments are the thing that keeps the site editable without a toolchain.
 7. **Documentation and tooling are served, not stripped (SCP-137).** Pages serves
-   the repository verbatim, so `CLAUDE.md`, `docs/`, `.claude/` and `.github/` are
+   the repository verbatim, so `CLAUDE.md`, `rulebooks/`, `.claude/` and `.github/` are
    reachable at their paths. Accepted rather than fixed: stripping them would require
    a build step, which is the constraint the whole project is built around
    (`CLAUDE.md` 1.2). Nothing links to them, no page loads them, and none of them
    contain a credential. A `robots.txt` was considered and rejected — SCP-158 notes
    it advertises the very structure it hides.
-8. **Actions are pinned by tag, not commit SHA (§3.2).** `pages.yml` pins
+8. **Actions are pinned by tag, not commit SHA (§5b.2, §5b.7).** `pages.yml` pins
    `actions/checkout@v5`, `actions/upload-pages-artifact@v4` and
    `actions/deploy-pages@v5`. A tag is mutable, so this trusts GitHub not to
    re-point its own tags. Accepted for now: all three are first-party, the workflow

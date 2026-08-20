@@ -5,28 +5,26 @@ description: Re-run the untrusted-input audit on the portfolio site — poison t
 
 # Audit the untrusted inputs
 
-Three inputs are attacker-controllable and must all be narrowed on read: the
-GitHub API reply, the `localStorage` cache, and the URL query string. The rules
-they enforce are in `.claude/skills/audit-untrusted-input/reference/security-posture.md`; this is how to prove they still
-hold.
+Three inputs are attacker-controllable and are all narrowed on read: the GitHub
+API reply, the `localStorage` cache, and the URL query string. The rules are in
+[reference/security-posture.md](reference/security-posture.md). This is how to
+prove they still hold.
 
-**Re-run this whenever a new field is added to the cache or the render path.**
-Adding `topics` is what prompted the last round.
-
----
+**Re-run this whenever a new field reaches the cache or the render path.** Adding
+`topics` prompted the last round.
 
 ## 1. Pin the render to the poison
 
-The live API will overwrite a poisoned cache before you can measure it. Point
-the fetch at a 404 so the cache is what renders **and** the error path is
-exercised at the same time:
+The live API overwrites a poisoned cache before you can measure it. Point the
+fetch at a 404, so the cache renders **and** the error path runs at the same
+time:
 
 ```js
 // in script.js, temporarily
 var API_URL = "https://api.github.com/TESTFAIL/users/affannajiy/repos?...";
 ```
 
-Revert afterwards and confirm it:
+Revert it afterwards and confirm:
 
 ```bash
 grep -c TESTFAIL script.js
@@ -36,8 +34,8 @@ That must print `0`.
 
 ## 2. Poison the cache
 
-Write a mixture of valid rows and every shape of bad one. The valid rows are the
-control: if they disappear too, the guard is over-broad.
+Write a mix of valid rows and every shape of bad one. The valid rows are the
+control. If they disappear too, the guard is over-broad.
 
 ```js
 var flood = [];
@@ -73,8 +71,8 @@ localStorage.setItem('projects-cache-v1', JSON.stringify({
 location.reload();
 ```
 
-Check the cache key name against `script.js` before pasting — it must match what
-the site actually reads.
+Check the cache key name against `script.js` before you paste. It must match what
+the site reads.
 
 ## 3. Measure, do not read
 
@@ -105,12 +103,12 @@ over-long topics dropped and uppercase ones folded to lowercase; the fork
 excluded; the status line naming **both** the cache age and the failure, with a
 Retry button present.
 
-**`injected: 0` is the check that matters most.** It is the one that was
-previously `1`, and the CSP — not the escaper — was what stopped it running.
+**`injected: 0` is the check that matters most.** It was `1` once, and the CSP,
+not the escaper, is what stopped it running.
 
 ## 3a. The cache must heal itself
 
-A cache that fails validation is deleted, not merely skipped. Two cases:
+A cache that fails validation is deleted, not merely skipped. Two cases.
 
 ```js
 // corrupt JSON
@@ -134,9 +132,9 @@ location.reload();
 ?sort=<img onerror=alert(1)>&dir=javascript:&view=../../etc&topic=NOT_A_SLUG
 ```
 
-**Expected:** every one ignored rather than assigned, and the query string
-rewritten to only the legal state. `sort` and `dir` are checked with
-`hasOwnProperty` against known sets, `view` against the two modes, `topic`
+**Expected:** every one ignored instead of assigned, and the query string
+rewritten to the legal state only. `sort` and `dir` are checked with
+`hasOwnProperty` against known sets, `view` against the two modes, and `topic`
 against `TOPIC_RE`.
 
 ## 5. Clean up
@@ -145,23 +143,23 @@ against `TOPIC_RE`.
 localStorage.removeItem('projects-cache-v1');
 ```
 
-Revert `API_URL`, reload in a **fresh tab**, and confirm the console is clean —
-errors from the 404 runs persist in the pane's console and will otherwise be
-read back as current failures. See the `preview-pane-quirks` skill.
+Revert `API_URL`, reload in a **fresh tab**, and confirm the console is clean.
+Errors from the 404 runs persist in the pane's console and otherwise read back as
+current failures. See `preview-pane-quirks`.
 
 ## 6. Check nobody rebuilt the trap
 
-The whole class of bug is closed by *not parsing HTML*, not by escaping it well.
+*Not parsing HTML* closes the whole class of bug. Escaping it well does not.
 Confirm that is still true:
 
 ```bash
 grep -n "innerHTML" script.js
 ```
 
-Every hit must be either a comment or a bare `= ""` clear. **An `innerHTML`
-assignment built by concatenation is a regression**, even if the values look
-safe, and an `escapeHTML()` reappearing in the file is the same regression
-wearing a hat. See `.claude/skills/audit-untrusted-input/reference/security-posture.md` §3.
+Every hit must be a comment or a bare `= ""` clear. **An `innerHTML` assignment
+built by concatenation is a regression**, even if the values look safe. An
+`escapeHTML()` back in the file is the same regression wearing a hat. See
+[reference/security-posture.md](reference/security-posture.md) §3.
 
 ## Done means
 
@@ -173,4 +171,4 @@ wearing a hat. See `.claude/skills/audit-untrusted-input/reference/security-post
 - Every bad URL falls back to the profile URL
 - The status line names the cache age *and* the failure, and offers Retry
 - `grep -c TESTFAIL script.js` prints `0`
-- The result is written into `.claude/skills/verify-site/reference/verification-log.md`
+- The result is written into `verify-site/reference/verification-log.md`

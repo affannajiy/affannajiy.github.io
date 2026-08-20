@@ -111,8 +111,9 @@ masthead to **21.6mm**. Measured, in order:
 
 ## Round: 2026-08-17, OWASP Secure Coding Practices audit
 
-All 213 items of [SECURITY_Rulebook.md](../../../../docs/SECURITY_Rulebook.md) §2a walked against
-the source. Four changes, three rejections
+All 213 items of the OWASP Secure Coding Practices checklist walked against the
+source. That list was §2a of [SECURITY_Rulebook.md](../../../../rulebooks/SECURITY_Rulebook.md) until
+2026-08-20 and is now replaced there by ASVS 5.0. Four changes, three rejections
 ([decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md)), and a written statement of
 which categories are *not applicable* rather than passed
 ([security-posture.md](../../audit-untrusted-input/reference/security-posture.md) §7).
@@ -697,3 +698,437 @@ cache; `curl` against the same server returned the new file. The tell was that
 logic never ran — behaviour that exists in both versions cannot distinguish them.
 Fixed by serving from a **different port**, which is a different cache key.
 `.claude/launch.json` now carries a `portfolio-alt` config for this.
+
+## 2026-08-20 — résumé content refresh
+
+Content-only round: new résumé folded into About, Education, Experience and
+Interests. No colour, control or animation changed, so contrast was not
+re-measured.
+
+| Check | Result |
+| --- | --- |
+| Site-owned inline styles (`[style]`) | 0 |
+| Console errors | none |
+| Projects rows from live API | 10 |
+| Page horizontal overflow @375px | false |
+| Header height / `scroll-margin-top` @375px | 124px / 172.5px — clears |
+| Tap targets @375px | nav 40, wordmark 40, button 44, sort 40, filter 40 |
+| `.filter-input` font size | 16px |
+| `.table-wrap` overflowing @375px | 0 |
+| Sort, filter, empty-filter status | each exercised, each stated in words |
+| Print apply/revert on cancel | fully reverted |
+
+### The résumé budget has no headroom left
+
+**Before adding a `[data-resume]` string, measure the budget — do not eyeball it.**
+The one-page résumé was already sitting at **exactly 59 of ~59 lines** before this
+round. Rewriting the Keysight Highlights cell from 118 to 258 characters pushed it
+to **60 lines — roughly 2 pages**, which is a whole extra sheet bought by one cell.
+
+Bisected the ceiling by swapping candidate strings into the cell and re-reading
+`#export-budget`: **185 characters is the largest that still fits**; 258 does not.
+The shipped cell is 185 and carries both achievements with both numbers.
+
+The rule: any new or lengthened `[data-resume]` row now costs a page unless
+something else is dropped. The estimate does say so in words when it spills, so
+the failure is loud — but it is only loud in the export dialog, which nobody opens
+while editing content.
+
+### Follow-up the same day — internship length and the Sahom row
+
+Two corrections from Affan after the round above.
+
+**"Eight months", not seven.** The internship ran January to August 2026, so the
+span is eight. Restored in all four places (About paragraph, the 2026 timeline
+row, the Keysight detail list, the SSMS evidence cell). Character-neutral swap —
+the budget did not move.
+
+**Sahom Sejahtera starts May 2025, not June**, standardised against LinkedIn.
+Dataran Sungai Dipang *is* in Kampung Sahom — the resume and the site were
+describing the same place at different zoom levels, not disagreeing. The row now
+names both, and carries the 40-tree figure the site had been missing.
+
+Budget re-measured across four candidate strings for that cell: the shipped
+278-character version holds at **59 of ~59**. Trimming the talk and the workshop
+buys a line back (58) if a future row needs one.
+
+## 2026-08-20 — Security rulebook sweep
+
+Read `rulebooks/SECURITY_Rulebook.md` end to end and ran the whole
+`audit-untrusted-input` round against it. **No code defect found.** Every guard
+held on measurement, not on reading.
+
+### Poisoned cache, API pinned to a 404
+
+512 cache entries, twelve of them hostile. Measured:
+
+| Check | Result |
+| --- | --- |
+| Rows rendered | **200** — capped at `MAX_REPOS` despite 512 entries |
+| `[onmouseover]`/`[onerror]`/`[onclick]` in the table | **0** |
+| `<img>`, `<b>` from remote strings | **0** |
+| `window.__XSS` | **false** |
+| Link hosts | `["github.com"]` alone — `javascript:` and `evil.example.com` both fell back |
+| Longest description cell | **300** — clamp held against a 20,000-char field |
+| Topics | over-long dropped, `PYTHON` folded to `python`, `'not-an-array'` dropped |
+| Fork row | excluded |
+| Status line | named the cache age **and** the 404, with Retry present |
+
+### Cache self-heal
+
+Corrupt JSON (`{not json`) → key `null` after reload. Forged `time` one year in
+the future → key `null`, and `ghost` appears nowhere in `document.body`. Both
+delete rather than skip.
+
+### Poisoned URL
+
+`?sort=<img onerror=alert(1)>&dir=javascript:&view=../../etc&topic=NOT_A_SLUG&focus=<script>`
+— every one ignored, query string rewritten to empty. `q` clamps at `MAX_NAME`.
+
+### Two things worth writing down
+
+- **`connect-src` is doing real work.** A `fetch('/script.js')` from the console
+  was blocked — the page cannot read its own origin over the network. That is
+  the CSP working, not a bug, and it is why the API must be pinned by editing
+  the file rather than by intercepting the request.
+- **`/favicon.ico` 404s once per load.** Browser default probe, not a site
+  request; `assets/favicon.svg` is declared and serves 200. Not a defect and not
+  worth a fifth asset to silence.
+
+### What was actually fixed — stale rulebook citations
+
+The 2026-08-20 renumbering left **18 citations naming a real section that now
+holds a different rule**, which is the exact trap `CLAUDE.md` §2 warns about.
+Remapped by meaning, not by arithmetic:
+
+| Was | Now | Rule |
+| --- | --- | --- |
+| `Security §2.9` (no escaper) | `§2b.3` | use the framework's encoder; a hand-written escape misses a case |
+| `Security §2.9` (simplest impl) | `§1a.1` | economy of mechanism |
+| `Security §3.6` (size/shape) | `§2a.3` | check type, length, range, format |
+| `Security §2.4` (scheme/host) | `§2a.2`, `§2m.1` | allowlist |
+| `Security §2.4` (topics dropped) | `§2a.2`, `§2a.5` | reject, do not repair |
+| `Security §2.4` (defence in depth) | `§1b.4` | layer independent controls |
+| `Security §2.4, §3.6` (`text()`) | `§2a.8`, `§2a.3` | another service's reply is input |
+| `Security §3.5` (retry cooldown) | `§6.3` | rate limiting and quotas |
+| `Security §2.12` (one boundary) | `§1a.1` | two mechanisms where one would do |
+| `Security §1.7` (stated error) | `§2h.1` | handle every error path on purpose |
+| `§3.4` (a failure needs a way out) | `§2h.1` | same |
+
+Twelve in `script.js`, five in `SECURITY.md` §3 (`§2.3`→`§1b.11`,
+`§3.2`→`§5b.6`, `§3.9/§3.10`→`§6.7/§6.8`, `§2.11`→`§1a.4`, `§3.2`→`§5b.2/§5b.7`),
+one in `security-posture.md`. `SECURITY.md` also cited **`rule 2.2`** twice for
+the unauthenticated-API trade; `CLAUDE.md` has no rule 2.2 — the rule is **1.5**,
+no secrets in the repo.
+
+UI-UX citations were checked and left alone: `§1.N` still resolves to Nielsen
+heuristic N and `§2.4` to the Gestalt list, so that scheme did not move.
+
+### Gaps re-checked against the rulebook and left accepted
+
+`frame-ancestors` (§5) is ignored in a `<meta>` CSP and Pages sets no headers —
+already `SECURITY.md` §3.1, and a JS frame-buster is still the wrong answer.
+Actions pinned by tag not digest (§5b.2, §5b.7) — already §3.8, all three
+first-party, workflow scoped `contents: read` / `pages: write` / `id-token: write`.
+Neither changed; both now cite the right section.
+
+### Regression round after the edits
+
+Comments and prose only, no behaviour touched. Re-verified anyway: 10 live
+repos, 0 site-owned inline styles, 0 page overflow at 375px and desktop, console
+clean apart from the favicon probe, `grep -c TESTFAIL script.js` = 0.
+
+## 2026-08-20 — Engineering rulebook sweep
+
+Read `rulebooks/ENGINEERING_Rulebook.md` and scanned §1 (failure modes) against
+the code. Two hits, both fixed. Everything else in §1 either does not apply or is
+a constraint the project chose on purpose.
+
+### §1.13 copy-paste divergence — three clipboards, two holes
+
+Three controls copy something: the address buttons (`.copy-btn`), the JSON
+dialog (`#json-copy`), and the section anchors (`.anchor-btn`). Each was its own
+implementation of the same four steps — feature-detect, write, confirm, revert
+after 2500ms. They had already drifted, and **each copy had lost a different
+half of the confirmation**:
+
+| Control | Visible on success | Announced | Visible on failure | Announced on failure |
+| --- | --- | --- | --- | --- |
+| Address buttons | "Copied" | yes | "Press Ctrl+C" | yes |
+| **JSON dialog** | "Copied" | **none — no `role="status"` node at all** | "Press Ctrl+C" | **none** |
+| **Section anchor** | ` copied` via CSS | yes | **nothing at all** | yes |
+
+So a screen-reader user copied the JSON in silence, and a sighted reader whose
+clipboard permission was denied clicked an anchor and saw the button do
+**nothing** — a failed copy and a working one were indistinguishable.
+
+Neither hole is visible while reading one call site. That is the argument for
+the rule: one idea, three implementations, and the bug lives in the difference.
+
+**Fixed** by one path — `canCopy()`, `copyStatusNode()`, `attachCopy()` — with
+`COPY_RESET_MS` replacing three copies of `2500`. Every copy control now says
+the result in words on screen **and** announces it, and both halves revert
+together. `.anchor-btn.is-failed::after { content: " press Ctrl+C" }` is the
+visible half the anchor never had; `--muted`, not a red, because nothing is
+lost — the address is still on screen to select by hand.
+
+One behaviour deliberately added rather than preserved: `canCopy()` is
+re-checked **per click**, not once at wiring time. A permission can be revoked
+while the page is open, and the old code would then have done nothing silently.
+
+Measured on 8125 (8123 was serving a stale `style.css` — the documented preview
+quirk; a second port is the cheapest way past it):
+
+| Path | Result |
+| --- | --- |
+| Anchor, clipboard denied | `class="anchor-btn is-failed"`, `::after` = `" press Ctrl+C"`, announced "Could not copy the link." |
+| Anchor, revert after 2.7s | class gone, `::after` = `none`, announcer emptied |
+| Anchor, clipboard stubbed OK | `is-done`, `::after` = `" copied"`, announced |
+| Address button, denied | "Press Ctrl+C" + full announcement |
+| Address button, OK | "Copied", announced, wrote the right address |
+| **JSON copy, OK** | "Copied" **and** "The JSON is on the clipboard." — the hole is closed |
+
+Tap targets unchanged: `.anchor-btn` is 40px directly, `.copy-btn` is a 20px box
+with a 40px absolute `::after` overlay. `getBoundingClientRect()` on the button
+reads 20 and is the wrong thing to measure — check the pseudo.
+
+### §1.14 lava flow — `slim()`
+
+`function slim(list) { return narrow(list); }`, one caller, and that caller
+passed a list `narrow()` had already returned. A half-finished migration held in
+place by a name that still read as though it did something: every cache write
+narrowed an already-narrowed list a second time. Deleted; `writeCache` stores
+what it is given. The comment explaining *why* the cache is slim was kept — that
+part was still true and is the reason nobody deleted the function.
+
+Cache shape confirmed identical after removal: 10 rows, the same 8 narrowed
+fields, 3,269 bytes, no forks.
+
+### Considered and left alone
+
+- **`script.js` is 3,900 lines in one IIFE** — reads as §1.1 god object, but
+  rule 1.4 fixes the file count at four. Forced by a constraint, not a drift.
+- **No tests (§3.16–§3.20)** — no build step, so no runner. The
+  `verify-site` / `audit-untrusted-input` skills are the test suite, run by hand
+  and written down here.
+- **§4.9 configuration in the environment** — `API_URL` is in the source because
+  there is one environment and no build to inject anything.
+
+### Regression round
+
+Console clean. 0 site-owned inline styles. 0 page overflow at 375px and 1280px.
+Poison round re-run because the cache write path changed: `injected` 0, `imgs`
+0, `xssRan` false, hosts `["github.com"]` alone, live API repopulated 10 narrowed
+rows. No print impact — `.copy-btn` and `.anchor-btn` are already hidden on
+paper, and the new announcer is `.sr-only`.
+
+## 2026-08-20 — UI/UX rulebook sweep
+
+Ran `rulebooks/UI-UX_Rulebook.md` against the page, measuring the pass/fail
+sections (§4, §5, §7) rather than reading them. Four criteria had never been
+checked here at all. Three passed. One failed badly.
+
+### Passed, first time measured
+
+| Criterion | Result |
+| --- | --- |
+| **1.4.10 reflow at 320px** | 0 page overflow, 0 elements past the viewport outside `.table-wrap` |
+| **1.4.4 resize text 200%** | Root 15px → 32px, 0 overflow, 0 offenders |
+| **1.4.12 text spacing** | line-height 1.5 / letter-spacing .12em / word-spacing .16em / para 2em forced — 0 clipped blocks, 0 overflow |
+| **2.4.11 focus not obscured** | 129 focusable elements in `main`, each focused in turn and tested against the sticky header's rect. 1 hit, and it is the header's own Search button at `top: 0`. No real obstruction — the browser honours `scroll-margin-top` when it scrolls a focused element into view |
+
+Also confirmed: line spacing 24.8px on 16px = **1.55**, over the 1.5 floor
+(§6.11), and no justified body text (§6.12).
+
+### Failed — §6.10 line length  *(fix reverted the same day, see below)*
+
+Every prose block on the page ran **far past the 80-character ceiling** at
+1280px:
+
+| Element | Measured | Ceiling |
+| --- | --- | --- |
+| Bare `<p>` in `.section-body` (About ×3, Résumé ×1) | **108ch** | 80 |
+| `.note` (Dean's List line) | **120ch** | 80 |
+| `.hint` ×7 | **144ch** | 80 |
+
+The rule in `style.css` said the 1000px column bounded the line at "roughly
+105ch at 1280px" and treated that as the reason no second cap was needed. 105ch
+was never a bound — it is 1.3× the ceiling, and the real number was worse.
+
+**Fixed** at **65ch**, which is not a new number: `.status[data-state="error"]`
+already used it, so the site had picked its measure and applied it to exactly
+one element. After: **max 65ch, 0 blocks over 80**, across all 11 visible prose
+blocks. At 320px they read 46ch. `.resume-actions` still 108ch — untouched,
+which is the point.
+
+Two traps, both hit on the way:
+
+- **Specificity.** A bare `.hint` is (0,1,0) and loses to
+  `.section-body p { max-width: 100% }` at (0,1,1). The first version capped the
+  unclassed paragraphs and left `.hint` — **the widest lines on the page** — at
+  144ch, while a naive check of "did the rule apply" said yes. Every selector
+  now carries the `.section-body` prefix for specificity, not for scope.
+- **`:not([class])`** excludes `.resume-actions` and `.fold-controls`. Both are
+  `<p>` inside a section body, both are rows of buttons, both squash at 65ch.
+
+Scoped to `@media screen`. Print keeps `max-width: 100%`.
+
+> **Reverted later the same day, on Affan's call.** The measurement stands — the
+> lines really are 108–144ch — but the cap was the wrong answer *here*. The
+> paragraphs on this page are short, so 65ch left them as a narrow strip beside a
+> wide empty gutter, which reads worse than the long line does. `.section-body p`
+> is back to `max-width: 100%` and the 1000px column is the only bound. The two
+> traps above still apply to anyone who tries it again. Rulings carried into
+> [layout.md](../../site-design-and-layout/reference/layout.md) §1 and
+> [decisions-not-built.md](../../site-feature-map/reference/decisions-not-built.md).
+
+### §5.12 safe area — added
+
+No `env()` anywhere in the file. `main` and `.site-header` now take
+`padding: 0 max(1.25rem, env(safe-area-inset-right)) 0 max(1.25rem, env(safe-area-inset-left))`,
+and the meta viewport gained `viewport-fit=cover` — without that half iOS
+letterboxes the page and `env()` reports 0. `max()` rather than an addition, so
+a device with no cutout is unchanged: measured 20px left and right at 1280px,
+15px at 320px, exactly as before.
+
+### §1.1 / §7b.7 — the status line could state a wrong total
+
+`per_page=100` is the largest page the GitHub REST API returns and there is no
+second request, so a 101st repository would never arrive. The status line said
+"N public repositories" regardless — presenting the first page as the whole
+list. Not reachable today at 10 repos; a silent lie the day it is.
+
+`PER_PAGE` is now named (it was an inline `100` in the URL string), `truncated`
+is set from `data.length >= PER_PAGE` **before** `narrow()` drops the forks —
+the page limit applies to what GitHub sent, not to what survived — and it rides
+in the cache, coerced back with `=== true` like everything else read out of
+`localStorage`.
+
+Verified against a 100-row cache with `truncated: true` and the API pinned to a
+404: **"The 100 most recently updated of a longer list, live from the GitHub
+API, sorted by name, descending."** The filtered variant is unchanged
+("Showing 11 of 100 …"), because there the count already has a stated reason.
+
+### Print
+
+Budget re-read: **"About 59 lines of the ~59 a page holds — fits on one page."**
+Unmoved. Table edges all drawn at 0.8px (last `th`, last `td`, last row);
+`.copy-btn` and `.anchor-btn` both `display: none` on paper. `@media print`
+restored after each flip.
+
+Note for next time: flipping `@media print` to `all` does **not** switch the
+screen rules off, so a `@media screen` cap still reads as present in that
+measurement. It cannot reach paper by construction — `screen` never matches when
+printing — and the flip cannot show that. Do not chase it.
+
+### Regression
+
+320px / 375px / 1280px: 0 overflow at each. 0 site-owned inline styles. Console
+clean. Copy controls from the engineering round still behave.
+
+Port note: 8123 was serving a `style.css` from before the round and produced
+three misleading readings before it was spotted. A second port is the fix, not a
+reload.
+
+---
+
+## 2026-08-20 — prose measure reverted, skill docs revised
+
+Two changes, neither measured against a new criterion.
+
+### The 65ch prose cap is out
+
+Affan's call after seeing it: body prose runs the full content column again.
+`.section-body p` is `max-width: 100%`, the `@media screen` block that capped
+`> p:not([class])`, `p.hint` and `p.note` at 65ch is deleted, and the comment now
+records why the cap is not coming back. Nothing else in the file moved. The
+`65ch` on `.status[data-state="error"]` is untouched — that one predates the
+round and is a different element.
+
+### Prose justified above 640px
+
+Affan's call, after the revert above. `.section-body > p:not([class])`,
+`.section-body p.note` and `.colophon-note` take `text-align: justify` plus
+`hyphens: auto`, inside `@media screen and (min-width: 641px)`.
+`.colophon-note` was already justified and unhyphenated before this round, so it
+was folded into the same block rather than left as a second answer to the same
+question.
+
+Measured word-space width, against a 4.17px natural space at 15px Arial:
+
+| Viewport | State | Widest space | Stretch |
+| --- | --- | --- | --- |
+| 1280px | justify + hyphens | **5.98px** | 1.43x — mild |
+| 320px | justify + hyphens, **no width gate** | **27.75px** | **6.6x — holes** |
+| 320px | gated, ragged-right | 4.19px | 1.00x |
+
+**The width gate is the finding.** Justify was applied at every width first, and
+1280px measured fine, so it looked done. A narrow column has fewer word spaces per
+line to absorb the same slack, so it degrades far worse than a wide one — the
+opposite of the intuition that a short line is easier to set. 641px is the
+complement of the site's single 640px breakpoint.
+
+Confirmed after: prose and `.note` and `.colophon-note` all `justify` / `auto` at
+1280px; all `start` / `manual` at 375px and 320px. `.hint`, `.resume-actions` and
+`.fold-controls` untouched at every width.
+
+Regression: 0 page overflow at 320 / 375 / 1280 (`scrollX` 0 after
+`scrollTo(500,0)`), 0 inline styles, console clean, header 124px against
+`scroll-margin-top` 172.5px, filter font 16px, Projects live at 10 rows. Résumé
+budget re-read from the export dialog: **"About 59 lines of the ~59 a page holds
+— fits on one page."** Unmoved, as expected — the rule is `@media screen`.
+
+### The name normalised to one spelling
+
+Affan shortened the `<title>` to `‘Affan Najiy`, which surfaced that the name
+rendered **four ways** across the repo. The leading mark is the ayn in ʿAffān and
+is deliberate — the masthead already carried it, so it was not touched.
+
+| Was | Character | Where |
+| --- | --- | --- |
+| `‘Affan Najiy bin Rusdi` | U+2018 | masthead, footer |
+| `'Affan Najiy bin Rusdi` | U+0027 | JSON export |
+| `'Affan Najiy` | U+0027 | the new `<title>` |
+| `Affan Najiy` | none | `og:site_name`, `og:title`, meta description |
+
+The last row is the one that mattered: a shared link card named him differently
+from the page it opened.
+
+**Settled on U+2018 everywhere**, Affan's call — the character the masthead
+already used. U+02BF is the strictly correct ayn and was rejected as an uncommon
+glyph that risks a fallback box on the name itself. Seven occurrences now agree
+(`index.html` ×6, `script.js`, `style.css` header comment).
+
+`og:title` also dropped the role to match the shortened `<title>` exactly, so the
+tab, the search headline and the shared card all say one thing. The role is still
+a field in the JSON export, where it is data rather than a heading.
+
+Verified: `document.characterSet` UTF-8, `<title>` and masthead both start
+`U+2018`, `title === og:title`, JSON export parses and its `name` carries U+2018,
+masthead prints at 26.67px carrying the mark, budget **"About 59 lines of the ~59
+a page holds"** unmoved, 0 inline styles, console clean.
+
+Worth knowing: the `<title>` is what a browser offers as the filename when
+someone saves the page or prints to PDF, and some systems strip or substitute a
+leading `‘`. Not a defect and nothing was changed for it — `assets/resume.pdf` is
+the fixed-name copy for anywhere that matters.
+
+### Every `.md` under `.claude/skills/` revised
+
+24 files, rewritten for concision with `ste-writing`. Facts preserved. Four
+things were **wrong**, not merely wordy, and are now corrected:
+
+| File | Was | Now |
+| --- | --- | --- |
+| `edit-site-content/SKILL.md` | "Body prose is capped at `65ch` by `.section-body p`" | Full column, with the revert named |
+| `edit-site-content/SKILL.md` | "seven items already make the header ~124px", `scroll-margin-top` "9rem" | Eight items, `11.5rem` — matches `style.css:1828` and layout.md §2 |
+| `audit-untrusted-input/reference/security-posture.md` | `§2.4`, `§2.9`, `§3.5` | `§1b.4`, `§2b.3`, `§6.3` — the 2026-08-20 renumbering, same remap as `script.js` |
+| `site-feature-map/reference/FEATURES-suggestion.md` | Certificate verification URLs listed as still needed, citing a "rule 2.5" that no longer exists | Marked done 2026-08-17, pointing at content-rules §4 |
+
+Also: `tables.md` sections reordered to 1 / 1a / 1b / 2 / 3 / 4 (they ran 1, 1a,
+2, 3, 1b, untitled), and long `.claude/skills/...` paths inside a skill replaced
+with relative links.
+
+No source file changed for this, so no verification round is owed. The CSS revert
+above is covered by the regression numbers in the UI/UX round: it restores the
+state those were taken against.

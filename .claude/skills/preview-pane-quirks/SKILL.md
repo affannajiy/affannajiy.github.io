@@ -5,20 +5,16 @@ description: Work around the Claude Code preview pane's seven failure modes when
 
 # Preview-pane quirks
 
-The Claude Code preview pane is not a normal browser. Seven things fail there and
-are **not** site bugs. Every one of them has produced a false bug report before.
+The preview pane is not a normal browser. Seven things fail there and are **not**
+site bugs. Each one produced a false bug report before.
 
-**Prefer measuring computed values over looking at pixels.** Screenshots
-frequently time out here, for the same reason the pane never paints.
-
----
+**Measure computed values instead of looking at pixels.** Screenshots often time
+out here, for the same reason the pane never paints.
 
 ## 1. It injects its own inline styles
 
-They trip `style-src 'self'` and appear in the console as CSP violations that
-look like the site's fault.
-
-Confirm ownership before investigating:
+They trip `style-src 'self'` and appear in the console as CSP violations that look
+like the site's fault. Confirm ownership before you investigate:
 
 ```js
 document.querySelectorAll('[style]').length   // must be 0
@@ -28,9 +24,9 @@ If that is `0`, the page is clean and the violations belong to the harness.
 
 ## 2. It cannot scroll
 
-`window.scrollTo` is a no-op and `IntersectionObserver` callbacks never fire.
-Simulate scrolling by shifting layout instead — a negative `margin-top` on
-`<main>` has the same effect on every `getBoundingClientRect` as scrolling does.
+`window.scrollTo` does nothing and `IntersectionObserver` callbacks never fire.
+Shift the layout instead. A negative `margin-top` on `<main>` has the same effect
+on every `getBoundingClientRect` as scrolling.
 
 ```js
 var main = document.querySelector('main');
@@ -49,21 +45,19 @@ window.requestAnimationFrame = function (fn) { fn(); return 0; };
 ```
 
 **Stub it first, before the first `dispatchEvent`.** The scrollspy latches a
-`queued` flag and clears it inside the callback, so one scroll event fired
-against the native rAF wedges every later one for the rest of the session. This
-is the single easiest way to convince yourself the scrollspy is broken when it
-is not.
+`queued` flag and clears it inside the callback, so one scroll event fired against
+the native rAF wedges every later one for the rest of the session. It is the
+easiest way to convince yourself the scrollspy is broken when it is not.
 
-Anything transitioned is also frozen at its old computed value — the export
-dialog's chevron `transform` is the usual victim. **Verify that cascade through
-`margin-top`**, which is not transitioned, or read the declared `transform` out
-of the CSSOM.
+Anything transitioned is also frozen at its old computed value. The export
+dialog's chevron `transform` is the usual victim. **Check that cascade through
+`margin-top`**, which is not transitioned, or read the declared `transform` out of
+the CSSOM.
 
 ## 4. It restores a previous scroll position across reloads
 
-So `scrollY` is not 0 at load. To measure the **un-scrolled** state, push
-`<main>` down with a *positive* `margin-top`; use a negative one for the
-scrolled state.
+So `scrollY` is not 0 at load. To measure the **un-scrolled** state, push `<main>`
+down with a *positive* `margin-top`. Use a negative one for the scrolled state.
 
 ## 5. A resize preset leaves a stale layout viewport
 
@@ -71,11 +65,11 @@ scrolled state.
 `documentElement.scrollWidth > window.innerWidth` reads **true** and looks like
 real horizontal overflow. Seen as 375 / 410.
 
-**Reload after any resize before believing an overflow number.** Confirm by
-re-measuring: a real offender is still there after the reload.
+**Reload after any resize before you believe an overflow number.** Re-measure to
+confirm. A real offender is still there after the reload.
 
-Do not diagnose it by walking elements for `right > innerWidth` either — every
-`.grid-table` legitimately extends past the viewport inside its scrolling
+Do not diagnose it by walking elements for `right > innerWidth` either. Every
+`.grid-table` correctly extends past the viewport inside its scrolling
 `.table-wrap`, so that probe reports 236 false offenders.
 
 ## 6. A deleted image still loads from cache
@@ -98,9 +92,9 @@ subresource.
 
 ## 7. `location.reload()` can serve the old `style.css`
 
-A CSS edit measures as if it never happened — and the giveaway is that the rule is
-missing from the CSSOM, not merely losing the cascade. **Check before
-diagnosing specificity:**
+A CSS edit measures as if it never happened. The giveaway is that the rule is
+missing from the CSSOM, not merely losing the cascade. **Check that before you
+diagnose specificity:**
 
 ```js
 [].filter.call(document.styleSheets[0].cssRules, function (r) {
@@ -122,19 +116,19 @@ document.head.appendChild(n);
 
 ## When something still looks wrong
 
-Open a **fresh tab** before concluding a console error is real — errors from an
+Open a **fresh tab** before you conclude a console error is real. Errors from an
 earlier test run (a stubbed `fetch`, a poisoned cache, a 404 API URL) persist in
-the pane's console and will be read back as current failures.
+the pane's console and read back as current failures.
 
 ### 7a. `script.js` goes stale the same way — and hides it better
 
-The `<link>` cache-bust above only fixes CSS. A stale `script.js` survives
-`location.reload()` **and** a forced navigation, and it is harder to spot: the old
-and new files usually share most of their behaviour, so a probe that both versions
-satisfy proves nothing. On 2026-08-18 the old `syncScrollableTables()` still set
+The `<link>` cache-bust above fixes only CSS. A stale `script.js` survives
+`location.reload()` **and** a forced navigation, and it hides better. The old and
+new files usually share most of their behaviour, so a probe both versions satisfy
+proves nothing. On 2026-08-18 the old `syncScrollableTables()` still set
 `tabindex`, which looked like the new code running.
 
-You cannot fetch the file to compare — `connect-src` allows only `api.github.com`,
+You cannot fetch the file to compare. `connect-src` allows only `api.github.com`,
 so `fetch("/script.js")` throws in the page.
 
 **Check from outside the page:**

@@ -29,9 +29,10 @@ GitHub API. Content-Security-Policy locked to same-origin, keyboard skip link,
 | `script.js` | Fetches repos from the GitHub API and fills the Projects table. |
 | `assets/` | Résumé PDF, certificate PDFs, favicon, QR code. |
 | `CLAUDE.md` | Hard constraints, and the index to everything below. Read before changing anything. |
-| `docs/` | Two general rulebooks only (UI/UX, security). Everything project-specific moved into the skills. |
-| `docs/UI-UX_Rulebook.md` | General UI/UX reference. Not project-specific. |
-| `docs/SECURITY_Rulebook.md` | General security reference. Not project-specific. |
+| `rulebooks/` | Three portable rulebooks. General theory, no project content. Start at its README. |
+| `rulebooks/UI-UX_Rulebook.md` | Nielsen, Gestalt, Laws of UX, WCAG 2.2, responsive, hierarchy, patterns. |
+| `rulebooks/SECURITY_Rulebook.md` | Design principles, ASVS controls, OWASP Top 10:2025, LLM Top 10, supply chain. |
+| `rulebooks/ENGINEERING_Rulebook.md` | Failure modes, core principles, reliability, delivery, run and measure. |
 | `.claude/launch.json` | Local dev-server config for Claude Code. |
 | `.github/workflows/pages.yml` | Deploys the repo verbatim to Pages. No build step. |
 | `.claude/skills/` | Skills Claude uses to work on this site — see below. |

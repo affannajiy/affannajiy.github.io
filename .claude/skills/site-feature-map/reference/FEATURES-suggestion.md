@@ -1,7 +1,11 @@
 # Feature suggestions — what shipped
 
 Suggestions from ChatGPT and Gemini, 2026-08-14, checked against the codebase and
-`CLAUDE.md`, then built. Record of what was done and what was not.
+`CLAUDE.md`, then built. A record of what was done and what was not.
+
+**This is history, dated 2026-08-14.** The current state is in
+[feature-inventory.md](feature-inventory.md), and the current rejections are in
+[decisions-not-built.md](decisions-not-built.md).
 
 **Affan's calls before the build:** no dark mode · no supervisor or third-party
 contacts · GitHub cache left as-is · static tables may be revamped · Stars column
@@ -95,7 +99,7 @@ on tables with 3+ rows.
 - **Tag repositories on GitHub** with `featured` to light up the Selected
   projects band. Optionally `academic` / `coursework` for more topic chips —
   only topics used more than once get one.
-- **Certificate verification URLs** where Coursera and DataCamp publish them.
-  Marked as unfinished with a visible `.hint` per rule 2.5; no URL invented.
+- ~~**Certificate verification URLs.**~~ **Done 2026-08-17**, four of seven. See
+  [content-rules.md](../../edit-site-content/reference/content-rules.md) §4.
 - **Keep the availability dates in "Currently seeking" current.**
 - `assets/resume.pdf` still says the internship is ongoing.

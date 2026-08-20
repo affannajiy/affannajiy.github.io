@@ -5,27 +5,28 @@ description: Run the full verification round on the portfolio site before callin
 
 # Verify the site
 
-The site has no tests and no build step, so verification is manual and must be
-done the same way every time. **Measure, do not eyeball** — several regressions
-here (contrast, tap targets, header height) are invisible to the naked eye.
+The site has no tests and no build step, so verification is manual and must run
+the same way every time. **Measure, do not eyeball.** Contrast, tap targets and
+header height each regressed here invisibly.
 
-**This is the general round.** Four sibling skills go deeper where a change
-warrants it, and each writes its result into `.claude/skills/verify-site/reference/verification-log.md`:
+**This is the general round.** Four sibling skills go deeper where a change needs
+it, and each writes its result into
+[reference/verification-log.md](reference/verification-log.md):
 
 | Skill | When |
 | --- | --- |
 | `check-accessibility` | A colour changed, or a control or animation was added |
 | `verify-print` | The print block, a printed section, or the export dialog changed |
 | `audit-untrusted-input` | The render path, the cache shape, or a sanitising helper changed |
-| `preview-pane-quirks` | Something here measures wrong and may be the harness, not the site |
+| `preview-pane-quirks` | Something measures wrong and may be the harness, not the site |
 
 ## 1. Serve over HTTP
 
-Never verify from `file://` — it breaks the GitHub API fetch with a CORS error
-and produces a false failure.
+Never verify from `file://`. It breaks the GitHub API fetch with a CORS error and
+produces a false failure.
 
-Use the Claude Code preview tool (`preview_start` with name `portfolio`, which
-reads `.claude/launch.json`). Manual equivalent:
+Use `preview_start` with name `portfolio`, which reads `.claude/launch.json`.
+Manual equivalent:
 
 ```bash
 python -m http.server 8123
@@ -34,18 +35,18 @@ python -m http.server 8123
 ## 2. Check the console first
 
 CSP violations are the most common silent failure in this repo. A blocked inline
-style does not throw — the element just renders unstyled.
+style does not throw. The element renders unstyled.
 
-Read console errors. Expect **zero** violations from the site's own code.
+Read the console errors. Expect **zero** violations from the site's own code.
 
-> The Claude Code preview pane injects its own inline styles, which produce
-> `style-src 'self'` violations that are **not** from the site. Confirm ownership with:
+> The preview pane injects its own inline styles, which produce `style-src 'self'`
+> violations that are **not** from the site. Confirm ownership with:
 >
 > ```js
 > document.querySelectorAll('[style]').length   // must be 0
 > ```
 
-If that returns 0, the page is clean and the violations are the harness's.
+If that returns 0, the page is clean and the violations belong to the harness.
 
 ## 3. Confirm the live data path
 
@@ -58,7 +59,7 @@ document.getElementById('projects-status').textContent       // states the count
 
 ## 4. Measure contrast (only if colours changed)
 
-Every text colour must be ≥ 4.5:1 against its own background. Paste into the console:
+Every text colour must be ≥ 4.5:1 against its own background:
 
 ```js
 (function(){
@@ -84,7 +85,7 @@ return JSON.stringify({
 Known-good baseline: body 14.4, muted tiers 5.05, section numbers and masthead
 role 4.96, row labels 5.35, table header 17.9.
 
-**Orange `#f97316` is 2.64:1 on cream and must never colour text** — use
+**Orange `#f97316` is 2.64:1 on cream and must never colour text.** Use
 `--accent-text` (`#b8490c`) for words, `--accent` for rules and borders only.
 
 ## 5. Check 375px and 1280px
@@ -108,18 +109,17 @@ return JSON.stringify({
 }, null, 1);})()
 ```
 
-Failure meanings:
+`documentElement.scrollWidth` over-reports here. If `pageOverflowX` says true,
+confirm it against ground truth before you chase it — layout.md §1a.
 
 | Result | Cause |
 | --- | --- |
-| `pageOverflowX: true` | Something escaped `.table-wrap`. Wide content must scroll inside it, never past the page edge. |
-| `anchorsClearHeader: false` | Nav grew a row. Raise `scroll-margin-top` in the 640px block above the header's real height. |
+| `pageOverflowX: true` | Something escaped `.table-wrap`. Wide content scrolls inside it, never past the page edge. |
+| `anchorsClearHeader: false` | The nav grew a row. Raise `scroll-margin-top` in the 640px block above the header's real height. |
 | a tap target < 40 | Fitts's Law floor breached. Raise `min-height`. |
-| `filterFontPx` < 16px | iOS Safari will zoom the page on focus and never zoom back. |
+| `filterFontPx` < 16px | iOS Safari zooms the page on focus and never zooms back. |
 
-## 6. Use the controls, do not just read them
-
-Exercise them for real:
+## 6. Use the controls, do not read them
 
 ```js
 // sorting: aria-sort must follow the click, and the arrow is drawn from it
@@ -131,10 +131,10 @@ f.value='python'; f.dispatchEvent(new Event('input'));
 
 Confirm `#projects-status` describes what happened in words each time.
 
-### Verifying scroll-dependent behaviour
+### Scroll-dependent behaviour
 
-The preview pane **cannot scroll** and never fires `requestAnimationFrame`, so
-the nav scrollspy cannot be tested by scrolling. Simulate it by shifting layout:
+The preview pane **cannot scroll** and never fires `requestAnimationFrame`, so the
+nav scrollspy cannot be tested by scrolling. Shift the layout instead:
 
 ```js
 window.requestAnimationFrame=function(fn){fn();return 0;};   // pane never paints
@@ -147,24 +147,25 @@ main.style.marginTop='';
 
 ## 7. Test the failure path when touching `script.js`
 
-Errors must state the fix, not only the fault, and must offer Retry:
+An error must state the fix, not only the fault, and must offer Retry:
 
 ```js
 window.fetch=function(){return Promise.resolve({ok:false,status:403});};
 // reload script.js, confirm the message names the rate limit and a Retry button appears
 ```
 
-When touching rendering, confirm untrusted input stays inert — feed a repo object
-with `html_url:'javascript:alert(1)'` and `name:'<img src=x onerror=alert(1)>'`
-and confirm the href falls back to the profile URL and no `<img>` element exists.
+When you touch rendering, confirm untrusted input stays inert. Feed a repo object
+with `html_url:'javascript:alert(1)'` and `name:'<img src=x onerror=alert(1)>'`.
+The href must fall back to the profile URL, and no `<img>` element may exist.
 
 ## Done means
 
 - Zero site-owned console errors
 - Projects table populated from the live API
 - No horizontal overflow at 375px
-- All measured contrast ≥ 4.5:1
-- All tap targets ≥ 40px
-- Sort, filter and Retry each exercised, not just read
-- Anything newly measured written into `.claude/skills/verify-site/reference/verification-log.md` (the
-  `record-decision` skill says where)
+- Every measured contrast ≥ 4.5:1
+- Every tap target ≥ 40px
+- Sort, filter and Retry each exercised, not read
+- Anything newly measured written into
+  [reference/verification-log.md](reference/verification-log.md) (`record-decision`
+  says where)

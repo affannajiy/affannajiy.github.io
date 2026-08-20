@@ -5,11 +5,9 @@ description: Measure the portfolio's accessibility floor — contrast ratios for
 
 # Check the accessibility floor
 
-The floor is in `.claude/skills/check-accessibility/reference/accessibility.md`. **Measure, do not eyeball** — contrast
-and tap-target regressions are invisible to the naked eye and have shipped here
-before.
-
----
+The floor is in [reference/accessibility.md](reference/accessibility.md).
+**Measure, do not eyeball.** Contrast and tap-target regressions are invisible to
+the eye and shipped here before.
 
 ## 1. Contrast — every text colour, against its own background
 
@@ -32,13 +30,14 @@ return JSON.stringify(out,null,1);})()
 ```
 
 **Every value must be ≥ 4.5.** Baseline in
-`.claude/skills/verify-site/reference/verification-log.md`. Add a line to the list above for any new text class.
+`verify-site/reference/verification-log.md`. Add a line above for each new text
+class.
 
 For text on a non-page background (table surfaces, hover fills, the dark table
-header), pass that element's own `backgroundColor` rather than `bg`.
+header), pass that element's own `backgroundColor` instead of `bg`.
 
 **Orange `#f97316` is 2.64:1 on cream and must never colour text.** Words use
-`--accent-text` (`#b8490c`); `--accent` is for rules, borders, underlines and
+`--accent-text` (`#b8490c`). `--accent` is for rules, borders, underlines and
 focus rings only.
 
 ## 2. Tap targets — at 375px, after resizing and reloading
@@ -54,19 +53,19 @@ document.querySelectorAll('a,button,summary,select,input').forEach(function(e){
 return JSON.stringify(out,null,1);})()
 ```
 
-**Expected result is close to empty.** The permitted exceptions:
+**Expect a result close to empty.** The allowed exceptions:
 
-- `.anchor-btn`, `.detail-btn`, `.copy-btn` — 16–17px visual boxes carrying a
-  **40px invisible hit overlay**. Confirm the overlay exists rather than raising
-  the box. `.anchor-btn` must use `::before`, because `::after` already carries
-  its "copied" confirmation.
+- `.anchor-btn`, `.detail-btn`, `.copy-btn` — 16–17px visual boxes with a **40px
+  invisible hit overlay**. Confirm the overlay exists instead of raising the box.
+  `.anchor-btn` must use `::before`, because `::after` already carries its
+  "copied" confirmation.
 - Inline `.text-link`s in prose and table cells — words in a sentence, not
   controls.
 
-Anything else under 40 is a Fitts's Law breach: raise `min-height`.
+Anything else under 40 is a Fitts's Law breach. Raise `min-height`.
 
-Also confirm `.filter-input` computes to **16px** font size, or iOS Safari zooms
-the page on focus and never zooms back.
+Confirm `.filter-input` computes to **16px**, or iOS Safari zooms the page on
+focus and never zooms back.
 
 ## 3. Focus, ARIA and colour-independence
 
@@ -81,21 +80,21 @@ document.querySelector('.sort-btn').click();
 document.querySelector('th[aria-sort]').getAttribute('aria-sort');  // follows the click
 ```
 
-- Nothing may be signalled by colour alone. Links carry a resting underline; the
-  current nav item carries weight *and* a rule *and* `aria-current`; every load
-  and error state is stated in words.
+- Nothing is signalled by colour alone. Links carry a resting underline. The
+  current nav item carries weight, a rule and `aria-current`. Every load and
+  error state is stated in words.
 
 ## 4. Reduced motion
 
-Any new animation must respect `prefers-reduced-motion: reduce`, which here
-collapses transitions, disables smooth scroll, and flattens the skeleton shimmer
+Every new animation must obey `prefers-reduced-motion: reduce`. Here that
+collapses transitions, disables smooth scroll and flattens the skeleton shimmer
 to a static bar.
 
 ```js
 matchMedia('(prefers-reduced-motion: reduce)').matches
 ```
 
-Emulate it in devtools and confirm the new animation is gone, not just faster.
+Emulate it in devtools and confirm the animation is gone, not merely faster.
 
 ## Done means
 
@@ -104,4 +103,4 @@ Emulate it in devtools and confirm the new animation is gone, not just faster.
 - `.filter-input` at 16px
 - ARIA state drives the visual indicator
 - Any new animation stands down under reduced motion
-- New numbers written into `.claude/skills/verify-site/reference/verification-log.md`
+- New numbers written into `verify-site/reference/verification-log.md`
