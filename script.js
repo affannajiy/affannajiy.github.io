@@ -107,6 +107,31 @@
     return "https://github.com/" + GITHUB_USER;
   }
 
+  /* The live-site URL for a repository that has GitHub Pages turned on.
+
+     Built here rather than read from the API's `homepage` field on purpose.
+     `homepage` is a free-text string an attacker with write access to the cache
+     can set to anything, so using it would mean a new host check and a new way
+     to get it wrong; `has_pages` is a boolean, and a boolean carries no payload.
+     The URL is then constructed from constants and the repository name, which
+     `clamp()` has already narrowed — so no remote string reaches the href.
+
+     Nothing is hand-tagged: turn Pages on for a repository and the link appears
+     on the next load, turn it off and it goes. Same contract as the topic chips.
+
+     The user site itself is excluded: its Pages URL is this page, and a link to
+     where you already are is noise. */
+  var PAGES_NAME_RE = /^[A-Za-z0-9._-]{1,100}$/;
+  var USER_SITE = GITHUB_USER + ".github.io";
+
+  function pagesURL(repo) {
+    if (!repo || repo.pages !== true) return "";
+    var name = text(repo.name);
+    if (!PAGES_NAME_RE.test(name)) return "";
+    if (name.toLowerCase() === USER_SITE) return "";
+    return "https://" + USER_SITE + "/" + name + "/";
+  }
+
   // Topics are remote data and arrive as an array of unknown contents. Anything
   // that is not a short, plain slug is dropped rather than escaped and shown:
   // a topic is a GitHub slug by definition, so a value that is not one is not a
@@ -283,8 +308,8 @@
     return copy.textContent.replace(/\s+/g, " ").trim();
   }
 
-  /* The name of a section, for the export checkboxes, the search results and
-     the JSON view — three places that must agree on what a section is called.
+  /* The name of a section, for the search results and the JSON view — two
+     places that must agree on what a section is called.
      The "01 — " index is stripped too, leaving the name a reader would say out
      loud. */
   function sectionLabel(section) {
@@ -491,6 +516,18 @@
       btn.setAttribute("data-repo", text(r.name));
       nameCell.appendChild(btn);
 
+      /* A repository with Pages on gets a second link to the running thing.
+         Labelled "Live", not a bare arrow glyph: an icon with no word beside it
+         is a guess, and the sr-only suffix would be the only reader who knew.
+         Absent, not disabled, when there is no site — see pagesURL(). */
+      var demo = pagesURL(r);
+      if (demo) {
+        nameCell.appendChild(document.createTextNode(" "));
+        nameCell.appendChild(
+          externalLink(demo, "Live", "demo-link")
+        );
+      }
+
       tr.appendChild(nameCell);
       tr.appendChild(cell("td", text(r.description) || "—"));
       tr.appendChild(cell("td", text(r.language) || "—"));
@@ -673,6 +710,13 @@
         created_at: clamp(r.created_at, 40),
         topics: safeTopics(r.topics),
         html_url: safeRepoURL(r.html_url),
+        /* A boolean, not the API's free-text `homepage` — see pagesURL().
+
+           Both key names are read because narrow() runs over two sources: the
+           API sends `has_pages`, and the cache this function itself wrote holds
+           `pages`. Reading only the API name meant every cache-fed load silently
+           lost the Live links — invisible on a warm network, visible offline. */
+        pages: r.has_pages === true || r.pages === true,
         fork: false
       });
     }
@@ -1016,355 +1060,6 @@
      depending on which part of the page you were looking at. The hint beside
      the field no longer claims the key; it says what the field filters, which
      was the more useful half of it. See initKeyboard(). */
-
-  /* ── PDF export ──────────────────────────────────────────
-     No PDF library, and none needed: the browser already has a typesetter and
-     a "Save as PDF" destination. This decides what is visible, calls print(),
-     and puts the page back exactly as it was afterwards.
-
-     Everything it changes is recorded in `restore` first. A print dialogue can
-     be cancelled, and a page left hidden or re-sorted because the reader
-     pressed Escape would be a worse bug than having no export at all. */
-  function initExport() {
-    var openBtn = document.getElementById("export-open");
-    var dialog  = document.getElementById("export-dialog");
-    var form    = document.getElementById("export-form");
-    var checks  = document.getElementById("export-sections");
-    var langSel = document.getElementById("export-language");
-
-    if (!openBtn || !dialog || !form || !checks) return;
-
-    // <dialog> without showModal is just a box. If the browser lacks it, the
-    // button would open nothing — so it is removed rather than left as a lie.
-    if (typeof dialog.showModal !== "function") {
-      openBtn.remove();
-      return;
-    }
-
-    var sections = document.querySelectorAll("main .section[id]");
-    var budgetEl = document.getElementById("export-budget");
-
-    // A SECTION is "curated" if it marks anything at all with data-resume.
-    // Inside a curated section, only marked rows and paragraphs print — which
-    // is what drops the one-row MBOT and PETRA UTP tables from the résumé
-    // without naming them anywhere. A section that marks nothing (Skills)
-    // prints whole. CSS cannot ask whether an ancestor contains a matching
-    // descendant, so the answer is recorded as a class once, here.
-    sections.forEach(function (section) {
-      if (section.querySelector("[data-resume]")) {
-        section.classList.add("resume-curated");
-      }
-    });
-
-    // Tables emptied by that curation, and the sub-heading that introduces
-    // them, are hidden together: a heading standing over nothing reads as a
-    // missing section rather than an omitted one. Emptiness cannot be asked in
-    // CSS, so it is resolved here and recorded for undo like every other print
-    // change.
-    function collapseEmptyTables(restore) {
-      document.querySelectorAll(".resume-curated table.grid-table").forEach(
-        function (table) {
-          if (table.querySelector("tbody tr[data-resume]")) return;
-
-          var wrap = table.closest(".table-wrap") || table;
-          var prev = wrap.previousElementSibling;
-          wrap.classList.add("resume-empty");
-          restore.emptied.push(wrap);
-
-          if (prev && prev.classList.contains("subhead")) {
-            prev.classList.add("resume-empty");
-            restore.emptied.push(prev);
-          }
-        }
-      );
-    }
-
-    function currentMode() {
-      var picked = form.querySelector("input[name=mode]:checked");
-      return picked ? picked.value : "resume";
-    }
-
-    // Whether a section starts ticked, which depends on the format.
-    //   data-print-default="off"  — never in a PDF at all. §08 Résumé: a
-    //     paragraph explaining how to download the PDF, printed inside that
-    //     PDF, is nonsense.
-    //   data-resume-default="off" — in the full record, not on a one-page
-    //     résumé. Certificates, Projects and Links: 32 rows between them.
-    // Both are unticked, not removed — the reader can still put them back.
-    function defaultFor(section) {
-      if (section.getAttribute("data-print-default") === "off") return false;
-      if (currentMode() === "resume" &&
-          section.getAttribute("data-resume-default") === "off") return false;
-      return true;
-    }
-
-    // One checkbox per section, built from the page so a new section appears
-    // here automatically and cannot be forgotten.
-    sections.forEach(function (section) {
-      var label = sectionLabel(section);
-
-      var wrap = document.createElement("label");
-      wrap.className = "export-check";
-
-      var input = document.createElement("input");
-      input.type = "checkbox";
-      input.checked = defaultFor(section);
-      input.value = section.id;
-      input.setAttribute("data-section", section.id);
-
-      var text = document.createElement("span");
-      text.textContent = label;
-
-      wrap.appendChild(input);
-      wrap.appendChild(text);
-      checks.appendChild(wrap);
-    });
-
-    function fillLanguages() {
-      if (!langSel) return;
-      var seen = {};
-      var list = [];
-      repos.forEach(function (r) {
-        if (r.language && !seen[r.language]) {
-          seen[r.language] = true;
-          list.push(r.language);
-        }
-      });
-      list.sort();
-      // Rebuild rather than append, so reopening the dialog cannot duplicate.
-      langSel.length = 1;
-      list.forEach(function (lang) {
-        var opt = document.createElement("option");
-        opt.value = lang;
-        opt.textContent = lang;
-        langSel.appendChild(opt);
-      });
-    }
-
-    /* ── The one-page budget ────────────────────────────────
-       "One page" is a promise the dialog makes, so the dialog has to be able
-       to tell when it is about to break it (Nielsen §1.1) — finding out in the
-       print preview is finding out too late.
-
-       This is an ESTIMATE and says so. A4 at 12.7mm margins leaves ~272mm of
-       live height; 10pt at 1.3 line-height is ~4.6mm, so ~59 lines fit. The
-       full record uses 14mm and 1.35, so ~56. Text is divided by the ~100
-       characters that fit on a 182mm line at 10pt Arial. It cannot know where
-       the browser will actually break a word, and it is not asked to — it only
-       has to be right about "comfortably fits" versus "nowhere near". */
-    var CHARS_PER_LINE = 100;
-
-    function linesFor(text) {
-      var n = text.replace(/\s+/g, " ").trim().length;
-      return Math.max(1, Math.ceil(n / CHARS_PER_LINE));
-    }
-
-    // The résumé print drops .evidence cells, so the estimate has to drop them
-    // too. The rule that matters here is not the eight lines it saves — it is
-    // that the budget and the stylesheet must pick the same text, or the
-    // dialog is describing a page nobody is about to get (§3.9).
-    function rowTextFor(row, resume) {
-      // readableText() rather than textContent throughout: the sr-only new-tab
-      // notes and the Copy buttons are display:none on paper, so charging the
-      // budget for them is the same mistake .hint was.
-      if (!resume) return readableText(row);
-      var out = "";
-      [].forEach.call(row.cells, function (cell) {
-        if (!cell.classList.contains("evidence")) out += readableText(cell) + " ";
-      });
-      return out;
-    }
-
-    function estimateLines() {
-      var resume = currentMode() === "resume";
-      var total = resume ? 6 : 8;                       // masthead
-      var boxes = checks.querySelectorAll("input[type=checkbox]");
-
-      [].forEach.call(boxes, function (box) {
-        if (!box.checked) return;
-        var section = document.getElementById(box.value);
-        if (!section) return;
-
-        // Curation is the section's, so what counts here must be picked the
-        // same way the stylesheet picks it — or the estimate describes a page
-        // that is not the one printed.
-        var curated = resume && section.classList.contains("resume-curated");
-
-        total += 2;                                     // heading plus its gap
-        section.querySelectorAll(".section-body > p").forEach(function (p) {
-          // .hint is display:none for the whole print block, so counting one
-          // charges the budget for a line that never reaches paper. It went
-          // unnoticed while there were two hints on the page; there are now
-          // eight, and Skills alone was being billed five lines for nothing.
-          if (p.classList.contains("hint")) return;
-          if (curated && !p.hasAttribute("data-resume")) return;
-          total += linesFor(readableText(p)) + 1;
-        });
-
-        section.querySelectorAll("table.grid-table").forEach(function (table) {
-          // .block-empty is deliberately NOT skipped here. The print block
-          // reverses .filtered-out, so the rows that emptied the block come
-          // back on paper and the block comes back with them — the budget has
-          // to count a page that ignores the on-screen filter, or it describes
-          // one nobody is about to get. See printing.md §4.
-          var rows = table.querySelectorAll(
-            curated ? "tbody tr[data-resume]" : "tbody tr"
-          );
-          // An emptied table takes its sub-heading with it and costs nothing.
-          if (!rows.length) return;
-
-          var subhead = 0;
-          var wrap = table.closest(".table-wrap");
-          var prev = wrap ? wrap.previousElementSibling : null;
-          if (prev && prev.classList.contains("subhead")) subhead = 2;
-          total += subhead;
-
-          if (!resume) total += 2;                      // header row and table gap
-
-          var cols = table.getAttribute("data-resume-columns");
-          var divisor = resume && cols ? Number(cols) || 1 : 1;
-          var rowLines = 0;
-          [].forEach.call(rows, function (row) {
-            rowLines += linesFor(rowTextFor(row, resume));
-          });
-          total += Math.ceil(rowLines / divisor);
-        });
-      });
-
-      return total;
-    }
-
-    function updateBudget() {
-      if (!budgetEl) return;
-      var resume = currentMode() === "resume";
-      var cap = resume ? 59 : 56;
-      var lines = estimateLines();
-      var pages = Math.max(1, Math.ceil(lines / cap));
-
-      if (!resume) {
-        budgetEl.textContent =
-          "Roughly " + pages + (pages === 1 ? " page." : " pages.") +
-          " The full record is not meant to fit on one.";
-        budgetEl.classList.remove("is-over");
-        return;
-      }
-
-      if (pages === 1) {
-        budgetEl.textContent =
-          "About " + lines + " lines of the ~" + cap +
-          " a page holds — fits on one page.";
-        budgetEl.classList.remove("is-over");
-      } else {
-        budgetEl.textContent =
-          "About " + lines + " lines — roughly " + pages +
-          " pages. Untick a section, or mark fewer rows with data-resume in " +
-          "index.html, to get back to one.";
-        budgetEl.classList.add("is-over");
-      }
-    }
-
-    // Switching format re-derives every checkbox from its declared default,
-    // rather than leaving the previous mode's ticks behind for the reader to
-    // untangle. Ticking a section only updates the estimate.
-    form.addEventListener("change", function (event) {
-      if (event.target.name === "mode") {
-        [].forEach.call(
-          checks.querySelectorAll("input[type=checkbox]"),
-          function (box) {
-            var section = document.getElementById(box.value);
-            if (section) box.checked = defaultFor(section);
-          }
-        );
-      }
-      updateBudget();
-    });
-
-    openBtn.addEventListener("click", function () {
-      fillLanguages();
-      updateBudget();
-      dialog.showModal();
-    });
-
-    form.addEventListener("submit", function (event) {
-      // event.submitter is the button that was pressed; "cancel" just closes.
-      var action = event.submitter ? event.submitter.value : "cancel";
-      if (action !== "print") return;
-
-      var restore = {
-        hidden: [], opened: [], emptied: [], query: query, mode: false
-      };
-
-      // 0. Format. The class drives the whole résumé print layout in CSS, and
-      //    like every other print change it is recorded so it can be undone.
-      if (currentMode() === "resume") {
-        document.body.classList.add("print-resume");
-        restore.mode = true;
-        collapseEmptyTables(restore);
-      }
-
-      // 1. Hide unticked sections.
-      checks.querySelectorAll("input[type=checkbox]").forEach(function (box) {
-        if (box.checked) return;
-        var section = document.getElementById(box.value);
-        if (section) {
-          section.classList.add("print-hidden");
-          restore.hidden.push(section);
-        }
-      });
-
-      // 2. "Everything" opens every fold. Forcing the attribute in JS is the
-      //    only reliable way — a closed <details> cannot be opened by CSS.
-      var detail = form.querySelector("input[name=detail]:checked");
-      if (detail && detail.value === "everything") {
-        document.querySelectorAll("details.section-fold").forEach(function (d) {
-          if (!d.open) {
-            d.open = true;
-            restore.opened.push(d);
-          }
-        });
-      }
-
-      // 3. Narrow the Projects table if a language was chosen.
-      var lang = langSel ? langSel.value : "";
-      if (lang && filterEl) {
-        query = lang;
-        filterEl.value = lang;
-        refresh();
-      }
-
-      function undo() {
-        if (restore.mode) document.body.classList.remove("print-resume");
-        restore.emptied.forEach(function (el) {
-          el.classList.remove("resume-empty");
-        });
-        restore.hidden.forEach(function (el) {
-          el.classList.remove("print-hidden");
-        });
-        restore.opened.forEach(function (el) {
-          el.open = false;
-        });
-        if (lang && filterEl) {
-          query = restore.query;
-          filterEl.value = restore.query;
-          refresh();
-        }
-        window.removeEventListener("afterprint", undo);
-      }
-
-      window.addEventListener("afterprint", undo);
-
-      // Let the dialog finish closing and the layout settle before printing;
-      // printing mid-close captures the dialog backdrop in some browsers.
-      window.setTimeout(function () {
-        window.print();
-        // afterprint is not fired by every browser. A timed fallback means the
-        // page cannot be left in export state even if the event never lands.
-        window.setTimeout(undo, 1500);
-      }, 60);
-    });
-  }
-
-  initExport();
 
   /* ── Folds: reveal on navigation ─────────────────────────
      A nav link, the skip link, or a pasted #anchor must land on readable
@@ -2024,7 +1719,10 @@
         ["Created", r.created_at ? formatDate(r.created_at) : "—"],
         ["Last updated", formatDate(r.updated_at)],
         ["Topics", topics.length ? topics.join(" · ") : "None"],
-        ["Repository", safeRepoURL(r.html_url)]
+        ["Repository", safeRepoURL(r.html_url)],
+        // Text, like the Repository row above it, so the dialog stays one kind
+        // of thing. The clickable version is the "Live" link in the table row.
+        ["Live site", pagesURL(r) || "Not published"]
       ].forEach(function (pair) {
         bodyEl.appendChild(detailRow(pair[0], pair[1]));
       });
@@ -3417,7 +3115,7 @@
       /* run() with an empty box, so the dialog opens showing every command
          rather than a blank prompt. This is the whole accommodation for readers
          who are not going to learn a syntax: a recruiter presses Search and is
-         looking at "Switch to the Recruiter view" and "Build a PDF…" without
+         looking at "Switch to the Recruiter view" and "View Document" without
          having typed, read or known anything. */
       run();
       input.focus();

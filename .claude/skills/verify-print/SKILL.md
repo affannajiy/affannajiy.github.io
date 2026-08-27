@@ -1,6 +1,6 @@
 ---
 name: verify-print
-description: Verify the portfolio's print output and one-page résumé budget — measure the print stylesheet by flipping @media print to @media all, check the résumé still fits ~59 lines, confirm estimateLines() agrees with the CSS, and confirm every print-time change is reverted on afterprint. Use after changing the print block, adding content to a printed section, or touching the export dialog.
+description: Verify the portfolio's print output — measure the print stylesheet by flipping @media print to @media all, and confirm the page prints what the reader sees. Use after changing the print block or adding content to a printed section. Note: the export dialog and its line budget were removed 2026-08-27; the sections below that describe them are history, not the current build.
 ---
 
 # Verify the print output
@@ -60,22 +60,16 @@ JSON.stringify({
 Any `0px` means the print block's plain `th, td { border }` lost to a more
 specific screen selector. **Override that edge by name.**
 
-## 3. Check the résumé budget
+## 3. The résumé budget — gone
 
-Open the export dialog, pick the one-page résumé, and read `#export-budget`.
+**Removed 2026-08-27 with the export dialog.** There is no `#export-budget` and
+no `estimateLines()`. There is no one-page target any more: Ctrl+P prints the
+page as the reader has it, however long that runs.
 
-```js
-document.getElementById('export-budget').textContent
-```
-
-Target: **at or under ~59 lines.** Past that, the estimate must say so in words.
-
-If the number looks wrong, instrument `estimateLines()` per section and compare it
-against what the stylesheet prints. The three known divergences — `.hint`,
-`.evidence` and `.resume-omit` — all counted a line that `display:none` removes.
-The estimate and the CSS disagreeing found each one, and each returns if a new
-`display:none` rule goes in the print block without a matching skip in the
-estimate.
+Kept because the reasoning still bites if a budget ever comes back: the three
+known divergences — `.hint`, `.evidence` and `.resume-omit` — each counted a line
+that `display:none` removes. Any estimate that does not skip what the print block
+hides will be wrong in exactly that way.
 
 ## 4. Confirm print reverts
 

@@ -109,16 +109,13 @@
   <main id="main">
 
     <section class="masthead">
-      <!-- Print only, and deliberately not in the Links section: Links carries
-         data-resume-default="off", so a QR living only there would be absent from
-         the one-page résumé — the sheet a recruiter is most likely to be holding.
+      <!-- Print only, and deliberately not in the Links section: a QR living
+         only there would be absent from a printed masthead, which is the sheet a
+         recruiter is most likely to be holding.
 
          First child, not next to the fact list, because it floats: a float only
-         has the block boxes *after* it to sit beside. In résumé mode the list is
-         down to its two [data-resume] rows, which is shorter than the code — so
-         placed lower it would hang below the masthead and add real height the
-         line budget cannot see, `estimateLines()` counting characters and an image
-         having none. From here it clears the name, the role and the list. -->
+         has the block boxes *after* it to sit beside. From here it clears the
+         name, the role and the list. -->
       <img class="masthead-qr" src="assets/qrcode_affannajiy.github.io.png" width="450" height="450"
         alt="QR code linking to affannajiy.github.io">
       <h1 class="masthead-name">‘Affan Najiy bin Rusdi</h1>
@@ -739,7 +736,7 @@
       </details>
     </section>
 
-    <section id="certificates" class="section" data-resume-default="off" aria-labelledby="certificates-title">
+    <section id="certificates" class="section" aria-labelledby="certificates-title">
       <details class="section-fold" open>
         <summary class="section-summary">
           <h2 class="section-title" id="certificates-title"><span class="num">05</span> — Certificates</h2>
@@ -886,7 +883,7 @@
     </section>
 
 
-    <section id="projects" class="section" data-resume-default="off" aria-labelledby="projects-title">
+    <section id="projects" class="section" aria-labelledby="projects-title">
       <details class="section-fold" open>
         <summary class="section-summary">
           <h2 class="section-title" id="projects-title"><span class="num">06</span> — Projects</h2>
@@ -993,7 +990,7 @@
       </details>
     </section>
 
-    <section id="links" class="section" data-resume-default="off" aria-labelledby="links-title">
+    <section id="links" class="section" aria-labelledby="links-title">
       <details class="section-fold" open>
         <summary class="section-summary">
           <h2 class="section-title" id="links-title"><span class="num">07</span> — Links</h2>
@@ -1046,95 +1043,28 @@
       </details>
     </section>
 
-    <!-- data-print-default="off": this section is about how to obtain a PDF, so
-       inside that PDF it is noise. Its checkbox in the export dialog starts
-       unticked; the reader can still tick it. -->
-    <section id="resume" class="section" aria-labelledby="resume-title" data-print-default="off">
+    <section id="resume" class="section" aria-labelledby="resume-title">
       <details class="section-fold" open>
         <summary class="section-summary">
           <h2 class="section-title" id="resume-title"><span class="num">08</span> — Résumé</h2>
         </summary>
         <div class="section-body">
           <p>
-            Everything on this page is drawn from my résumé. The PDF opens in a new
-            tab — read it there, or download it from your browser if you want a copy.
+            Everything on this page is drawn from my résumé. The document opens in a
+            new tab — read it there, or download it from your browser if you want a
+            copy.
           </p>
           <p class="resume-actions" id="resume-actions">
-            <button type="button" class="button js-only" id="export-open">Build a PDF…</button>
-            <a class="button button-quiet" href="assets/resume.pdf" target="_blank" rel="noopener noreferrer">View the
-              fixed PDF<span class="sr-only"> (opens in a new tab)</span></a>
+            <a class="button" href="assets/resume.pdf" target="_blank" rel="noopener noreferrer">View
+              Document<span class="sr-only"> (opens in a new tab)</span></a>
             <a class="button button-quiet" href="mailto:najiyaffan@gmail.com?subject=R%C3%A9sum%C3%A9%20request">Ask me
               by email</a>
-          </p>
-          <p class="hint">
-            “Build a PDF” lets you choose which sections to include, then hands the
-            page to your browser's own “Save as PDF”. The result keeps selectable
-            text and working links — it is not a screenshot.
           </p>
         </div>
       </details>
     </section>
 
   </main>
-
-  <!-- Export dialog. A native <dialog> so the modal behaviour, focus trap and
-     Escape-to-close come from the browser rather than from hand-written JS.
-     It never generates a PDF itself: it decides what is visible, then calls
-     window.print() and lets the browser's own "Save as PDF" do the work. -->
-  <dialog id="export-dialog" class="export-dialog" aria-labelledby="export-title">
-    <form method="dialog" class="export-form" id="export-form">
-      <h2 class="export-title" id="export-title">Build a PDF</h2>
-      <p class="export-intro">
-        Choose what to include. Your browser's print window opens next — pick
-        “Save as PDF” as the destination.
-      </p>
-
-      <fieldset class="export-group">
-        <legend>Format</legend>
-        <label class="export-check">
-          <input type="radio" name="mode" value="resume" checked>
-          <span><strong>One-page résumé</strong> — selected highlights, compact, no table borders</span>
-        </label>
-        <label class="export-check">
-          <input type="radio" name="mode" value="record">
-          <span><strong>Full record</strong> — everything, as the bordered tables on this page</span>
-        </label>
-        <p class="export-budget" id="export-budget" role="status"></p>
-      </fieldset>
-
-      <fieldset class="export-group">
-        <legend>Sections</legend>
-        <div class="export-checks" id="export-sections"></div>
-      </fieldset>
-
-      <fieldset class="export-group">
-        <legend>Level of detail</legend>
-        <label class="export-check">
-          <input type="radio" name="detail" value="everything" checked>
-          <span><strong>Everything</strong> — include rows inside collapsed sections</span>
-        </label>
-        <label class="export-check">
-          <input type="radio" name="detail" value="expanded">
-          <span><strong>What is open now</strong> — print only the sections I have expanded</span>
-        </label>
-      </fieldset>
-
-      <fieldset class="export-group" id="export-projects-group">
-        <legend>Projects</legend>
-        <label class="export-check" for="export-language">
-          <span class="export-label-text">Limit to language</span>
-        </label>
-        <select id="export-language" class="export-select">
-          <option value="">All languages</option>
-        </select>
-      </fieldset>
-
-      <div class="export-actions">
-        <button type="submit" value="print" class="button">Open print window</button>
-        <button type="submit" value="cancel" class="button button-quiet">Cancel</button>
-      </div>
-    </form>
-  </dialog>
 
   <!-- Repository detail. Everything shown here is already in memory from the
      list request, so opening it costs nothing: no second API call, no share of

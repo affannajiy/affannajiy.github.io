@@ -1132,3 +1132,70 @@ with relative links.
 No source file changed for this, so no verification round is owed. The CSS revert
 above is covered by the regression numbers in the UI/UX round: it restores the
 state those were taken against.
+
+
+## 2026-08-27 — Live links derived, PDF export removed
+
+**Live links.** A repository with GitHub Pages on now shows a second link,
+`Live`, beside `Details` in the Projects name cell, and a `Live site` row in the
+repository dialog.
+
+Derived, never typed. The flag is the API's `has_pages` boolean and the URL is
+built from constants plus the repository name — the API's `homepage` field is
+deliberately **not** read. `homepage` is free text an attacker with write access
+to the cache controls, so using it would need a new host check; a boolean carries
+no payload. Turn Pages on and the link appears next load; turn it off and it
+goes. Same contract as the topic chips, and nothing is hand-tagged.
+
+Guards, all exercised against a poisoned `projects-cache-v1` served from a
+throwaway page with `fetch` rejecting, so the stale-cache path rendered:
+
+| Cached row | Result |
+| --- | --- |
+| `name: "../../evil"`, `pages: true` | No Live link — `PAGES_NAME_RE` rejects `/`. `href` fell back to the profile URL |
+| `name: "<img src=x onerror=alert(1)>"` | Rendered as text, **0** `<img>` in `#projects-body`. No Live link |
+| `pages: "true"` / `pages: 1` | No Live link — the check is `=== true` |
+| `name: "affannajiy.github.io"` | No Live link — the user site is this page |
+| `name: "good-one"`, `pages: true` | Live link present, from the cache |
+
+**One real defect, found and fixed during the round.** `narrow()` runs over both
+sources, and it first read only `r.has_pages`. The cache it writes stores the
+field as `pages`, so every cache-fed load silently lost all Live links —
+invisible on a warm network, visible offline. It now reads either key.
+
+Live, unpoisoned: 11 repositories, **3** Live links —
+`crypto-site`, `daily-history`, `weather-prediction`.
+
+**Export removed.** `Build a PDF…`, `<dialog id="export-dialog">`, `initExport()`
+(349 lines of `script.js`), `estimateLines()`, the line budget, the
+`data-print-default` / `data-resume-default` attributes, and the dead
+`.export-group` / `.export-check` / `.export-budget` / `.export-select` CSS
+(1548 chars). `View the fixed PDF` is now `View Document` and is the primary
+button. `.export-dialog` / `.export-form` / `.export-title` / `.export-intro` /
+`.export-actions` are **kept** — five other dialogs use them, and the JSON dialog
+was opened to confirm it (intro 14.4px, actions `flex`).
+
+`.demo-link` is added to the print hide list, for the reason `.cert-verify` is
+there: the print rule spells out an href only for `href^="assets"`, so `Live` on
+paper would be a word with no destination.
+
+**Not done, and now dead:** the `body.print-resume` layer in `style.css` (~250
+lines, the one-page résumé print layout) was only ever reachable through the
+export dialog. It is inert, not broken — `body:not(.print-resume) main` simply
+always matches. Ripping it in the same change that added a feature is how a fire
+starts, so it is left for its own pass. Ctrl+P still prints through the base
+print block, unchanged.
+
+Measured, 375×812: `pageOverflowX` false, `.demo-link` 18px box with the same
+40px `::after` tap target `.detail-btn` uses, contrast **5.35:1** against the
+painted row background (`rgb(117,105,90)` on white) — identical to `.detail-btn`,
+which it is styled to match exactly.
+
+> Contrast note: measuring against `getComputedStyle('.grid-table')
+> .backgroundColor` gave a false **3.92**. Rows paint white over it. Walk up to
+> the first non-transparent ancestor background instead.
+
+Exercised, not read: sort by name (`aria-sort` `ascending`, 3 Live links
+survive), filter `crypto` ("Showing 1 of 11 …"), filter `zzzz` ("Showing 0 of 11
+… Clear the filter to see them all."), repository dialog `Live site` row. 0
+inline styles, console clean.

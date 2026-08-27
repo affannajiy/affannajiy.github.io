@@ -79,7 +79,7 @@ review against [UI-UX_Rulebook.md](../../../../rulebooks/UI-UX_Rulebook.md) and
 
 | Feature | What it does | Rules | Changed in review |
 | --- | --- | --- | --- |
-| PDF export dialog | Picks format and sections, then hands the page to the browser | [printing.md](../../verify-print/reference/printing.md) §5 | — |
+| Live site links | A repository with GitHub Pages on gets a `Live` link beside `Details`, and a `Live site` row in its dialog. Derived from the API's `has_pages` boolean, never hand-tagged; the URL is built, never read from `homepage` | [state-and-data.md](../../site-state-and-tables/reference/state-and-data.md) | **New 2026-08-27** |
 | One-page résumé mode | Curated rows, linearised tables, ATS-safe | [printing.md](../../verify-print/reference/printing.md) §2 | — |
 | Line budget | States lines used against lines available before printing | [printing.md](../../verify-print/reference/printing.md) §3 | **Counts what actually prints** |
 | Print restore | Every print-time change reverted on `afterprint` | [printing.md](../../verify-print/reference/printing.md) §5 | — |

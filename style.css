@@ -1181,6 +1181,47 @@ th[aria-sort="descending"] .sort-btn::after {
   color: var(--accent-text);
 }
 
+/* "Live" — the second link in a Projects name cell, present only where the
+   repository has GitHub Pages on. Deliberately identical to .detail-btn rather
+   than a new shape: the cell already carries a link and a button, and a third
+   visual language there would be furniture. It is still an <a>, so middle-click
+   and "copy link address" work on it.
+
+   The ::after block repeats the .detail-btn tap-target trick — the chip itself
+   is ~18px tall, which is under the 44px floor on a phone. */
+a.demo-link {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  margin-left: .4rem;
+  padding: .05rem .4rem;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: .66rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+a.demo-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 40px;
+  transform: translateY(-50%);
+}
+
+a.demo-link:hover,
+a.demo-link:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
 .compare-bar {
   display: flex;
   flex-wrap: wrap;
@@ -2466,82 +2507,6 @@ img {
   margin: 0 0 1.25rem 0;
 }
 
-.export-group {
-  border: 0;
-  border-top: 1px solid var(--border);
-  padding: 1rem 0 0 0;
-  margin: 0 0 1rem 0;
-}
-
-.export-group legend {
-  font-family: var(--sans);
-  font-size: .7rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  padding: 0 .5rem 0 0;
-}
-
-/* The one-page estimate. Stated in words and not in colour alone — over
-   budget reads as over budget with the sound off (Rulebook §4). */
-.export-budget {
-  margin: .7rem 0 0 0;
-  padding: .45rem .6rem;
-  background: var(--surface-2);
-  border-left: 3px solid var(--border);
-  font-size: .8rem;
-  color: var(--muted);
-}
-
-.export-budget.is-over {
-  background: var(--accent-soft);
-  border-left-color: var(--accent);
-  color: var(--accent-text);
-}
-
-.export-checks {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: .15rem 1rem;
-}
-
-.export-check {
-  display: flex;
-  align-items: center;
-  gap: .55rem;
-  min-height: 40px;
-  font-size: .9rem;
-  cursor: pointer;
-}
-
-.export-check input {
-  accent-color: var(--accent);
-  flex: 0 0 auto;
-}
-
-.export-check input:focus-visible {
-  outline: 2px solid rgba(var(--accent-rgb), .9);
-  outline-offset: 2px;
-}
-
-.export-select {
-  min-height: 40px;
-  width: 100%;
-  padding: 0 .6rem;
-  font-family: var(--sans);
-  font-size: .85rem;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 0;
-}
-
-.export-select:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid rgba(var(--accent-rgb), .9);
-  outline-offset: 1px;
-}
-
 .export-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2627,6 +2592,9 @@ img {
   .view-switch,
   .compare-bar,
   .detail-btn,
+  /* Same reason as .cert-verify above: the print rule only spells out an href
+     for `href^="assets"`, so "Live" on paper is a word with no destination. */
+  .demo-link,
   .anchor-btn,
   .filter-row-multi,
   #cert-status,

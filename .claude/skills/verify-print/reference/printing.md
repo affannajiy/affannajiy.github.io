@@ -66,7 +66,7 @@ leaves the right and bottom edges open.
 
 ## 2. One-page résumé
 
-The export dialog offers two formats. The choice sets `body.print-resume`.
+**Removed 2026-08-27, kept here as history.** The export dialog offered two formats and set `body.print-resume`. The dialog and `estimateLines()` are gone; the `body.print-resume` CSS remains in `style.css` and is now inert — nothing sets the class, so the base print block is the only path. Ctrl+P is the whole print story now. Its own removal pass has not been done.
 
 | | Full record | One-page résumé |
 | --- | --- | --- |

@@ -16,7 +16,7 @@ it, and each writes its result into
 | Skill | When |
 | --- | --- |
 | `check-accessibility` | A colour changed, or a control or animation was added |
-| `verify-print` | The print block, a printed section, or the export dialog changed |
+| `verify-print` | The print block or a printed section changed |
 | `audit-untrusted-input` | The render path, the cache shape, or a sanitising helper changed |
 | `preview-pane-quirks` | Something measures wrong and may be the harness, not the site |
 
